@@ -7,8 +7,12 @@ The idea: instead of discovering a codebase by repeated `grep` and file reads, t
 ("who calls this?", "how does A reach B?", "show me this function") and gets compact, exact answers.
 
 - Code: [`src/mcp_server/server.py`](../src/mcp_server/server.py)
-- Transport: stdio (the agent launches the server as a subprocess)
-- All tools are **read-only**; nothing in the indexed repo or the index is modified.
+- Transports: **stdio** (the agent launches the server as a subprocess) and **streamable HTTP** at
+  `http://127.0.0.1:8787/mcp` (`--transport http`), which also serves the Spelunk app's handoff routes
+- Code tools are **read-only**; nothing in the indexed repo or the index is modified. The two handoff write tools
+  only touch `data/handoffs/`.
+- Skills for Claude Code: `.claude/skills/repo-analysis` (code questions), `spelunk-handoff` (act on handoffs),
+  `index-repo` (build an index, start the server)
 
 ---
 
@@ -51,6 +55,10 @@ larger results end with a `[truncated …]` note telling the agent to narrow the
 | `path_between` | `source`, `target`, `repo`, `limit=5` | How two symbols connect, e.g. how a CLI command reaches a storage function |
 | `statement_slice` | `symbol`, `repo`, `limit=20` | Statements in a function with what each defines, reads, writes and calls |
 | `prepare_answer_bundle` | `question`, `repo`, `limit=8` | One-shot evidence for a broad "how does X work?" question: top symbols and files, graph neighbourhoods, summaries, and evidence with the reason each item was included |
+| `list_handoffs` | `repo`, `status="open"`, `limit=20` | Spelunk handoffs, newest first, with a count; `status=null` for all |
+| `get_handoff` | `handoff_id` | Decisions, what was said, why, `code_ref` (file, lines, signature) per focus decision, and `instructions` markdown |
+| `update_handoff_status` | `handoff_id`, `status`, `note` | **Writes.** `open` / `in_progress` / `done` / `dismissed`, appended to the handoff's history |
+| `publish_handoff` | `handoff` (a `ProposalBatch`) | **Writes.** Stores a new handoff; for the app / extraction step, not for coding agents |
 
 Symbol arguments accept a plain name (`ChatClientBuilder`), a method path (`ChatClientBuilder::build`) or a fully
 qualified name (`rust_agent_framework::client::ChatClientBuilder`).
@@ -78,13 +86,15 @@ cd repo-analysis-workbench
 export PATH=/opt/homebrew/opt/rustup/bin:$PATH     # native search worker needs cargo
 export PYTHON_BIN="$PWD/.venv/bin/python"
 WS="$PWD/../repo_analyse"
+./scripts/build_scip.sh       --repo <repo> --workspace-root "$WS"      # Rust: rust-analyzer SCIP, ~1 min
 ./scripts/parse_repos.sh      --repo <repo> --workspace-root "$WS"
-./scripts/build_index.sh      --repo <repo> --workspace-root "$WS"
+./scripts/build_index.sh      --repo <repo> --workspace-root "$WS" --scip-index "$WS/.scip/<repo>.scip.json"
 ./scripts/build_search.sh     --repo <repo> --workspace-root "$WS"
 ./scripts/export_summaries.sh --repo <repo>
 ```
 
-A 67k-line Rust workspace takes about 6 minutes on an M1 Pro. Embeddings are **not** needed (see [Embeddings](#embeddings)).
+A 67k-line Rust workspace takes about 4–6 minutes on an M1 Pro. Skip the SCIP step for non-Rust repos. Embeddings are
+**not** needed (see [Embeddings](#embeddings)).
 
 The MCP SDK is installed with the workbench's dependencies (`mcp==2.3.0`, in the workbench `.venv`).
 
@@ -119,7 +129,21 @@ claude mcp add repo-analysis --scope user \
 
 or per run, without changing any config, with `claude -p --mcp-config <file.json> ...`.
 
-Check the connection with `/mcp` inside Claude Code; the server should list 12 tools.
+Check the connection with `/mcp` inside Claude Code; the server should list 16 tools.
+
+### 3. HTTP (Spelunk app, Haiku, remote agents)
+
+```bash
+cd repo-analysis-workbench
+.venv/bin/python src/mcp_server/server.py --transport http        # --host 127.0.0.1 --port 8787 by default
+```
+
+- MCP endpoint: `http://127.0.0.1:8787/mcp` (streamable HTTP). Connect another agent with
+  `claude mcp add --transport http spelunk http://127.0.0.1:8787/mcp`; the app's Connect screen shows the same.
+- App routes on the same port: `POST /handoffs` (the app's `ProposalBatch`; set `VITE_AGENT_URL` to this URL),
+  `GET /handoffs`, `GET /handoffs/{id}`, `GET /health`.
+- CORS allows `http(s)://localhost` and `127.0.0.1` on any port (override with `REPO_ANALYSIS_CORS_ORIGIN_REGEX`).
+- It binds to `127.0.0.1` only. Don't expose it on a network without adding authentication.
 
 ---
 
@@ -161,9 +185,10 @@ smoke-test calls succeed.
 |---|---|---|
 | `list_repos`, `repo_overview`, `summarize_path`, `find_symbol`, `get_symbol_body` | < 0.01 s | 0.3–1.6k chars |
 | `search_code`, `find_file` | ~0.15 s | ~2k chars (5 results) |
-| `symbol_relations`, `path_between`, `statement_slice` | 0.1–1.7 s | 0.6–5.7k chars |
-| `get_enclosing_context` | ~2.7 s | ~8k chars |
-| `prepare_answer_bundle` | **~20 s first call**, ~1.7 s repeated | ~14k chars |
+| `symbol_relations`, `path_between`, `statement_slice` | 0.05–0.4 s | 0.6–6k chars |
+| `get_enclosing_context` | ~1.5 s | ~9.5k chars |
+| `prepare_answer_bundle` | **~18 s first call**, ~1.7 s repeated | ~15k chars |
+| handoff tools | < 0.05 s | < 2k chars (`get_handoff` grows with the decisions) |
 
 What the server does to the raw workbench output:
 
@@ -177,24 +202,22 @@ What the server does to the raw workbench output:
 
 ## Limitations
 
-- **The call graph misses many real calls in Rust.** Calls are linked by name, without type inference, and
-  effectively within a crate. Checked against the source of `rust-agent-framework`:
+- **Call graph: complete with SCIP, a few extra callers.** With the rust-analyzer SCIP step, method calls, trait
+  dispatch and cross-crate calls are found (`scripts/graph_recall_check.py`, distinct real callers):
 
-  | Symbol | Real call sites | Found by `symbol_relations(callers)` |
-  |---|---|---|
-  | `ApprovalRequiredTool::new` | 2 (in another crate) | 0 |
-  | `requires_approval()` (trait method) | 3 (method-call syntax) | 0 |
-  | `ChatClientBuilder::build` (`.build()`) | many | 0 |
-  | `FunctionInvokingChatClient::new` | 1 | 1 |
+  | Symbol | Real callers | Name matching only | With SCIP |
+  |---|---|---|---|
+  | `ApprovalRequiredTool::new` | 2 (another crate) | 0 | 2 |
+  | `ITool::requires_approval` (trait method) | 2 | 0 | 2 |
+  | `ChatClientBuilder::build` (`.build()`) | 1 | 0 | 1 (+3 false) |
+  | `FunctionInvokingChatClient::new` | 7 | 0 (1 false) | 7 (+2 false) |
 
-  Method-call syntax (`x.method()`), trait dispatch and cross-crate calls are mostly missing, and same-named methods
-  can merge into a phantom container-less symbol (e.g. `rust_agent_core::tool::requires_approval`). Treat empty
-  `callers`/`callees` results as "not found by the index", not "no callers". The server's instructions tell the agent
-  to verify by reading code. A compiler-grade fix would be importing a SCIP index from rust-analyzer
-  (`--scip-index`, supported by `build-index`), not yet tried.
-- **Bundle quality is mixed.** For "How does human-in-the-loop tool approval work?" the bundle found the right files
-  (`invoke.rs`, `tool.rs`, `run_options.rs`) but its evidence over-weights one test function and misses the
-  `ApprovalRequiredTool` struct and the approval docs. Use it as a starting point, then follow up with the precise tools.
+  The extra callers come from the parser's older name matching (e.g. `ChatClient::new` calling some other
+  `.build()`). Without SCIP (non-Rust repos, or skipping `build_scip.sh`) method calls and cross-crate calls are
+  mostly missing. Treat an empty result as "not found by the index", and verify call sites before acting on them.
+- **Bundle quality is mixed.** For "How does human-in-the-loop tool approval work?" the bundle finds the right files
+  and `FunctionInvokingChatClient::run` / `WorkspaceContextProvider::add_tool`, but still ranks one test function
+  first. Use it as a starting point, then follow up with the precise tools.
 - **Index freshness.** Answers come from the last build. Rebuild after significant changes.
 - **Language depth.** Rust gets the full graph. Python, TypeScript and Go get symbols and search only (no call graph).
 - **Large outputs** are truncated at the size cap; narrow the query or lower `limit`.
@@ -204,8 +227,8 @@ What the server does to the raw workbench output:
 ## Testing
 
 ```bash
-# unit tests (no index needed)
-.venv/bin/python -m pytest tests/unit/test_mcp_server.py -q
+# unit tests (no index needed): tools, handoff store, HTTP routes and CORS
+.venv/bin/python -m pytest tests/unit/test_mcp_server.py tests/unit/test_handoffs.py -q
 
 # end-to-end over real MCP stdio, against an indexed repo
 .venv/bin/python scripts/mcp_smoke_test.py <repo>
