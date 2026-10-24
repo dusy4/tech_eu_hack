@@ -121,6 +121,32 @@ class ScipBackendTest(unittest.TestCase):
         self.assertIn("IMPLEMENTS", edge_types)
         self.assertIn("USES", edge_types)
 
+    def test_probe_scip_json_normalizes_windows_document_paths(self) -> None:
+        # rust-analyzer on Windows writes backslash paths; they must match the parser's "/" paths.
+        payload = {
+            "documents": [
+                {
+                    "relative_path": "src\\app.py",
+                    "symbols": [{"symbol": WORKER_SYMBOL, "display_name": "Worker", "kind": 7}],
+                    "occurrences": [{"symbol": WORKER_SYMBOL, "range": [0, 6, 12], "symbol_roles": 1}],
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            repo_root = Path(tmpdir)
+            (repo_root / "src").mkdir()
+            (repo_root / "src" / "app.py").write_text("class Worker:\n    pass\n", encoding="utf-8")
+            (repo_root / "index.scip.json").write_text(json.dumps(payload), encoding="utf-8")
+            probe = probe_scip_indexes(
+                "demo",
+                repo_root,
+                {"files": [{"path": "src/app.py", "language": "Python", "content_hash": "abc"}]},
+                scip_indexes=[Path("index.scip.json")],
+            )
+
+        self.assertEqual(probe["symbol_records"][0]["path"], "src/app.py")
+        self.assertEqual(probe["file_records"][0]["path"], "src/app.py")
+
 
 if __name__ == "__main__":
     unittest.main()

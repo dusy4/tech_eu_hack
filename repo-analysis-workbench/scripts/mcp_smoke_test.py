@@ -57,7 +57,7 @@ def headline(payload: object) -> str:
 
 async def main() -> int:
     params = StdioServerParameters(
-        command=str(WORKBENCH / ".venv/bin/python"),
+        command=sys.executable,  # the venv's python, on macOS, Linux and Windows
         args=[str(WORKBENCH / "src/mcp_server/server.py")],
         cwd=str(WORKBENCH),
     )

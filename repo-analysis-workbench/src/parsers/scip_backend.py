@@ -209,7 +209,7 @@ def parse_scip_payload(
     file_records: Dict[str, Dict[str, object]] = {}
 
     for doc in documents:
-        path = get_text(doc, "relative_path", "relativePath")
+        path = document_path(doc)
         if not path or (path_prefixes and not matches_path_prefix(path, path_prefixes)):
             continue
         language = normalize_language(get_text(doc, "language") or repo_files_by_path.get(path, {}).get("language"))
@@ -256,7 +256,7 @@ def parse_scip_payload(
     definition_ranges_by_path = build_definition_ranges(definitions, symbol_id_by_scip)
     reference_records = []
     for doc in documents:
-        path = get_text(doc, "relative_path", "relativePath")
+        path = document_path(doc)
         if not path or (path_prefixes and not matches_path_prefix(path, path_prefixes)):
             continue
         language = normalize_language(get_text(doc, "language") or repo_files_by_path.get(path, {}).get("language"))
@@ -540,6 +540,11 @@ def get_value(payload: Dict[str, object], *keys: str) -> object:
         if key in payload:
             return payload[key]
     return None
+
+
+def document_path(doc: Dict[str, object]) -> str:
+    # SCIP paths are "/"-separated, but rust-analyzer on Windows writes backslashes.
+    return get_text(doc, "relative_path", "relativePath").replace("\\", "/")
 
 
 def get_text(payload: Dict[str, object], *keys: str) -> str:

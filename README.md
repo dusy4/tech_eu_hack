@@ -233,7 +233,7 @@ tech_eu_hack/
 | Accept proposals and send them to the agent | UI real; sending only logs to the console unless `VITE_AGENT_URL` is set |
 | Watch an answer build on the graph, with the agent run listing tool calls | **Replay**: recorded answers played on timers (`app/src/engine/useReplay.ts`), nothing streams yet |
 | Play FlowTrace, BlastRadius, AlgoStepper and the code city | Sample: recorded React answers in `app/src/data/` |
-| Ask the chat a question | Sample data by default; real index if the bridge runs and `VITE_KNOWLEDGE_URL` is set |
+| Ask the chat a question | **Real** with the bridge running and `VITE_KNOWLEDGE_URL` set: answers from `rust-agent-framework` with real code, callers and file:line sources. Sample data otherwise |
 | "Connect your agent" screen | Shows config for an MCP server that doesn't exist in that form (open decision 2) |
 
 ## 8. Decided
@@ -485,7 +485,7 @@ Optional settings go in `app/.env.local` (template: `app/.env.example`):
 
 ## 17. Run the backend
 
-macOS, Apple Silicon.
+### macOS, Apple Silicon
 
 ```bash
 brew install rustup universal-ctags
@@ -514,18 +514,52 @@ export PYTHON_BIN="$PWD/.venv/bin/python"; WS="$PWD/../repo_analyse"
 
 Then open Claude Code in `tech_eu_hack/`, approve the `repo-analysis` server, and check `/mcp`.
 
+### Windows
+
+Tested on Windows 10 with Git Bash: the full index of `rust-agent-framework` builds in about 15 minutes (SCIP ~7,
+the rest ~8) and all 15 smoke-test calls succeed.
+
+**One-time setup.** Rust's default (MSVC) toolchain needs Visual Studio's linker. Without it, use the GNU toolchain
+and WinLibs MinGW instead:
+
+```bash
+winget install BrechtSanders.WinLibs.POSIX.UCRT        # gcc + dlltool for the GNU toolchain
+rustup toolchain install stable-x86_64-pc-windows-gnu --profile minimal
+rustup component add rust-analyzer --toolchain stable-x86_64-pc-windows-gnu
+```
+
+**Every shell that builds** (Git Bash). Put MinGW first on `PATH`: Git Bash's own `link` shadows the linker.
+
+```bash
+export RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu PYTHONUTF8=1
+export PATH="$LOCALAPPDATA/Microsoft/WinGet/Packages/BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe/mingw64/bin:$PATH"
+
+cd repo-analysis-workbench
+python -m venv .venv
+.venv/Scripts/python -m pip install -e ".[tree-sitter]" tree-sitter-rust pytest
+cargo build --manifest-path native/Cargo.toml
+export PYTHON_BIN="$PWD/.venv/Scripts/python.exe"; WS="$PWD/../repo_analyse"
+# then the same clone and index commands as on macOS
+.venv/Scripts/python scripts/mcp_smoke_test.py rust-agent-framework
+```
+
+`.mcp.json` points at `.venv/bin/python`, which doesn't exist on Windows. Register the server for your user instead:
+`claude mcp add repo-analysis --scope user -- "<abs>/repo-analysis-workbench/.venv/Scripts/python.exe" "<abs>/repo-analysis-workbench/src/mcp_server/server.py"`.
+
 ## 18. Run the bridge
 
 Needs the backend's `.venv` and an indexed repo.
 
 ```bash
-WORKBENCH_REPO=rust-agent-framework repo-analysis-workbench/.venv/bin/python bridge/server.py
+WORKBENCH_REPO=rust-agent-framework repo-analysis-workbench/.venv/bin/python bridge/server.py           # macOS
+WORKBENCH_REPO=rust-agent-framework repo-analysis-workbench/.venv/Scripts/python.exe bridge/server.py   # Windows
 ```
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `WORKBENCH_REPO` | (required) | Indexed repo name (a folder under `data/search/`) |
 | `WORKBENCH_DATA` | `repo-analysis-workbench/data` | Workbench data root |
+| `WORKBENCH_WORKSPACE` | `repo_analyse` | Where the indexed repos are cloned. The index keeps symbol spans, not text, so `find-symbol` reads the code from here |
 | `BRIDGE_PORT` | `18300` | Port, on 127.0.0.1 only |
 
 Then set `VITE_KNOWLEDGE_URL=http://127.0.0.1:18300` in `app/.env.local`.
@@ -548,6 +582,12 @@ Then set `VITE_KNOWLEDGE_URL=http://127.0.0.1:18300` in `app/.env.local`.
 - **SCIP call graph for Rust** (`src/symbols/scip_bridge.py`, `scripts/build_scip.sh`, `scripts/scip_to_json.py`):
   rust-analyzer's references become CALLS edges. Also fixes rust-analyzer symbol locations, which removed ~1.5k
   phantom duplicate symbols (statements 244k → 33k on `rust-agent-framework`).
+- **Windows fixes** (after Aneeth's `39a9c81`, found while indexing on Windows):
+  - SCIP document paths are normalised to `/` (`parsers/scip_backend.py`). rust-analyzer on Windows writes `\`, so
+    no compiler references attached: callers went missing and ~7.7k duplicate symbols appeared.
+  - The native worker's output is decoded as UTF-8 (`common/native_tool.py`); the Windows code page broke search
+    on non-ASCII text such as the repo's Chinese comments.
+  - The Unix-only `resource` import is optional (`symbols/indexer.py`); the smoke test uses its own interpreter.
 - **Rerank penalises test code** unless the question is about tests.
 - **Graph recall check** (`scripts/graph_recall_check.py`): compares callers with hand-verified call sites.
 

@@ -91,6 +91,7 @@ def run_native_json(
         input=stdin,
         capture_output=True,
         text=True,
+        encoding="utf-8",  # the worker writes UTF-8; Windows would otherwise decode with the ANSI code page
         check=True,
     )
     return json.loads(result.stdout or "{}")

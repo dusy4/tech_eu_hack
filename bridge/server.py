@@ -23,6 +23,8 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKBENCH_SRC = ROOT / "repo-analysis-workbench" / "src"
 DATA_ROOT = Path(os.environ.get("WORKBENCH_DATA", ROOT / "repo-analysis-workbench" / "data")).resolve()
 REPO = os.environ.get("WORKBENCH_REPO", "")
+# Where the indexed repos are cloned; symbol code is read from here by line span.
+WORKSPACE = Path(os.environ.get("WORKBENCH_WORKSPACE", ROOT / "repo_analyse")).resolve()
 PORT = int(os.environ.get("BRIDGE_PORT", "18300"))
 
 SEARCH_KINDS = ("symbol", "function_body", "type_body")
@@ -47,7 +49,16 @@ class Workbench:
         return self.tk.search_lexical(self.search_root, self.repo, query, limit=limit, kinds=SEARCH_KINDS)
 
     def body(self, name: str) -> Dict[str, Any]:
-        return self.tk.get_symbol_body(self.search_root, self.parsed_root, self.repo, name)
+        """get_symbol_body, plus the symbol's source read from the clone: the index keeps spans, not text."""
+        result = self.tk.get_symbol_body(self.search_root, self.parsed_root, self.repo, name)
+        row = self.tk.resolve_symbol_query(self.search_root, self.parsed_root, self.repo, name) if result.get("symbol") else None
+        span = (row or {}).get("span") or (row or {}).get("range") or {}
+        source = WORKSPACE / self.repo / str((row or {}).get("path") or "")
+        if span.get("start_line") and source.is_file():
+            lines = source.read_text(encoding="utf-8", errors="replace").splitlines()
+            start, end = int(span["start_line"]), int(span.get("end_line") or span["start_line"])
+            result["source"] = {"start": start, "code": "\n".join(lines[start - 1 : end])}
+        return result
 
     def callers(self, name: str) -> Dict[str, Any]:
         return self.tk.callers_of(self.search_root, self.parsed_root, self.graph_root, self.repo, name)
@@ -116,11 +127,12 @@ def symbol_info(body: Dict[str, Any], callers: Dict[str, Any], tests: Dict[str, 
     if not symbol:
         return None
     doc = body.get("body") or {}
+    source = body.get("source") or {}
     return {
         "symbol": _name(symbol),
         "file": symbol.get("path") or doc.get("path") or "",
-        "start": _start_line(doc) if doc else 1,
-        "code": str(doc.get("content") or symbol.get("signature") or ""),
+        "start": source.get("start") or (_start_line(doc) if doc else 1),
+        "code": str(source.get("code") or doc.get("content") or symbol.get("signature") or ""),
         "callers": _neighbor_names(callers),
         "tests": [n.get("path") or _name(n) for n in tests.get("neighbors") or []],
     }

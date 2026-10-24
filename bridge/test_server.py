@@ -38,6 +38,9 @@ class FakeWorkbench:
     def body(self, name):
         if name == "missing":
             return {"symbol": None, "body": None}
+        if name == "from_clone":  # the real workbench keeps spans, not text: code comes from the clone
+            return {"symbol": {"qualified_name": "queue::from_clone", "path": "src/queue.rs", "signature": "fn from_clone()"},
+                    "body": {"path": "src/queue.rs", "metadata": {}}, "source": {"start": 7, "code": "fn from_clone() {\n}"}}
         return {"symbol": {"qualified_name": "queue::process_queue", "path": "src/queue.rs"}, "body": BODY_DOC}
 
     def callers(self, name):
@@ -81,6 +84,10 @@ class BridgeContract(unittest.TestCase):
         self.assertEqual(info["start"], 42)
         self.assertEqual(info["callers"], ["worker::tick", "main"])
         self.assertEqual(info["tests"], [])  # graph error degrades to empty, not 500
+
+    def test_find_symbol_code_from_clone(self):
+        info = self.post("/find-symbol", {"name": "from_clone"})
+        self.assertEqual((info["start"], info["code"]), (7, "fn from_clone() {\n}"))
 
     def test_find_symbol_missing_is_null(self):
         self.assertIsNone(self.post("/find-symbol", {"name": "missing"}))

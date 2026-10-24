@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import resource
 import subprocess
 import sys
 import time
@@ -2621,6 +2620,10 @@ def parse_rust_source_file(
 
 
 def current_rss_mb() -> float:
+    try:
+        import resource  # Unix only; progress logs report 0 on Windows
+    except ImportError:
+        return 0.0
     usage = resource.getrusage(resource.RUSAGE_SELF)
     rss_kb = usage.ru_maxrss
     if sys.platform == "darwin":
