@@ -4,9 +4,10 @@
 .tool { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 54px; padding: 5px 0 4px; border: 0; background: transparent; border-radius: 4px; color: #33404b; font-size: 11px; }
 .tool:hover { background: #f1f4f6; }
 .tool.on { background: #2d72d2; color: #fff; }
-.legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 14px; max-width: 58%; background: #fff; border-radius: 8px; padding: 8px 12px; box-shadow: var(--elev-1); font-size: 12px; }
+/* Chips float on the canvas without a card behind them, so a wrapped row leaves no empty panel. */
+.legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 58%; font-size: 12px; }
 .legend-head { font: 600 12px/1 var(--display); color: #55606b; margin-bottom: 6px; }
-.legend-row { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; padding: 3px 8px 3px 4px; border-radius: 999px; background: color-mix(in srgb, var(--c) 12%, #fff); color: color-mix(in srgb, var(--c) 60%, #1c2024); font-weight: 600; }
+.legend-row { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; padding: 3px 8px 3px 4px; border-radius: 999px; background: color-mix(in srgb, var(--c) 12%, #fff); color: color-mix(in srgb, var(--c) 60%, #1c2024); font-weight: 600; box-shadow: 0 0 0 1px color-mix(in srgb, var(--c) 28%, transparent), var(--elev-1); }
 .legend-row .num { color: inherit; opacity: 0.75; }
 .sw { width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid; }
 .react-flow__controls { box-shadow: var(--elev-1) !important; border: 0; border-radius: 6px; overflow: hidden; }
