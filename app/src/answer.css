@@ -1,0 +1,79 @@
+/* ── Answer screen: the canvas is the screen; playback floats, the run and the selection slide in ── */
+
+.answer { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100%; min-height: 0; }
+.answer-head { padding: 12px var(--pad) 10px; display: flex; gap: 16px; align-items: flex-start; }
+.answer-head h1 { font-size: 26px; line-height: 32px; font-weight: 700; letter-spacing: -0.02em; margin: 0; }
+.summary { min-height: 0; margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; color: #33404b; }
+
+.stage-canvas {
+  position: relative; margin: 0 12px 12px; min-height: 0;
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #f3f5f7;
+}
+.stage-canvas .react-flow { position: absolute; inset: 0; }
+
+/* Playback: the step strip and the dock, centred at the bottom of the canvas */
+.playbar {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 6;
+  width: min(760px, calc(100% - 32px)); display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+.playbar > * { pointer-events: auto; }
+.strip {
+  width: 100%; background: rgba(255, 255, 255, 0.97); border: 1px solid var(--border); border-radius: 10px;
+  padding: 8px 12px 10px; box-shadow: 0 4px 16px rgba(16, 24, 32, 0.08);
+}
+.strip-caption { display: flex; gap: 10px; align-items: baseline; white-space: nowrap; overflow: hidden; }
+.strip-of { font-size: 12px; color: var(--text-muted); flex: none; }
+.strip-group { font: 600 12px/1 var(--display); color: #33404b; flex: none; }
+.strip-text { font: 500 14px/20px var(--display); color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+.strip-bars { display: grid; gap: 3px; margin-top: 7px; }
+.tl-bar { height: 8px; border: 0; border-radius: 2px; background: var(--c); opacity: 0.25; padding: 0; cursor: pointer; transition: opacity var(--duration-fast) var(--ease-in-out), box-shadow var(--duration-fast) var(--ease-smooth-out); }
+.tl-bar:hover { opacity: 0.6; }
+.tl-bar.past { opacity: 0.8; }
+.tl-bar.now { opacity: 1; box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px #1f2933; }
+.playdock { background: rgba(255, 255, 255, 0.97); box-shadow: 0 8px 24px rgba(16, 24, 32, 0.14); }
+.dock-text { font: 600 13px/1 var(--display); }
+
+/* Agent run: a sheet that rises above the playback while the answer builds */
+.run-sheet {
+  position: absolute; left: 12px; right: 12px; bottom: 136px; z-index: 7;
+  transform: translateY(16px); opacity: 0; pointer-events: none;
+  transition: transform var(--duration-slow) var(--ease-smooth-out), opacity var(--duration-fast) var(--ease-in-out);
+}
+.run-sheet.open { transform: none; opacity: 1; pointer-events: auto; }
+.run-sheet .agent-run { padding: 0; }
+.run-sheet .lanes-embed > [class*="card"] { box-shadow: 0 10px 30px rgba(16, 24, 32, 0.16); }
+
+/* Selection drawer (beUI Drawer) */
+.insp-drawer { width: min(460px, 94vw) !important; display: flex; flex-direction: column; }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; height: 52px; padding: 0 12px 0 18px; border-bottom: 1px solid var(--border); font: 600 14px/1 var(--display); flex: none; }
+.insp { overflow: auto; padding-bottom: 16px; }
+.insp-title { display: flex; align-items: center; gap: 10px; padding: 14px 18px 10px; }
+.insp-swatch { width: 14px; height: 14px; border-radius: 3px; flex: none; }
+.insp-name { font: 600 17px/1.2 var(--display); letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.props { margin: 0; padding: 2px 18px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.props > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.props dt { color: var(--text-muted); font-size: 12px; }
+.props dd { margin: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.insp-code { margin: 0 18px; }
+.pane-empty { color: var(--text-muted); padding: 18px; margin: 0; }
+
+/* App shell (beUI AnimatedSidebar) */
+.app-shell { min-height: 100vh; background: var(--ground); }
+.main { background: var(--ground); display: grid; grid-template-rows: 52px minmax(0, 1fr); height: 100vh; min-height: 0; padding: 0 var(--sheet-inset) var(--sheet-inset) 0; }
+.main .sheet { min-height: 0; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 0 8px; }
+.nav-trigger { color: #33404b; }
+.nav-trigger:hover { background: rgba(0, 0, 0, 0.05); }
+.topbar .ask { margin: 0 auto; }
+.nav { background: var(--ground); }
+.nav-head { display: flex; flex-direction: row !important; align-items: center; gap: 10px; padding: 14px 16px 6px; }
+@media (max-width: 760px) {
+  .playbar { width: calc(100% - 16px); bottom: 8px; }
+  .run-sheet { left: 6px; right: 6px; bottom: 128px; }
+  .legend { display: none; }
+}
+
+[data-state="collapsed"] .brand-name { display: none; }
+[data-state="collapsed"] .nav-head { justify-content: center; padding-inline: 0; }
+.insp { overflow-x: hidden; }
