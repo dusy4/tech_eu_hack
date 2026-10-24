@@ -1,5 +1,5 @@
 // The one contract this UI owns: what the harness hands over to be drawn.
-// Mirrors section 6 of docs/swe-demo-plan.md.
+// Documented in README.md, section 10.
 
 export type Archetype =
   | "flowTrace"

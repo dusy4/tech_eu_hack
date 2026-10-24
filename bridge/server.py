@@ -1,7 +1,7 @@
 """HTTP bridge between the frontend (app/) and repo-analysis-workbench.
 
 Runs the workbench's toolkit functions in-process and reshapes their output into the
-types the UI already uses (app/src/knowledge/index.ts). docs/backend-contract.md is
+types the UI already uses (app/src/knowledge/index.ts). README.md section 13 is
 the spec; keep the two in sync.
 
     WORKBENCH_REPO=<indexed-repo> python bridge/server.py

@@ -2,7 +2,7 @@ import type { CodeHit, KnowledgeBackend, SymbolInfo } from "./index";
 
 /**
  * KnowledgeBackend over the bridge server (bridge/server.py).
- * Routes and shapes are specified in docs/backend-contract.md.
+ * Routes and shapes are specified in README.md, section 13.
  */
 export function httpBackend(baseUrl: string): KnowledgeBackend {
   const base = baseUrl.replace(/\/+$/, "");

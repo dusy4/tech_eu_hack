@@ -4,7 +4,7 @@ import { httpBackend } from "./http";
 
 /**
  * Code knowledge: the one seam between this UI and whatever indexes the repo
- * (the repo-analysis MCP server). The tool names match docs/swe-demo-plan.md.
+ * (the repo-analysis MCP server, README.md section 12).
  *
  * Everything here is mock: it answers from the sample index in data/repo.ts.
  * The real backend implements `KnowledgeBackend` and is swapped in with `setBackend`.

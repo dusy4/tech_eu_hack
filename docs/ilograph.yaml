@@ -135,7 +135,7 @@ resources:
     - name: suggest.ts
       instanceOf: Typescript Module
       description: |
-        Keyword matcher that turns an utterance into `focus` and `ask` suggestions against the graph on screen; also builds the demo conversation script. Stands in for jev or the harness.
+        Keyword matcher that turns an utterance into `focus` and `ask` suggestions against the graph on screen; also builds the demo conversation script. Stands in for Claude Haiku 5.5 extraction.
     - name: agent.ts
       instanceOf: Typescript Module
       description: |
@@ -157,11 +157,6 @@ resources:
         subtitle: mock KnowledgeBackend
         description: |
           In-file mock implementing `searchCode` (search-code), `findSymbol` (find-symbol) and `callersOf` (callers-of) over the sample index, with artificial latency and cosine-like scores.
-    - name: jev seam
-      instanceOf: Typescript Module
-      subtitle: jev/index.ts
-      description: |
-        Seam for jev (json-render). `readJev()` narrows untrusted JSON into either a whole `ViewSpec` or a list of `Suggestion` proposals. Not yet wired into any screen.
 
   - name: Data
     instanceOf: Package
@@ -221,17 +216,17 @@ resources:
 
 - name: Code Knowledge Backend
   instanceOf: Planned Service
-  subtitle: Embeddings / MCP (currently mocked)
+  subtitle: repo-analysis MCP server
   icon: Networking/database.svg
   description: |
-    Planned repository index (embeddings, an MCP server, or both) implementing `KnowledgeBackend`. Today the in-file mock answers from the sample index.
+    The repo-analysis MCP server (keyword search and code graph, no embeddings). The chat reaches it through the stopgap bridge; otherwise the in-file mock answers from the sample index.
 
-- name: jev
+- name: Claude Haiku 5.5
   instanceOf: Planned Service
-  subtitle: json-render (planned)
+  subtitle: transcript extractor (planned)
   icon: Networking/data-structure.svg
   description: |
-    Planned service that turns the room's conversation into JSON views or proposals, replacing the keyword matcher in `suggest.ts`.
+    Reads the Reson8 transcript, extracts decisions and questions, grounds them through the MCP tools, and returns proposals or whole `ViewSpec` graphs, replacing the keyword matcher in `suggest.ts`.
 
 - name: Coding Agent Endpoint
   instanceOf: Planned Service
@@ -371,7 +366,7 @@ perspectives:
 
 - name: Run Live Suggestions
   notes: |
-    This perspective details live suggestions in the room: a conversation about the answer on screen becomes approval cards, approved cards change the graph, and accepted proposals are sent to the coding agent. The transcript source is interchangeable (demo script, browser speech, or Reson8 realtime), and the matcher produces the same `Suggestion` shape jev will produce later.
+    This perspective details live suggestions in the room: a conversation about the answer on screen becomes approval cards, approved cards change the graph, and accepted proposals are sent to the coding agent. The transcript source is interchangeable (demo script, browser speech, or Reson8 realtime), and the matcher produces the same `Suggestion` shape Claude Haiku 5.5 will produce later.
   sequence:
     start: User
     steps:
@@ -768,9 +763,6 @@ perspectives:
     to: repo.ts
   - from: useLiveTranscript
     to: reson8.ts
-  - from: jev seam
-    to: suggest.ts
-    label: Imports Suggestion type
 
 - name: Integration Seams
   color: Firebrick
@@ -798,12 +790,12 @@ perspectives:
   - from: Code Knowledge Backend
     to: knowledge
     label: Implements KnowledgeBackend (planned)
-  - from: jev
-    to: jev seam
-    label: Sends views and proposals (planned)
-  - from: jev seam
+  - from: Claude Haiku 5.5
+    to: ProposalsPanel
+    label: Sends proposals (planned)
+  - from: Claude Haiku 5.5
     to: GraphCanvas
-    label: Supplies ViewSpec
+    label: Supplies ViewSpec (planned)
   - from: agent.ts
     to: Coding Agent Endpoint
     label: POSTs ProposalBatch

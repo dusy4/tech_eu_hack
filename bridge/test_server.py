@@ -1,5 +1,5 @@
 """Contract tests for the bridge: a fake workbench returning toolkit-shaped dicts,
-checked against the shapes in docs/backend-contract.md.
+checked against the shapes in README.md section 13.
 
     python -I bridge/test_server.py
 """
