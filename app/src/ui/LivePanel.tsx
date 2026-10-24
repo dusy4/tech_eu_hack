@@ -38,9 +38,9 @@ export type LiveProps = {
 
 // One pigment set per speaker, matching their avatar colour: base, highlight, shadow.
 const ORB: Record<string, readonly [string, string, string]> = {
-  Alex: ["#8e4ec6", "#e9d7fe", "#3b1a5c"],
+  Alex: ["#64748b", "#e2e8f0", "#1e293b"],
   Sam: ["#12a594", "#c3f5ec", "#06473f"],
-  You: ["#2d72d2", "#d3e4fd", "#0d2f63"],
+  You: ["#f48120", "#fde4c8", "#7a3c00"],
 };
 
 // Reson8 names voices "Speaker 1", "Speaker 2"…; each gets its own pigment.
@@ -77,7 +77,7 @@ export function ConversationPanel(p: LiveProps) {
 
       <MessageScroller className="pane-scroll" contentClassName="live-feed" viewportClassName="overflow-x-hidden" followOutput label="Conversation">
         {p.utterances.length === 0 && !p.interim && (
-          <p className="live-empty">Talk about the code. Each sentence is matched to the graph, and what it suggests appears under Proposals.</p>
+          <p className="live-empty">Talk about the code. Every sentence that names a real symbol becomes a proposal, grounded in the graph.</p>
         )}
         {p.utterances.map((u) => {
           const n = p.suggestions.filter((s) => s.from === u.id && p.states[s.id] !== "rejected").length;
@@ -145,7 +145,7 @@ export function ProposalsPanel(p: LiveProps) {
   return (
     <div className="pane">
       <MessageScroller className="pane-scroll" contentClassName="prop-feed" viewportClassName="overflow-x-hidden" followOutput label="Proposals">
-        {shown.length === 0 && <p className="live-empty">Nothing proposed yet. Proposals appear here when the conversation names code on the graph.</p>}
+        {shown.length === 0 && <p className="live-empty">Nothing proposed yet. When the conversation names a symbol on the graph, it lands here for an accept or a dismiss — nothing moves without a yes.</p>}
         <AnimatePresence initial={false}>
           {shown.map((s) => {
             const u = said(s);

@@ -44,7 +44,7 @@ function Mark() {
   // A lamp beam into a stack of layers: the product's mark, drawn for it.
   return (
     <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="1" y="1" width="22" height="22" rx="6" fill="#2d72d2" />
+      <rect x="1" y="1" width="22" height="22" rx="6" fill="#f48120" />
       <path d="M6 15.5h12M7.5 18.5h9M6 12.5l6-6.5 6 6.5" stroke="#fff" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -232,7 +232,7 @@ export default function App() {
       </Modal>
 
       <Modal open={agentOpen} onClose={() => setAgentOpen(false)} title="Connect your agent">
-        <p className="lead">Your agent asks through the Spelunk MCP server, and accepted proposals from the room are sent to it.</p>
+        <p className="lead">Code intelligence under your coding agent. The Spelunk MCP server gives it 12 read-only tools over this repo's code graph — who calls this, how A reaches B, statement slices. Accepted proposals from the room go to it as one handoff.</p>
         <ConnectAgent connected={agent} onConnected={(n) => { connectAgent(n); setAgentOpen(false); }} />
       </Modal>
 

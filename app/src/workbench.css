@@ -3,7 +3,7 @@
 .toolstrip { display: flex; gap: 4px; background: #fff; border-radius: 8px; padding: 4px; box-shadow: var(--elev-1); }
 .tool { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 54px; padding: 5px 0 4px; border: 0; background: transparent; border-radius: 4px; color: #33404b; font-size: 11px; }
 .tool:hover { background: #f1f4f6; }
-.tool.on { background: #2d72d2; color: #fff; }
+.tool.on { background: #f48120; color: #fff; }
 /* Chips float on the canvas without a card behind them, so a wrapped row leaves no empty panel. */
 .legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; max-width: 58%; font-size: 12px; }
 .legend-head { font: 600 12px/1 var(--display); color: #55606b; margin-bottom: 6px; }
@@ -30,7 +30,7 @@
 .gp.s-skipped .gp-chip { background: #c9d0d6; color: #55606b; }
 .gp.s-ghost .gp-chip { display: none; }
 .gp.ctx { border-style: dashed; }
-.gp.s-now { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #1f2933, 0 6px 18px rgba(16, 24, 32, 0.18); }
+.gp.s-now { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #f48120, 0 6px 18px rgba(16, 24, 32, 0.18); }
 /* taste-skill-ignore: a hatch marks a skipped subtree */
 .gp.s-skipped { background: repeating-linear-gradient(45deg, #eef1f4 0 6px, #e0e5ea 6px 12px); color: #55606b; border: 1px dashed #a9b3bc; box-shadow: none; }
 .gp.s-flagged { box-shadow: 0 0 0 2px #c93a6a; }
@@ -64,15 +64,15 @@
 /* Agent run: one row per tool call, readable at a glance */
 .agent-run { width: min(560px, 100%); background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(16, 24, 32, 0.08), 0 10px 30px rgba(16, 24, 32, 0.14); padding: 12px 6px 6px; }
 .ar-head { display: flex; align-items: baseline; gap: 10px; padding: 0 10px 8px; }
-.ar-title { font: 600 14px/1 var(--display); color: #1c2024; }
+.ar-title { font: 600 11px/16px var(--display); text-transform: uppercase; letter-spacing: 0.07em; color: #565c63; }
 .ar-sub { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #60646c; }
 .ar-sub svg { align-self: center; }
-.ar-status { margin-left: auto; font-size: 12px; font-weight: 600; color: #2d72d2; }
+.ar-status { margin-left: auto; font-size: 12px; font-weight: 600; color: #b4530a; }
 .ar-status.done { color: #18794e; }
 .ar-list { list-style: none; margin: 0; padding: 0; }
 .ar-row { display: grid; grid-template-columns: 18px 18px auto minmax(0, 1fr) auto; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 6px; font-size: 13px; color: #1c2024; transition: opacity 200ms ease, background-color 200ms ease; }
 .ar-row.pending { opacity: 0.4; }
-.ar-row.running { background: #eef4fc; }
+.ar-row.running { background: #fdf1e3; }
 .ar-row > svg { color: #60646c; }
 .ar-name { font: 500 12.5px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; }
 .ar-row.agent .ar-name { font: 500 13px/1 var(--body, inherit); }
@@ -80,7 +80,7 @@
 .ar-result { font-size: 12px; color: #60646c; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ar-state { display: grid; place-items: center; color: #18794e; }
 .ar-dot { width: 6px; height: 6px; border-radius: 50%; background: #b9bbc6; }
-.ar-spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #c7dbf6; border-top-color: #2d72d2; animation: ar-spin 700ms linear infinite; }
+.ar-spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #f7ddc0; border-top-color: #f48120; animation: ar-spin 700ms linear infinite; }
 @keyframes ar-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .ar-spin { animation: none; } }
 
@@ -88,11 +88,11 @@
 /* The canvas fills whatever holds it */
 .rf-wrap { position: absolute; inset: 0; }
 .de-line.lit { opacity: 0.85; stroke-width: 2; }
-.ripple { fill: none; stroke: #2f6fd1; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.ripple { fill: none; stroke: #f48120; stroke-width: 2; vector-effect: non-scaling-stroke; }
 
 /* A node the live conversation points at: a soft ring that breathes until it's applied or dismissed */
-.gp.sug { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #8e4ec6; }
-.gp-sug { position: absolute; inset: -8px; border-radius: 12px; border: 2px dashed #8e4ec6; opacity: 0.6; pointer-events: none; }
+.gp.sug { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #f48120; }
+.gp-sug { position: absolute; inset: -8px; border-radius: 12px; border: 2px dashed #f48120; opacity: 0.6; pointer-events: none; }
 
 /* When the layout changes (panel opens, window resizes), nodes glide to their new place in step with the camera */
 .rf-wrap .react-flow__node { transition: transform 300ms cubic-bezier(0.77, 0, 0.175, 1); }

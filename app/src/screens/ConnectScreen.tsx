@@ -84,7 +84,7 @@ export default function ConnectScreen({ onIndexed, agent, onAgent }: { onIndexed
       <div className="title-row">
         <div>
           <h1>Add a repository</h1>
-          <p className="sub">Spelunk indexes the code once, then answers questions about it with views you can play, each step linked to its source.</p>
+          <p className="sub">Parse the repository once into a code graph — symbols, callers, statement slices — then ask structural questions and replay the answer, every step linked to its source.</p>
         </div>
       </div>
 
@@ -152,7 +152,7 @@ export default function ConnectScreen({ onIndexed, agent, onAgent }: { onIndexed
             <h2 id="agent-h">Connect your agent</h2>
             <div className="meta">Optional</div>
           </div>
-          <p className="muted" style={{ margin: "4px 16px 12px" }}>Your agent asks through the Spelunk MCP server. Answers build here while it works.</p>
+          <p className="muted" style={{ margin: "4px 16px 12px" }}>Your agent queries the same graph through 12 read-only MCP tools. Answers build here while it works.</p>
           <ConnectAgent connected={agent} onConnected={onAgent} />
         </section>
       </div>

@@ -60,7 +60,7 @@ export default function AskBox({
             if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(-1, a - 1)); }
             if (e.key === "Escape") input.current?.blur();
           }}
-          placeholder={inAnswer ? "Follow up: slower, show it as a tree…" : `Ask ${repo} anything`}
+          placeholder={inAnswer ? "Follow up: slower, show it as a tree…" : `Ask about ${repo}: who calls this, how A reaches B…`}
           aria-label="Ask the codebase"
           role="combobox"
           aria-expanded={open}
