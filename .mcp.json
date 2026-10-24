@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "repo-analysis": {
+      "type": "stdio",
+      "command": "repo-analysis-workbench/.venv/bin/python",
+      "args": ["repo-analysis-workbench/src/mcp_server/server.py"],
+      "env": {
+        "REPO_ANALYSIS_EMBEDDINGS": "off",
+        "REPO_ANALYSIS_RERANK_PROVIDER": "heuristic"
+      }
+    }
+  }
+}

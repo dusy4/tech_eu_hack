@@ -278,8 +278,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_search_root_arg(build_embeddings)
     build_embeddings.add_argument("--repo", action="append")
-    build_embeddings.add_argument("--provider", choices=("auto", "hashing", "openai", "qwen"), default="qwen")
+    build_embeddings.add_argument(
+        "--provider", choices=("auto", "hashing", "openai", "openrouter", "qwen"), default="qwen"
+    )
     build_embeddings.add_argument("--model")
+    build_embeddings.add_argument(
+        "--skip-unit-kinds",
+        default="",
+        help="comma-separated retrieval unit kinds not to embed, e.g. statement,semantic_text (openrouter only)",
+    )
+    build_embeddings.add_argument(
+        "--restart",
+        action="store_true",
+        help="drop the existing Qdrant collection instead of resuming (openrouter only)",
+    )
 
     run_eval = subparsers.add_parser(
         "run-benchmarks",
@@ -1206,6 +1218,8 @@ def handle_build_embeddings(args: argparse.Namespace) -> int:
             repo_name,
             provider=args.provider,
             model=args.model,
+            skip_unit_kinds=[kind.strip() for kind in args.skip_unit_kinds.split(",") if kind.strip()],
+            restart=args.restart,
             progress_callback=progress_callback,
         )
 

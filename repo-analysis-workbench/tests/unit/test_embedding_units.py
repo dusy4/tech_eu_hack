@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -10,6 +11,7 @@ SRC_ROOT = Path(__file__).resolve().parents[2] / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from backends.qdrant.store import write_dense_vectors  # noqa: E402
 from embeddings.indexer import (  # noqa: E402
     append_qwen_embedding_checkpoint,
     build_embedded_unit_record,
@@ -241,6 +243,63 @@ class EmbeddingUnitsTest(unittest.TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["doc_id"], "doc-a")
         self.assertEqual(results[0]["metadata"]["embedding_aggregation"], "maxp")
+        self.assertEqual(len(results[0]["metadata"]["embedding_unit_hits"]), 2)
+
+    def test_query_embedding_index_searches_qdrant_for_dense_vectors(self) -> None:
+        def unit(doc_id: str, source: str, path: str, vector: list) -> dict:
+            return {
+                "doc_id": doc_id,
+                "source_doc_id": source,
+                "source_kind": "file",
+                "unit_id": doc_id,
+                "unit_kind": "line_window",
+                "aggregation_key": f"path:{path}",
+                "aggregation_kind": "path",
+                "kind": "file",
+                "path": path,
+                "name": Path(path).name,
+                "qualified_name": None,
+                "symbol_id": None,
+                "title": path,
+                "preview": doc_id,
+                "content": doc_id,
+                "start_line": 1,
+                "end_line": 10,
+                "token_estimate": 2,
+                "vector": vector,
+            }
+
+        write_dense_vectors(
+            ":memory:",
+            "test_dense",
+            3,
+            [
+                unit("doc-a:unit:0", "doc-a", "src/a.rs", [1.0, 0.0, 0.0]),
+                unit("doc-a:unit:1", "doc-a", "src/a.rs", [0.9, 0.1, 0.0]),
+                unit("doc-b:unit:0", "doc-b", "src/b.rs", [0.0, 1.0, 0.0]),
+            ],
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            search_root = Path(tmpdir)
+            (search_root / "demo").mkdir()
+            payload = {
+                "provider": "qwen",
+                "model": "text",
+                "model_backed": True,
+                "dimensions": 3,
+                "vector_format": "dense",
+                "documents": [],
+                "vector_store": {"backend": "qdrant", "url": ":memory:", "collection": "test_dense"},
+            }
+            (search_root / "demo" / "embedding_index.json").write_text(json.dumps(payload), encoding="utf-8")
+
+            with mock.patch.dict("os.environ", {}, clear=False), mock.patch(
+                "embeddings.indexer.qwen_embeddings_available", return_value=True
+            ), mock.patch("embeddings.indexer.embed_with_qwen", return_value=[[1.0, 0.0, 0.0]]):
+                os.environ.pop("REPO_ANALYSIS_QDRANT_URL", None)
+                results = query_embedding_index(search_root, "demo", "needle", limit=10)
+
+        self.assertEqual([item["doc_id"] for item in results], ["doc-a"])
         self.assertEqual(len(results[0]["metadata"]["embedding_unit_hits"]), 2)
 
     def test_rerank_document_prefers_embedding_unit_text(self) -> None:

@@ -15,3 +15,10 @@ repo-analysis-workbench/data/*
 repo-analysis-workbench/data/eval/*
 !repo-analysis-workbench/data/eval/cases/
 repo-analysis-workbench/native/target/
+
+# Qdrant data
+qdrant/storage/
+
+# Target repositories cloned for analysis (each is its own git repo)
+repo_analyse/*
+!repo_analyse/README.md
