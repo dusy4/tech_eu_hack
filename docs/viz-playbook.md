@@ -1,6 +1,6 @@
 # Ideation A v2: Ask the codebase, watch it build the answer
 
-> **Background only.** This is the early, domain-agnostic brainstorm. The plan we're building is [swe-demo-plan.md](swe-demo-plan.md); the overview is [PROJECT.md](PROJECT.md).
+> **Background only.** This is the early, domain-agnostic brainstorm. The plan we're building is [swe-demo-plan.md](swe-demo-plan.md); the overview is the [README](../README.md).
 
 ## The wow loop
 
