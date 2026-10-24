@@ -1,9 +1,9 @@
 {
   "provider": "ElevenLabs",
   "model": "music_v2_5",
-  "songId": "qvMhlhbHoidhiTs2XYw1",
+  "songId": "eTTe5u6FJuHQzRXDzp5n",
   "requestedDuration": 62,
   "bytes": 1489004,
-  "generatedAt": "2026-10-24T15:21:43.440Z",
+  "generatedAt": "2026-10-24T15:55:56.340Z",
   "apiReference": "https://elevenlabs.io/docs/api-reference/music/compose"
 }

@@ -55,15 +55,15 @@ export type ViewSpec = {
 
 /** One MCP tool call the harness made, as the agent ticker shows it. */
 export type ToolCall = {
-  tool: "repo-overview" | "find-symbol" | "callers-of" | "search-lexical" | "prepare-context" | "prepare-answer-bundle";
+  tool: "repo-overview" | "find-symbol" | "callers-of" | "callees-of" | "path-between" | "search-lexical" | "prepare-context" | "prepare-answer-bundle" | (string & {});
   arg: string;
   count: number;
   /** Nodes this call discovered; they appear on the canvas when the call returns. */
   reveals: string[];
 };
 
-/** A recorded answer: the final spec plus the calls that built it. */
-export type Recording = { spec: ViewSpec; calls: ToolCall[] };
+/** A recorded answer: the final spec plus the calls that built it. `live` when it came from the real index. */
+export type Recording = { spec: ViewSpec; calls: ToolCall[]; live?: boolean };
 
 export type ViewPatch =
   | { op: "speed"; value: number }

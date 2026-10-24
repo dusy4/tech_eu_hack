@@ -1,0 +1,439 @@
+<!doctype html>
+<!--
+  Cursor skin: canonical markup for every UI piece.
+  Open this file directly to see them all (append #dark for the dark theme).
+  In a component:
+    <link rel="stylesheet" href="assets/fonts/fonts.css">
+    <link rel="stylesheet" href="assets/skins/cursor/skin.css">
+    <script src="assets/skins/cursor/icons.js"></script>
+  then copy the block you need. Icons: either inline the SVG string from
+  window.SKIN_ICONS_CURSOR[name] inside <span class="cu-i">…</span>, or write
+  <span class="cu-i" data-cu-icon="name"></span> and call SKIN_CURSOR.hydrate(root).
+  Every block must sit inside an element with class "sk-cursor" (the root carries
+  the colour tokens). Dark theme: data-theme="dark" on that root or any ancestor.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cursor skin snippets</title>
+<link rel="stylesheet" href="../../_shared/fonts/fonts.css">
+<link rel="stylesheet" href="skin.css">
+<script src="icons.js"></script>
+<style>
+  body { margin: 0; padding: 32px; background: #f5f5f4; font-family: Inter, sans-serif; }
+  body.dark { background: #0e0e0f; }
+  .sec { margin: 0 0 40px; }
+  .sec > h2 { font: 500 12px/1 Inter, sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #8a8a8a; margin: 0 0 12px; }
+  .row { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+  .pad { padding: 20px; background: var(--cu-bg); border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="sk-cursor" id="root">
+
+<!-- ========================================================================
+  0. SCREEN-RECORDING FRAME (Aug 25 2026 frames): macOS menu bar over the
+  wallpaper, then the Cursor window filling the rest of the screen. Author the
+  screen at 1280x720 points and scale it 1.5x to fill a 1080p frame.
+  .cu-screen is a flex column; .cu-window inside it takes the remaining height.
+  ======================================================================== -->
+<div class="sec"><h2>Screen: menu bar + window (top strip shown)</h2>
+<div class="cu-screen" style="width:940px;height:120px">
+  <div class="cu-menubar"><span class="cu-mb-apple" data-cu-icon="apple"></span><b>Cursor</b><span>File</span><span>Edit</span><span>View</span><span>Window</span><span>Help</span>
+    <span class="cu-mb-status"><span class="cu-i wide" data-cu-icon="battery"></span><span class="cu-i" data-cu-icon="wifi"></span><span class="cu-i" data-cu-icon="spotlight"></span><span class="cu-i" data-cu-icon="controlCenter"></span><span class="cu-mb-clock">Fri Oct 16  9:41 AM</span></span></div>
+  <div class="cu-window"><aside class="cu-sidebar"><div class="cu-side-top"><div class="cu-traffic"><span></span><span></span><span></span></div>
+    <span class="cu-iconbtn is-on"><span class="cu-i" data-cu-icon="sidebar"></span></span><span class="cu-spacer"></span>
+    <span class="cu-iconbtn is-on"><span class="cu-i" data-cu-icon="arrowLeft"></span></span><span class="cu-iconbtn is-muted"><span class="cu-i" data-cu-icon="arrowRight"></span></span></div></aside>
+    <main class="cu-main"><div class="cu-titlebar"><span class="cu-title">Theme persistence questions</span><span class="cu-title-meta"><span class="cu-i sm" data-cu-icon="laptop"></span></span><span class="cu-spacer"></span>
+      <span class="cu-ide-link">IDE <span class="cu-i" data-cu-icon="arrowUpRight"></span></span><span class="cu-iconbtn"><span class="cu-i" data-cu-icon="ellipsis"></span></span><span class="cu-iconbtn"><span class="cu-i" data-cu-icon="panelRight"></span></span></div></main></div>
+</div></div>
+
+<!-- ========================================================================
+  1. WINDOW + SIDEBAR (grouped by time) + TITLE BAR
+  .cu-window.is-floating gives the macOS radius and shadow. Sidebar 220 wide.
+  Group heads: .cu-group-head (filter + folder-plus buttons on "Today").
+  Agent rows: status slot (.cu-dot unread, .cu-dot.is-attn, .cu-ring idle,
+  .cu-braille running), truncated title, optional meta glyphs, right time.
+  ======================================================================== -->
+<div class="sec"><h2>Window · sidebar by time · empty New Chat</h2>
+<div class="cu-window is-floating" style="width:940px;height:530px">
+  <aside class="cu-sidebar">
+    <div class="cu-side-top">
+      <div class="cu-traffic"><span></span><span></span><span></span></div>
+      <span class="cu-iconbtn is-on"><span class="cu-i" data-cu-icon="sidebar"></span></span>
+      <span class="cu-spacer"></span>
+      <span class="cu-iconbtn is-on"><span class="cu-i" data-cu-icon="arrowLeft"></span></span>
+      <span class="cu-iconbtn is-muted"><span class="cu-i" data-cu-icon="arrowRight"></span></span>
+    </div>
+    <nav class="cu-nav">
+      <div class="cu-nav-row is-active"><span class="cu-i" data-cu-icon="newChat"></span><span>New Chat</span></div>
+      <div class="cu-nav-row"><span class="cu-i" data-cu-icon="search"></span><span>Search</span></div>
+      <div class="cu-nav-row"><span class="cu-i" data-cu-icon="automations"></span><span>Automations</span></div>
+      <div class="cu-nav-row"><span class="cu-i" data-cu-icon="customize"></span><span>Customize</span></div>
+    </nav>
+    <div class="cu-side-scroll">
+      <div class="cu-group">
+        <div class="cu-group-head"><span class="cu-label">Pinned</span></div>
+        <div class="cu-agent"><span class="cu-agent-status"></span><span class="cu-agent-title">Release checklist for v2.4</span><span class="cu-agent-time">9h</span></div>
+        <div class="cu-agent"><span class="cu-agent-status"></span><span class="cu-agent-title">Billing webhooks plan</span><span class="cu-agent-time">9h</span></div>
+        <div class="cu-agent is-more"><span class="cu-agent-status"></span><span class="cu-agent-title">More</span></div>
+      </div>
+      <div class="cu-group">
+        <div class="cu-group-head"><span class="cu-label">Today</span>
+          <span class="cu-iconbtn"><span class="cu-i" data-cu-icon="filter"></span></span>
+          <span class="cu-iconbtn"><span class="cu-i" data-cu-icon="folderPlus"></span></span></div>
+        <div class="cu-agent"><span class="cu-agent-status"><span class="cu-dot"></span></span><span class="cu-agent-title">Fix flaky checkout test</span><span class="cu-agent-time">4m</span></div>
+        <div class="cu-agent"><span class="cu-agent-status"><span class="cu-braille" data-cu-icon="running"></span></span><span class="cu-agent-title">Search results pagination</span><span class="cu-agent-time">53m</span></div>
+        <div class="cu-agent"><span class="cu-agent-status"></span><span class="cu-agent-title">Stripe customer portal</span>
+          <span class="cu-agent-meta"><span class="cu-i sm" data-cu-icon="pr"></span><span class="cu-i sm" data-cu-icon="cloud"></span></span><span class="cu-agent-time">2h</span></div>
+        <div class="cu-agent"><span class="cu-agent-status"><span class="cu-dot is-attn"></span></span><span class="cu-agent-title">Missing tests discussion</span><span class="cu-agent-time">4d</span></div>
+      </div>
+    </div>
+    <div class="cu-user"><span class="cu-avatar">M</span>
+      <div class="cu-user-text"><div class="cu-user-name">Maya Okafor</div><div class="cu-user-org">Atlas Labs</div></div>
+      <span class="cu-iconbtn"><span class="cu-i" data-cu-icon="settings"></span></span></div>
+  </aside>
+  <main class="cu-main">
+    <!-- title bar: agent title + location glyph on the left; IDE ↗ · ⋯ · panel toggle on the right -->
+    <div class="cu-titlebar"><span class="cu-title"></span><span class="cu-spacer"></span>
+      <span class="cu-ide-link">IDE <span class="cu-i" data-cu-icon="arrowUpRight"></span></span>
+      <span class="cu-iconbtn"><span class="cu-i" data-cu-icon="ellipsis"></span></span>
+      <span class="cu-iconbtn"><span class="cu-i" data-cu-icon="panelRight"></span></span></div>
+    <!-- EMPTY STATE: repo / branch / location chips, tall composer, suggestion chips, footer hint -->
+    <div class="cu-empty"><div class="cu-empty-stack">
+      <div class="cu-ctx">
+        <span class="cu-pick">atlas-web<span class="cu-i chev" data-cu-icon="chevronDown"></span></span>
+        <span class="cu-pick">main<span class="cu-i chev" data-cu-icon="chevronDown"></span></span>
+        <span class="cu-pick"><span class="cu-i" data-cu-icon="laptop"></span>This Mac<span class="cu-i chev" data-cu-icon="chevronDown"></span></span>
+      </div>
+      <div class="cu-composer is-tall">
+        <div class="cu-input"><span class="cu-caret is-before"></span><span class="cu-ph">Plan, Build, / for skills, @ for context</span></div>
+        <div class="cu-composer-row"><span class="cu-plus"><span class="cu-i" data-cu-icon="plus"></span></span>
+          <span class="cu-model"><span class="cu-name">Auto</span><span class="cu-effort">Balance</span><span class="cu-i" data-cu-icon="chevronDown"></span></span>
+          <span class="cu-spacer"></span>
+          <span class="cu-send" data-state="mic"><span class="cu-i cu-send-mic" data-cu-icon="mic"></span><span class="cu-i cu-send-arrow" data-cu-icon="arrowUp"></span><span class="cu-i cu-send-stop" data-cu-icon="stop"></span></span>
+        </div>
+      </div>
+      <div class="cu-suggest">
+        <span class="cu-chip">Plan New Idea<span class="cu-kbd"><span class="cu-i" data-cu-icon="shift"></span>Tab</span></span>
+        <span class="cu-chip">Multitask</span><span class="cu-chip">Run in Cloud</span>
+      </div>
+    </div>
+    <div class="cu-hint">Plugins help you customize Cursor for your workflows - use <code>/add-plugin</code> to get started</div></div>
+  </main>
+</div></div>
+
+<!-- ========================================================================
+  2. SIDEBAR grouped by repository (Aug 13 frames). Filter icon is purple when active.
+  ======================================================================== -->
+<div class="sec"><h2>Sidebar by repository</h2>
+<div class="cu-window" style="width:220px;height:330px">
+  <aside class="cu-sidebar" style="border-right:0">
+    <div class="cu-side-scroll" style="-webkit-mask-image:none;mask-image:none">
+      <div class="cu-group" style="margin-top:6px">
+        <div class="cu-group-head"><span class="cu-label">Repositories</span>
+          <span class="cu-iconbtn is-on"><span class="cu-i" data-cu-icon="filter"></span></span>
+          <span class="cu-iconbtn"><span class="cu-i" data-cu-icon="folderPlus"></span></span></div>
+        <div class="cu-repo"><span class="cu-i" data-cu-icon="folderOpen"></span><span>atlas-web</span></div>
+        <div class="cu-agent is-active"><span class="cu-agent-status"><span class="cu-ring"></span></span><span class="cu-agent-title">New Agent</span><span class="cu-agent-time">1m</span></div>
+        <div class="cu-agent"><span class="cu-agent-status"><span class="cu-braille" data-cu-icon="running"></span></span><span class="cu-agent-title">Test coverage analysis</span><span class="cu-agent-time">1m</span></div>
+        <div class="cu-agent"><span class="cu-agent-status"></span><span class="cu-agent-title">Search results pagination</span><span class="cu-agent-meta"><span class="cu-i sm" data-cu-icon="cloud"></span></span><span class="cu-agent-time">10h</span></div>
+        <div class="cu-repo" style="margin-top:8px"><span class="cu-i" data-cu-icon="folderOpen"></span><span>atlas-api</span></div>
+        <!-- cloud-agent web variant: diff counts instead of a time -->
+        <div class="cu-agent"><span class="cu-agent-status"><span class="cu-i sm" data-cu-icon="pr"></span></span><span class="cu-agent-title">Refactor auth middleware</span><span class="cu-agent-diff"><span class="cu-add">+162</span> <span class="cu-del">-16</span></span></div>
+      </div>
+    </div>
+  </aside>
+</div></div>
+
+<!-- ========================================================================
+  3. COMPOSER STATES
+  .cu-send[data-state]: "mic" (empty) → "send" (text typed) → "stop" (generating).
+  Mode chips: .cu-mode.is-plan (tan) / .cu-mode.is-ask (green). Model label =
+  .cu-name + grey .cu-effort. .cu-under row: branch + location (+ .cu-loader while busy).
+  .cu-composer.is-glass + .cu-glass-pill: frosted, floats over a CANVAS tab
+  only (Aug 13 canvas frame). Never over the Changes diff: with Changes open,
+  use the split view (section 7), where the composer stays in the chat column.
+  ======================================================================== -->
+<div class="sec"><h2>Composer: idle · typing · generating · plan · glass (canvas only)</h2>
+<div class="pad" style="width:660px;display:flex;flex-direction:column;gap:16px">
+  <div class="cu-composer"><span class="cu-plus"><span class="cu-i" data-cu-icon="plus"></span></span>
+    <div class="cu-input"><span class="cu-caret is-before"></span><span class="cu-ph">Send follow-up</span></div>
+    <span class="cu-model"><span class="cu-name">Cursor Grok 4.7</span><span class="cu-effort">High Fast</span><span class="cu-i" data-cu-icon="chevronDown"></span></span>
+    <span class="cu-send" data-state="mic"><span class="cu-i cu-send-mic" data-cu-icon="mic"></span><span class="cu-i cu-send-arrow" data-cu-icon="arrowUp"></span><span class="cu-i cu-send-stop" data-cu-icon="stop"></span></span></div>
+
+  <div class="cu-composer"><span class="cu-plus"><span class="cu-i" data-cu-icon="plus"></span></span>
+    <div class="cu-input"><span class="cu-typed">Also add a test for the System option</span><span class="cu-caret"></span></div>
+    <span class="cu-model"><span class="cu-name">Cursor Grok 4.7</span><span class="cu-effort">High Fast</span><span class="cu-i" data-cu-icon="chevronDown"></span></span>
+    <span class="cu-send" data-state="send"><span class="cu-i cu-send-mic" data-cu-icon="mic"></span><span class="cu-i cu-send-arrow" data-cu-icon="arrowUp"></span><span class="cu-i cu-send-stop" data-cu-icon="stop"></span></span></div>
+
+  <div>
+    <div class="cu-composer"><span class="cu-plus"><span class="cu-i" data-cu-icon="plus"></span></span>
+      <span class="cu-mode is-ask"><span class="cu-i" data-cu-icon="ask"></span><span>Ask</span><span class="cu-i cu-x" data-cu-icon="x"></span></span>
+      <div class="cu-input"><span class="cu-ph">Ask questions</span></div>
+      <span class="cu-model"><span class="cu-name">Composer 2.5</span><span class="cu-i" data-cu-icon="chevronDown"></span></span>
+      <span class="cu-send" data-state="stop"><span class="cu-i cu-send-mic" data-cu-icon="mic"></span><span class="cu-i cu-send-arrow" data-cu-icon="arrowUp"></span><span class="cu-i cu-send-stop" data-cu-icon="stop"></span></span></div>
+    <div class="cu-under"><span class="cu-pick"><span class="cu-i" data-cu-icon="branch"></span>main<span class="cu-i chev" data-cu-icon="chevronDown"></span></span>
+      <span class="cu-pick"><span class="cu-i" data-cu-icon="laptop"></span>This Mac<span class="cu-i chev" data-cu-icon="chevronDown"></span></span>
+      <span class="cu-spacer"></span><span class="cu-loader" data-cu-icon="loader"></span></div>
+  </div>
+
+  <div class="cu-composer"><span class="cu-plus"><span class="cu-i" data-cu-icon="plus"></span></span>
+    <span class="cu-mode is-plan"><span class="cu-i" data-cu-icon="plan"></span><span>Plan</span><span class="cu-i cu-x" data-cu-icon="x"></span></span>
+    <div class="cu-input"><span class="cu-ph">Plan changes</span></div>
+    <span class="cu-model"><span class="cu-name">Opus 5.5</span><span class="cu-effort">Medium</span><span class="cu-i" data-cu-icon="chevronDown"></span></span>
+    <span class="cu-send" data-state="mic"><span class="cu-i cu-send-mic" data-cu-icon="mic"></span><span class="cu-i cu-send-arrow" data-cu-icon="arrowUp"></span><span class="cu-i cu-send-stop" data-cu-icon="stop"></span></span></div>
+
+  <div><div style="margin:0 0 8px 6px"><span class="cu-glass-pill">Worked for 2m 22s</span></div>
+    <div class="cu-composer is-glass"><span class="cu-plus"><span class="cu-i" data-cu-icon="plus"></span></span>
+      <div class="cu-input"><span class="cu-ph">Send follow-up</span></div>
+      <span class="cu-model"><span class="cu-name">Cursor Grok 4.7</span><span class="cu-effort">High Fast</span><span class="cu-i" data-cu-icon="chevronDown"></span></span>
+      <span class="cu-send" data-state="mic"><span class="cu-i cu-send-mic" data-cu-icon="mic"></span><span class="cu-i cu-send-arrow" data-cu-icon="arrowUp"></span><span class="cu-i cu-send-stop" data-cu-icon="stop"></span></span></div></div>
+</div></div>
+
+<!-- ========================================================================
+  4. MODEL PICKER (open). Opens upward from the model label; search field,
+  "Auto Balance", hairline, then the list. ✓ marks the selection, .is-hover the
+  row under the pointer. Closed state = the .cu-model label above (.is-pressed
+  while open: no fill, the label is plain text). The nine rows follow the
+  Aug 13 2026 frame; Grok 4.7 (Cursor blog, Sep 21) and Opus 5.5 are current.
+  Picking a row closes the menu (~120 ms) and the label becomes that model.
+  ======================================================================== -->
+<div class="sec"><h2>Model picker · @-menu · Context Usage</h2>
+<div class="row">
+  <div class="cu-menu">
+    <div class="cu-menu-search"><span class="cu-caret"></span>Search models</div>
+    <div class="cu-menu-group"><div class="cu-menu-item"><span class="cu-name">Auto</span><span class="cu-effort">Balance</span></div></div>
+    <div class="cu-menu-sep"></div>
+    <div class="cu-menu-group">
+      <div class="cu-menu-item is-selected"><span class="cu-name">Cursor Grok 4.7</span><span class="cu-effort">High Fast</span><span class="cu-i cu-check" data-cu-icon="check"></span></div>
+      <div class="cu-menu-item"><span class="cu-name">Composer 2.5</span><span class="cu-effort">Fast</span><span class="cu-i cu-check" data-cu-icon="check"></span></div>
+      <div class="cu-menu-item is-hover"><span class="cu-name">Opus 5.5</span><span class="cu-effort">Medium</span><span class="cu-i cu-check" data-cu-icon="check"></span></div>
+      <div class="cu-menu-item"><span class="cu-name">GPT-5.6 Sol</span><span class="cu-effort">High Fast</span><span class="cu-i cu-check" data-cu-icon="check"></span></div>
+      <div class="cu-menu-item"><span class="cu-name">Fable 5</span><span class="cu-effort">High</span><span class="cu-i cu-check" data-cu-icon="check"></span></div>
+      <div class="cu-menu-item"><span class="cu-name">Cursor Grok 4.6</span><span class="cu-effort">High Fast</span><span class="cu-i cu-check" data-cu-icon="check"></span></div>
+      <div class="cu-menu-item"><span class="cu-name">Gemini 3.7 Flash</span><span class="cu-effort">High</span><span class="cu-i cu-check" data-cu-icon="check"></span></div>
+      <div class="cu-menu-item"><span class="cu-name">GPT-5.6 Terra</span><span class="cu-effort">Medium</span><span class="cu-i cu-check" data-cu-icon="check"></span></div>
+      <div class="cu-menu-item"><span class="cu-name">Sonnet 5</span><span class="cu-effort">High</span><span class="cu-i cu-check" data-cu-icon="check"></span></div>
+    </div>
+  </div>
+
+  <!-- @-menu (Aug 25): context sources, then MCP servers with a status on the right -->
+  <div class="cu-menu" style="width:300px;padding-top:4px">
+    <div class="cu-menu-group" style="padding-top:0">
+      <div class="cu-menu-item"><span class="cu-i" data-cu-icon="branch"></span><span class="cu-name">Branch</span>&nbsp;<span class="cu-desc">Reference the current branch diff</span></div>
+      <div class="cu-menu-item is-hover"><span class="cu-i" data-cu-icon="globe"></span><span class="cu-name">Browser</span>&nbsp;<span class="cu-desc">Enable browser tools</span></div>
+      <div class="cu-menu-item"><span class="cu-i" data-cu-icon="ask"></span><span class="cu-name">Chats</span><span class="cu-i" data-cu-icon="chevronRight" style="margin-left:auto;width:11px;height:11px;color:var(--cu-fg-3)"></span></div>
+      <div class="cu-menu-item"><span class="cu-i" data-cu-icon="canvas"></span><span class="cu-name">Canvas</span><span class="cu-i" data-cu-icon="chevronRight" style="margin-left:auto;width:11px;height:11px;color:var(--cu-fg-3)"></span></div>
+    </div>
+    <div class="cu-menu-sep"></div>
+    <div class="cu-menu-label">MCP</div>
+    <div class="cu-menu-group" style="padding-top:0">
+      <div class="cu-menu-item"><span class="cu-name">linear</span><span class="cu-status">Ready</span></div>
+      <div class="cu-menu-item"><span class="cu-name">sentry</span><span class="cu-status is-warn">Needs authentication</span></div>
+    </div>
+  </div>
+
+  <!-- Context Usage popover (Aug 25): % full, token total, segmented bar, legend -->
+  <div class="cu-ctxpop" style="width:420px">
+    <div class="cu-ctxpop-head"><span>Context Usage</span><span class="cu-i" data-cu-icon="x"></span></div>
+    <div class="cu-ctxpop-sum"><span>25% Full</span><span>~49.8K / 200K Tokens</span></div>
+    <div class="cu-ubar"><span style="width:.25%;background:var(--cu-u-system)"></span><span style="width:4.1%;background:var(--cu-u-tools)"></span><span style="width:3.85%;background:var(--cu-u-rules)"></span><span style="width:2%;background:var(--cu-u-skills)"></span><span style="width:1.75%;background:var(--cu-u-mcp)"></span><span style="width:.85%;background:var(--cu-u-sub)"></span><span style="width:12%;background:var(--cu-u-conv)"></span></div>
+    <div class="cu-urow"><span class="cu-sw" style="background:var(--cu-u-system)"></span><span class="cu-ulabel">System prompt</span><span class="cu-uval">492</span></div>
+    <div class="cu-urow"><span class="cu-sw" style="background:var(--cu-u-tools)"></span><span class="cu-ulabel">Tool definitions</span><span class="cu-uval">8.2K</span></div>
+    <div class="cu-urow is-hover"><span class="cu-sw" style="background:var(--cu-u-rules)"></span><span class="cu-ulabel">Rules</span><span class="cu-uval">7.7K</span></div>
+    <div class="cu-urow"><span class="cu-sw" style="background:var(--cu-u-skills)"></span><span class="cu-ulabel">Skills</span><span class="cu-uval">4.0K</span></div>
+    <div class="cu-urow"><span class="cu-sw" style="background:var(--cu-u-mcp)"></span><span class="cu-ulabel">MCP &amp; dynamic tools</span><span class="cu-uval">3.5K</span></div>
+    <div class="cu-urow"><span class="cu-sw" style="background:var(--cu-u-sub)"></span><span class="cu-ulabel">Subagent definitions</span><span class="cu-uval">1.7K</span></div>
+    <div class="cu-urow"><span class="cu-sw" style="background:var(--cu-u-conv)"></span><span class="cu-ulabel">Conversation</span><span class="cu-uval">24.1K</span></div>
+  </div>
+</div></div>
+
+<!-- ========================================================================
+  5. THREAD: user prompt card (full width, bordered; .is-pinned keeps it at the
+  top while the reply scrolls under it), grey "Worked for …", tool-step rows,
+  document-style reply (h3, p, inline code, code card, table), working shimmer,
+  action row.
+  ======================================================================== -->
+<div class="sec"><h2>Thread: prompt card · steps · reply · code card · table</h2>
+<div class="pad" style="width:680px">
+  <div class="cu-prompt">How does theme selection work today, and what would it take to remember each user’s choice across devices?</div>
+  <div class="cu-worked">Worked for 1m 12s<span class="cu-i" data-cu-icon="chevronRight"></span></div>
+  <div class="cu-step"><span class="cu-i" data-cu-icon="explore"></span><span class="cu-verb">Explored</span><span>7 files, 2 searches</span><span class="cu-i cu-chev" data-cu-icon="chevronRight"></span></div>
+  <div class="cu-step"><span class="cu-verb">Thought</span><span>for 4s</span><span class="cu-i cu-chev" data-cu-icon="chevronRight"></span></div>
+  <div class="cu-step"><span class="cu-i" data-cu-icon="pencil"></span><span class="cu-verb">Edited</span><span class="cu-file">ThemeProvider.tsx</span><span class="cu-add">+21</span><span class="cu-del">-9</span></div>
+  <div class="cu-doc" style="margin-top:6px">
+    <h3>1. Where the theme comes from</h3>
+    <p><code>ThemeProvider</code> reads <code>prefers-color-scheme</code> once and never stores the result:</p>
+    <div class="cu-codecard">
+      <div class="cu-codecard-head"><span class="cu-i" data-cu-icon="fileCode"></span><span>ThemeProvider.tsx</span><span class="cu-lines">Ln 12-14</span></div>
+      <pre class="cu-pre"><span class="ln-row"><span class="k">export function</span> <span class="f">ThemeProvider</span>({ <span class="v">children</span> }: <span class="t">Props</span>) {</span><span class="ln-row">  <span class="k">const</span> <span class="v">prefersDark</span> = <span class="f">useMediaQuery</span>(<span class="s">"(prefers-color-scheme: dark)"</span>);</span><span class="ln-row">  <span class="k">const</span> <span class="v">theme</span> = <span class="v">prefersDark</span> ? <span class="s">"dark"</span> : <span class="s">"light"</span>;</span></pre>
+    </div>
+    <h3>2. What to change</h3>
+    <table class="cu-table"><tr><th>File</th><th>Change</th></tr>
+      <tr><td class="mono">db/migrations/0042_user_theme.sql</td><td>Add <code>users.theme</code></td></tr>
+      <tr><td class="mono">src/theme/ThemeProvider.tsx</td><td>Read the saved value first</td></tr></table>
+  </div>
+  <div class="cu-step"><span class="cu-shimmer is-live">Generating…</span></div>
+  <div class="cu-actions"><span class="cu-iconbtn"><span class="cu-i" data-cu-icon="copy"></span></span><span class="cu-iconbtn"><span class="cu-i" data-cu-icon="thumbUp"></span></span><span class="cu-iconbtn"><span class="cu-i" data-cu-icon="thumbDown"></span></span></div>
+</div></div>
+
+<!-- ========================================================================
+  6. RIGHT RAIL (collapsed panel overview, Aug 25 dark frame)
+  ======================================================================== -->
+<div class="sec"><h2>Right rail</h2>
+<div class="pad" style="width:240px">
+  <div class="cu-rail" style="padding:0">
+    <div class="cu-rail-label" style="margin-top:0">Open Tabs</div>
+    <div class="cu-rail-row"><span class="cu-i" data-cu-icon="terminal"></span><span>pnpm dev</span></div>
+    <div class="cu-rail-label">On atlas-web</div>
+    <div class="cu-rail-row"><span class="cu-i" data-cu-icon="diff"></span><span>Changes</span><span class="cu-add">+184</span><span class="cu-del">-12</span></div>
+    <div class="cu-rail-row"><span class="cu-i" data-cu-icon="globe"></span><span>Browser</span></div>
+    <div class="cu-rail-row"><span class="cu-i" data-cu-icon="terminal"></span><span>1 Terminal</span><span class="cu-i chev" data-cu-icon="chevronRight"></span></div>
+    <div class="cu-rail-row"><span class="cu-i" data-cu-icon="files"></span><span>Files</span></div>
+  </div>
+</div></div>
+
+<!-- ========================================================================
+  7. CHANGES: SPLIT VIEW (Apr 2026 Changes frame + Aug 13 cloud-agent layout).
+  The chat column keeps its title bar, thread and composer; the Changes panel
+  (.cu-panel.is-side, --cu-panel-w ≈ 55% of the main area) sits to its right.
+  Panel tab row: git glyph + coloured counts ("⑂ +184 -12", .cu-tab.is-git),
+  Browser, Terminal, then "+" and the panel toggle at the far right.
+  Bar: location chip, branch, ⋯, split button:
+    "Create PR" (.cu-splitbtn) → "Creating PR…" (.is-busy + spinning .cu-loader)
+    → "View PR ↗" (.is-ghost). When the PR exists, the summary row becomes the
+    PR row: green Open chip, title, #N ↗, counts.
+  Cards: header, then .cu-diff lines (.is-add / .is-del, .cu-dl-fold). While
+  scrolling, a .cu-sticky-head copy of the current file header sits at the top
+  so lines pass under it (never a headerless half-cut line).
+  ======================================================================== -->
+<div class="sec"><h2>Changes: split view · Create PR states · sticky file header</h2>
+<div class="cu-window is-floating" style="width:1060px;height:520px">
+  <main class="cu-main"><div class="cu-split">
+    <section class="cu-chatcol">
+      <div class="cu-titlebar"><span class="cu-title">Dark mode toggle in settings</span><span class="cu-title-meta"><span class="cu-i sm" data-cu-icon="laptop"></span></span><span class="cu-spacer"></span>
+        <span class="cu-ide-link">IDE <span class="cu-i" data-cu-icon="arrowUpRight"></span></span><span class="cu-iconbtn"><span class="cu-i" data-cu-icon="ellipsis"></span></span></div>
+      <div class="cu-body"><div class="cu-center">
+        <div class="cu-thread">
+          <div class="cu-prompt">Add a dark mode toggle to Settings and remember each user’s choice</div>
+          <div class="cu-worked">Worked for 3m 41s<span class="cu-i" data-cu-icon="chevronRight"></span></div>
+          <div class="cu-doc"><p>Settings › Appearance now has a <strong>Light / Dark / System</strong> control, saved per user.</p>
+            <ul><li><code>users.theme</code> column, default <code>system</code></li><li><code>ThemeProvider</code> reads the saved value first</li></ul></div>
+        </div>
+        <div class="cu-dock"><div class="cu-composer"><span class="cu-plus"><span class="cu-i" data-cu-icon="plus"></span></span>
+          <div class="cu-input"><span class="cu-ph">Send follow-up</span></div>
+          <span class="cu-model"><span class="cu-name">Cursor Grok 4.7</span><span class="cu-effort">High Fast</span><span class="cu-i" data-cu-icon="chevronDown"></span></span>
+          <span class="cu-send" data-state="mic"><span class="cu-i cu-send-mic" data-cu-icon="mic"></span><span class="cu-i cu-send-arrow" data-cu-icon="arrowUp"></span><span class="cu-i cu-send-stop" data-cu-icon="stop"></span></span></div>
+          <div class="cu-under"><span class="cu-pick"><span class="cu-i" data-cu-icon="branch"></span>main<span class="cu-i chev" data-cu-icon="chevronDown"></span></span><span class="cu-pick"><span class="cu-i" data-cu-icon="laptop"></span>This Mac<span class="cu-i chev" data-cu-icon="chevronDown"></span></span></div></div>
+      </div></div>
+    </section>
+    <section class="cu-panel is-side" style="--cu-panel-w:585px">
+      <div class="cu-tabs">
+        <span class="cu-tab is-active is-git"><span class="cu-i" data-cu-icon="branch"></span><span class="cu-add">+184</span><span class="cu-del">-12</span></span>
+        <span class="cu-tab is-icon"><span class="cu-i" data-cu-icon="globe"></span></span><span class="cu-tab is-icon"><span class="cu-i" data-cu-icon="terminal"></span></span>
+        <span class="cu-spacer"></span><span class="cu-iconbtn"><span class="cu-i" data-cu-icon="plus"></span></span><span class="cu-iconbtn is-on"><span class="cu-i" data-cu-icon="panelRight"></span></span>
+      </div>
+      <div class="cu-panel-bar"><span class="cu-loc"><span class="cu-i" data-cu-icon="laptop"></span>Local</span><span>main</span><span class="cu-spacer"></span>
+        <span class="cu-iconbtn"><span class="cu-i" data-cu-icon="ellipsis"></span></span>
+        <!-- idle -->
+        <span class="cu-splitbtn"><span class="cu-sb-main">Create PR</span><span class="cu-sb-more"><span class="cu-i" data-cu-icon="chevronDown"></span></span></span>
+        <!-- busy (Apr 2026 frame) -->
+        <span class="cu-splitbtn is-busy"><span class="cu-sb-main"><span class="cu-loader" data-cu-icon="loader"></span>Creating PR…</span><span class="cu-sb-more"><span class="cu-i" data-cu-icon="chevronDown"></span></span></span>
+        <!-- done -->
+        <span class="cu-splitbtn is-ghost"><span class="cu-sb-main">View PR<span class="cu-i" data-cu-icon="arrowUpRight"></span></span><span class="cu-sb-more"><span class="cu-i" data-cu-icon="chevronDown"></span></span></span></div>
+      <!-- before the PR: summary row -->
+      <div class="cu-changes-sum"><span class="cu-i" data-cu-icon="list"></span><span>4 Uncommitted Changes</span><span class="cu-i chev" data-cu-icon="chevronDown"></span><span class="cu-add">+184</span><span class="cu-del">-12</span><span class="cu-spacer"></span><span class="cu-i" data-cu-icon="revert"></span><span class="cu-checkbox" style="margin-left:6px"></span></div>
+      <!-- after the PR: the same row becomes the PR row -->
+      <div class="cu-changes-sum"><span class="cu-badge-open"><span class="cu-i" data-cu-icon="pr"></span>Open</span><span style="color:var(--cu-fg)">Persist each user’s theme choice</span><span class="cu-pr-num" style="display:inline-flex;align-items:center;gap:2px;color:var(--cu-fg-3)">#214<span class="cu-i xs" data-cu-icon="arrowUpRight"></span></span><span class="cu-spacer"></span><span class="cu-add">+184</span><span class="cu-del">-12</span></div>
+      <div class="cu-panel-scroll">
+        <div class="cu-panel-inner" style="transform:translateY(-60px)">
+          <div class="cu-filecard"><div class="cu-filecard-head"><span class="cu-ftype ts">TS</span><span class="cu-path"><span class="cu-dir">src/theme/</span>ThemeProvider.tsx</span><span class="cu-i sm" data-cu-icon="arrowUpRight"></span><span class="cu-add">+21</span><span class="cu-del">-9</span><span class="cu-spacer"></span><span class="cu-i" data-cu-icon="revert"></span><span class="cu-checkbox"></span></div>
+            <div class="cu-diff">
+              <div class="cu-dl-fold"><span class="cu-i" data-cu-icon="chevronsUpDown"></span>11 unmodified lines</div>
+              <div class="cu-dl is-del"><span class="ln">12</span><span class="code"><span class="k">export function</span> <span class="v">ThemeProvider</span>({ <span class="v">children</span> }: <span class="v">Props</span>) {</span></div>
+              <div class="cu-dl is-add"><span class="ln">12</span><span class="code"><span class="k">export function</span> <span class="v">ThemeProvider</span>({ <span class="v">children</span>, <span class="v">saved</span> }: <span class="v">Props</span>) {</span></div>
+              <div class="cu-dl"><span class="ln">13</span><span class="code">  <span class="k">const</span> <span class="v">prefersDark</span> = <span class="v">useMediaQuery</span>(<span class="s">"(prefers-color-scheme: dark)"</span>);</span></div>
+              <div class="cu-dl is-del"><span class="ln">14</span><span class="code">  <span class="k">const</span> <span class="v">theme</span> = <span class="v">prefersDark</span> ? <span class="s">"dark"</span> : <span class="s">"light"</span>;</span></div>
+              <div class="cu-dl is-add"><span class="ln">14</span><span class="code">  <span class="k">const</span> [<span class="v">choice</span>, <span class="v">setChoice</span>] = <span class="v">useState</span>(<span class="v">saved</span> ?? <span class="s">"system"</span>);</span></div>
+              <div class="cu-dl"><span class="ln">15</span><span class="code"></span></div>
+            </div></div>
+          <div class="cu-filecard"><div class="cu-filecard-head"><span class="cu-ftype sql">SQL</span><span class="cu-path"><span class="cu-dir">db/migrations/</span>0042_user_theme.sql</span><span class="cu-i sm" data-cu-icon="arrowUpRight"></span><span class="cu-add">+9</span><span class="cu-spacer"></span><span class="cu-new">New</span><span class="cu-i" data-cu-icon="revert"></span><span class="cu-checkbox"></span></div></div>
+        </div>
+        <!-- sticky copy of the header whose lines are passing under the top edge -->
+        <div class="cu-filecard-head cu-sticky-head"><span class="cu-ftype ts">TS</span><span class="cu-path"><span class="cu-dir">src/theme/</span>ThemeProvider.tsx</span><span class="cu-i sm" data-cu-icon="arrowUpRight"></span><span class="cu-add">+21</span><span class="cu-del">-9</span><span class="cu-spacer"></span><span class="cu-i" data-cu-icon="revert"></span><span class="cu-checkbox"></span></div>
+      </div>
+    </section>
+  </div></main>
+</div></div>
+
+<!-- ========================================================================
+  8. CLOUD AGENT GIT HEADER (cursor.com/agents, Aug 13)
+  ======================================================================== -->
+<div class="sec"><h2>Cloud agent Git header</h2>
+<div class="pad" style="width:520px;padding:0">
+  <div class="cu-subtabs" style="padding:8px 10px 0"><span class="cu-tab is-active">Git</span><span class="cu-tab">Desktop</span><span class="cu-tab">Terminal</span><span class="cu-tab">Files</span></div>
+  <div class="cu-pr">
+    <div class="cu-pr-top"><span class="cu-pr-title">Settings: add Light / Dark / System theme</span><span class="cu-pr-num">#128 <span class="cu-i xs" data-cu-icon="arrowUpRight"></span></span><span class="cu-spacer"></span>
+      <span class="cu-splitbtn"><span class="cu-sb-main">Squash and merge</span><span class="cu-sb-more"><span class="cu-i" data-cu-icon="chevronDown"></span></span></span></div>
+    <div class="cu-pr-meta"><span class="cu-badge-open"><span class="cu-i" data-cu-icon="pr"></span>Open</span><span>cursor/dark-mode-toggle-41c2</span><span>→</span><span>main</span></div>
+    <div class="cu-subtabs"><span class="cu-tab is-active">Diff</span><span class="cu-tab">Review</span><span class="cu-tab">Commits<span class="cu-count">4</span></span></div>
+  </div>
+</div></div>
+
+<!-- ========================================================================
+  9. SETTINGS CARD (Cursor Settings → Remote Control, Oct 6 2026)
+  ======================================================================== -->
+<div class="sec"><h2>Settings</h2>
+<div class="pad cu-settings" style="width:720px">
+  <div class="cu-set-label">Remote Control</div>
+  <div class="cu-set-card">
+    <div class="cu-set-row"><div class="cu-set-text"><div class="cu-set-title">Enable Remote Control for this computer <span class="cu-connected">Connected</span></div><div class="cu-set-desc">Allow agents on this computer to be controlled from your other devices</div></div><span class="cu-toggle is-on"></span></div>
+    <div class="cu-set-row"><div class="cu-set-text"><div class="cu-set-title">Computer Name</div><div class="cu-set-desc">Change how this computer appears on other devices</div></div><span class="cu-field">Maya’s MacBook Pro</span></div>
+    <div class="cu-set-row"><div class="cu-set-text"><div class="cu-set-title">Disable Remote Control on all of my computers</div><div class="cu-set-desc">Unregisters every computer on your account</div></div><span class="cu-btn-outline">Unregister All</span></div>
+  </div>
+</div></div>
+
+<!-- ========================================================================
+  10. CLI (`agent`) — dark terminal in both themes; tool groups start with a hexagon
+  ======================================================================== -->
+<div class="sec"><h2>CLI</h2>
+<div class="cu-cli" style="width:760px"><span class="hex" data-cu-icon="hexagon"></span><b>Read, listed, searched</b> <span class="dim">2 files, 1 directory, 1 search</span>
+<span class="dim">  <b style="color:inherit">Read</b> src/theme/ThemeProvider.tsx</span>
+
+To create a plan, I need a few details:
+<div class="cu-cli-box"><span class="ttl">Clarifying Questions</span>
+
+1. Should the choice sync across devices?
+   <span class="dim">[x] Yes, store it on the user</span>
+ <span class="acc">›</span> <span class="dim">[ ] No, keep it per browser</span>
+
+<span class="dim">↑/↓ option · ←/→ question · Space/Enter select · S submit · K skip</span></div></div>
+</div>
+
+<!-- ========================================================================
+  11. CLASSIC EDITOR INLINE DIFF (EXTRAPOLATED: no current official frame)
+  ======================================================================== -->
+<div class="sec"><h2>IDE inline diff (extrapolated)</h2>
+<div class="cu-window is-floating" style="width:720px;height:250px">
+  <div class="cu-editor" style="flex:1">
+    <div class="cu-ed-tabs"><span class="cu-ed-tab is-active"><span class="cu-ftype ts">TS</span>ThemeProvider.tsx</span><span class="cu-ed-tab"><span class="cu-ftype ts">TS</span>AppearanceSection.tsx</span></div>
+    <div class="cu-ed-crumbs">src<span class="cu-i" data-cu-icon="chevronRight"></span>theme<span class="cu-i" data-cu-icon="chevronRight"></span>ThemeProvider.tsx</div>
+    <div class="cu-ed-code">
+      <div class="cu-dl"><span class="ln">13</span><span class="code">  <span class="k">const</span> <span class="v">prefersDark</span> = <span class="f">useMediaQuery</span>(<span class="s">"(prefers-color-scheme: dark)"</span>);</span></div>
+      <div class="cu-dl is-del"><span class="ln">14</span><span class="code">  <span class="k">const</span> <span class="v">theme</span> = <span class="v">prefersDark</span> ? <span class="s">"dark"</span> : <span class="s">"light"</span>;</span></div>
+      <div class="cu-dl is-add"><span class="ln">14</span><span class="code">  <span class="k">const</span> [<span class="v">choice</span>, <span class="v">setChoice</span>] = <span class="f">useState</span>(<span class="v">saved</span> ?? <span class="s">"system"</span>);</span></div>
+      <div class="cu-hunk-actions" style="top:62px"><span class="is-undo">Undo <kbd>⌘N</kbd></span><span class="is-keep">Keep <kbd>⌘Y</kbd></span></div>
+      <div class="cu-review-bar"><span>1 of 3</span><span class="cu-btn-outline">Undo all</span><span class="cu-btn-solid">Keep all <kbd>⌘⏎</kbd></span></div>
+    </div>
+  </div>
+</div></div>
+
+</div>
+<script>
+  if (location.hash === "#dark") { document.getElementById("root").setAttribute("data-theme", "dark"); document.body.classList.add("dark"); }
+  SKIN_CURSOR.hydrate(document);
+  // the running glyph is a braille frame: hydrate() fills it from SKIN_ICONS_CURSOR.running
+</script>
+</body>
+</html>

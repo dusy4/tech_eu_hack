@@ -1,0 +1,335 @@
+<!doctype html>
+<!--
+  Gemini skin: canonical markup for every piece, light and dark side by side.
+  Open this file in a browser (serve the folder over http so the fonts load).
+  Copy a block into a component, keep the class names, fill icons with
+  SKIN_GEMINI.mountIcons(root) (every <span class="gm-ico" data-gm-icon="name">).
+  All sizes are real-app CSS px: scale the whole skin with `zoom` on a wrapper.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gemini skin snippets</title>
+<link rel="stylesheet" href="../../_shared/fonts/fonts.css">
+<link rel="stylesheet" href="skin.css">
+<script src="icons.js"></script>
+<style>
+  body { margin: 0; background: #e9e9e7; font: 13px/1.4 Inter, sans-serif; color: #333; }
+  .doc { padding: 24px 28px 60px; }
+  h2 { font: 600 15px/1 Inter, sans-serif; margin: 34px 0 12px; letter-spacing: -0.01em; }
+  h2 small { font-weight: 400; color: #777; margin-left: 8px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cell { position: relative; overflow: hidden; border-radius: 10px; }
+  .cell.sk-gemini { background: var(--gm-bg); padding: 22px; }
+  .cell.is-home { background: var(--gm-home-bg); }
+  .row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .phone { width: 402px; height: 874px; border-radius: 44px; overflow: hidden; position: relative; box-shadow: 0 0 0 8px #111; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+<!-- ================================================================== -->
+<h2>1. App frame: collapsed rail + home <small>.gm-app &gt; .gm-rail + .gm-main (Sept 2026 web build)</small></h2>
+<div class="pair">
+  <div class="sk-gemini cell" data-theme="light" style="padding:0;height:560px">
+    <div class="gm-app">
+      <!-- rail: logo, New chat, Search, Daily brief, Images, Videos, Library ... Settings, avatar.
+           .gm-rail__btn.is-active = selected circle; add <i class="gm-badge-dot"></i> for an unread dot.
+           Light rail is a solid #fdfdfd panel; the dark rail is transparent, so the home glow
+           (.gm-home-bg bleeds one rail width under it) runs edge to edge.
+           Account avatar = a PHOTO in the four-colour AI Pro/Ultra ring (img/avatar-*.jpg). -->
+      <nav class="gm-rail">
+        <div class="gm-rail__logo"><span class="gm-ico" data-gm-icon="spark"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="newChat"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="search"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="dailyBrief"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="images"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="videos"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="library"></span></div>
+        <div class="gm-rail__spacer"></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="settings"></span><i class="gm-badge-dot"></i></div>
+        <div class="gm-avatar gm-avatar--ring"><img src="img/avatar-alex.jpg" alt=""></div>
+      </nav>
+      <main class="gm-main">
+        <div class="gm-home-bg"></div>
+        <!-- home: greeting (2 lines with a name, 1 line in Task mode), composer pill, Chat | Task -->
+        <section class="gm-home" style="--gm-home-top:130px">
+          <h1 class="gm-greeting"><span class="gm-greeting__line">Hi Alex,</span><span class="gm-greeting__line">what can I help with?</span></h1>
+          <div class="gm-composer" style="--gm-composer-w:520px">
+            <div class="gm-composer__input"><span class="gm-composer__placeholder">Ask Gemini</span></div>
+            <div class="gm-composer__bar">
+              <button class="gm-icon-btn gm-composer__plus"><span class="gm-ico" data-gm-icon="plus"></span></button>
+              <span class="gm-composer__spacer"></span>
+              <button class="gm-model-chip"><span>Flash</span><span class="gm-ico gm-model-chip__down" data-gm-icon="chevronDown"></span><span class="gm-ico gm-model-chip__up" data-gm-icon="chevronUp"></span></button>
+              <button class="gm-icon-btn gm-composer__mic"><span class="gm-ico" data-gm-icon="mic"></span></button>
+              <button class="gm-send"><span class="gm-ico gm-send__arrow" data-gm-icon="send"></span><span class="gm-ico gm-send__stop" data-gm-icon="stop"></span></button>
+            </div>
+          </div>
+          <div class="gm-mode-toggle"><span class="gm-mode is-active">Chat</span><span class="gm-mode">Task</span></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <div class="sk-gemini cell" data-theme="dark" style="padding:0;height:560px">
+    <div class="gm-app">
+      <nav class="gm-rail">
+        <div class="gm-rail__logo"><span class="gm-ico" data-gm-icon="spark"></span></div>
+        <div class="gm-rail__btn is-active"><span class="gm-ico" data-gm-icon="newChat"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="search"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="dailyBrief"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="images"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="videos"></span></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="library"></span></div>
+        <div class="gm-rail__spacer"></div>
+        <div class="gm-rail__btn"><span class="gm-ico" data-gm-icon="settings"></span></div>
+        <div class="gm-avatar gm-avatar--ring"><img src="img/avatar-alex.jpg" alt=""></div>
+      </nav>
+      <main class="gm-main">
+        <div class="gm-home-bg"></div>
+        <section class="gm-home" style="--gm-home-top:160px">
+          <h1 class="gm-greeting">What can I take off your plate?</h1>
+          <div class="gm-composer" style="--gm-composer-w:520px">
+            <div class="gm-composer__input"><span class="gm-composer__placeholder">Ask Gemini</span></div>
+            <div class="gm-composer__bar">
+              <button class="gm-icon-btn gm-composer__plus"><span class="gm-ico" data-gm-icon="plus"></span></button>
+              <span class="gm-composer__spacer"></span>
+              <button class="gm-model-chip"><span>Flash</span><span class="gm-ico gm-model-chip__down" data-gm-icon="chevronDown"></span><span class="gm-ico gm-model-chip__up" data-gm-icon="chevronUp"></span></button>
+              <button class="gm-icon-btn gm-composer__mic"><span class="gm-ico" data-gm-icon="mic"></span></button>
+              <button class="gm-send"><span class="gm-ico gm-send__arrow" data-gm-icon="send"></span></button>
+            </div>
+          </div>
+          <div class="gm-mode-toggle"><span class="gm-mode">Chat</span><span class="gm-mode is-active">Task</span></div>
+        </section>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2>2. Composer states <small>.gm-composer (+ .is-expanded / .has-text / .is-generating)</small></h2>
+<div class="pair">
+<script>
+  /* the same four composers in both themes, written once */
+  document.write([0, 1].map(function (d) {
+    var chip = '<button class="gm-model-chip"><span>Flash</span><span class="gm-ico gm-model-chip__down" data-gm-icon="chevronDown"></span><span class="gm-ico gm-model-chip__up" data-gm-icon="chevronUp"></span></button>';
+    var mic = '<button class="gm-icon-btn gm-composer__mic"><span class="gm-ico" data-gm-icon="mic"></span></button>';
+    var send = '<button class="gm-send"><span class="gm-ico gm-send__arrow" data-gm-icon="send"></span><span class="gm-ico gm-send__stop" data-gm-icon="stop"></span></button>';
+    var plus = '<button class="gm-icon-btn gm-composer__plus"><span class="gm-ico" data-gm-icon="plus"></span></button>';
+    return '<div class="sk-gemini cell is-home" data-theme="' + (d ? 'dark' : 'light') + '"><div style="display:flex;flex-direction:column;gap:18px;align-items:center">' +
+      /* idle pill: no send button until there is text */
+      '<div class="gm-composer" style="--gm-composer-w:560px"><div class="gm-composer__input"><span class="gm-caret"></span><span class="gm-composer__placeholder">Ask Gemini</span></div><div class="gm-composer__bar">' + plus + '<span class="gm-composer__spacer"></span>' + chip + mic + send + '</div></div>' +
+      /* typing: grows into a 2-row card, text on top, send appears */
+      '<div class="gm-composer is-expanded has-text" style="--gm-composer-w:560px"><div class="gm-composer__input"><span class="gm-composer__text">Plan a 3-day food trip to Kyoto for my parents in November</span><span class="gm-caret"></span></div><div class="gm-composer__bar">' + plus + '<span class="gm-composer__spacer"></span>' + chip + mic + send + '</div></div>' +
+      /* tool on: "Canvas" chip after the + (Sept 2026) */
+      '<div class="gm-composer is-expanded has-text" style="--gm-composer-w:560px"><div class="gm-composer__input"><span class="gm-composer__text">let me export the designs for 3d printing</span></div><div class="gm-composer__bar">' + plus + '<span class="gm-tool-chip"><span class="gm-ico" data-gm-icon="canvas"></span>Canvas</span><span class="gm-composer__spacer"></span>' + chip + mic + send + '</div></div>' +
+      /* generating (chat dock): stop square replaces the arrow */
+      '<div class="gm-composer is-generating" style="--gm-composer-w:560px"><div class="gm-composer__input"><span class="gm-composer__placeholder">Ask Gemini</span></div><div class="gm-composer__bar">' + plus + '<span class="gm-composer__spacer"></span>' + chip + mic + send + '</div></div>' +
+      '<div class="gm-disclaimer">Gemini is AI and can make mistakes.</div>' +
+      '</div></div>';
+  }).join(''));
+</script>
+</div>
+
+<!-- ================================================================== -->
+<h2>3. Model picker <small>.gm-model-chip.is-open + .gm-model-menu (right edges aligned, 5px below the chip)</small></h2>
+<div class="pair">
+<script>
+  document.write([0, 1].map(function (d) {
+    return '<div class="sk-gemini cell is-home" data-theme="' + (d ? 'dark' : 'light') + '" style="height:250px"><div style="display:flex;justify-content:center">' +
+      '<div class="gm-composer is-expanded has-text" style="--gm-composer-w:560px"><div class="gm-composer__input"><span class="gm-composer__text">Build a Google Slides deck for Friday’s client pitch from my notes</span></div>' +
+      '<div class="gm-composer__bar"><button class="gm-icon-btn gm-composer__plus"><span class="gm-ico" data-gm-icon="plus"></span></button><span class="gm-composer__spacer"></span>' +
+      '<span style="position:relative;display:inline-flex"><button class="gm-model-chip is-open"><span>Flash</span><span class="gm-ico gm-model-chip__down" data-gm-icon="chevronDown"></span><span class="gm-ico gm-model-chip__up" data-gm-icon="chevronUp"></span></button>' +
+      /* menu: two-line rows (name / use-case, same colour), check on the current model, fill on hover */
+      '<div class="gm-model-menu" style="right:0;top:calc(100% + 5px)">' +
+        '<div class="gm-model-option is-selected is-hover"><span class="gm-ico gm-model-option__check" data-gm-icon="check"></span><span class="gm-model-option__name">3.8 Flash</span><span class="gm-model-option__desc">All-around help</span></div>' +
+        '<div class="gm-model-option"><span class="gm-ico gm-model-option__check" data-gm-icon="check"></span><span class="gm-model-option__name">4 Argon</span><span class="gm-model-option__desc">Complex tasks</span></div>' +
+      '</div></span>' +
+      '<button class="gm-icon-btn gm-composer__mic"><span class="gm-ico" data-gm-icon="mic"></span></button><button class="gm-send"><span class="gm-ico gm-send__arrow" data-gm-icon="send"></span></button></div></div>' +
+      '</div></div>';
+  }).join(''));
+</script>
+</div>
+
+<!-- ================================================================== -->
+<h2>4. Tools menu (from +) <small>.gm-tools-menu</small></h2>
+<div class="pair">
+<script>
+  document.write([0, 1].map(function (d) {
+    var items = [['createImage', 'Create image'], ['canvas', 'Canvas'], ['deepResearch', 'Deep research'], ['createVideo', 'Create video'], ['createMusic', 'Create music'], ['guidedLearning', 'Guided learning']];
+    return '<div class="sk-gemini cell is-home" data-theme="' + (d ? 'dark' : 'light') + '" style="height:300px"><div class="gm-tools-menu" style="left:22px;top:22px">' +
+      '<div class="gm-tools-menu__title">Tools</div>' +
+      items.map(function (it, i) { return '<div class="gm-tools-item' + (i === 1 ? ' is-hover' : '') + '"><span class="gm-ico" data-gm-icon="' + it[0] + '"></span>' + it[1] + '</div>'; }).join('') +
+      '</div></div>';
+  }).join(''));
+</script>
+</div>
+
+<!-- ================================================================== -->
+<h2>5. Conversation: user bubble, thinking, steps, answer, action row <small>.gm-chat &gt; .gm-thread + .gm-chat__dock</small></h2>
+<div class="pair">
+<script>
+  document.write([0, 1].map(function (d) {
+    return '<div class="sk-gemini cell" data-theme="' + (d ? 'dark' : 'light') + '" style="padding:0;height:760px"><div class="gm-app"><main class="gm-main"><section class="gm-chat" style="--gm-col-w:640px">' +
+      '<header class="gm-topbar"><div class="gm-topbar__title">Austin trip expense sheet</div><div class="gm-topbar__actions"><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="more"></span></button></div></header>' +
+      '<div class="gm-thread"><div class="gm-thread__inner">' +
+        /* user turn: right-aligned grey bubble; copy / edit show on hover */
+        '<div class="gm-turn-user"><div class="gm-bubble">Find my Austin trip receipts in Drive and put them in an expense sheet</div>' +
+        '<div class="gm-turn-user__actions"><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="copy"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="edit"></span></button></div></div>' +
+        /* model turn: no bubble, no avatar. Working: dots glyph + "Thinking it through..." + steps on a 1px rule;
+           a tool row swaps the rule for its icon (monitor, Drive logo...). Done: "Finished thinking ⌄" */
+        '<div class="gm-turn-model"><div class="gm-thinking"><div class="gm-thinking__head"><span class="gm-thinking__glyph" data-gm-icon="thinkingDots"></span><span class="gm-thinking__label">Thinking it through…</span></div>' +
+        '<div class="gm-steps">' +
+          '<div class="gm-step"><span>Finding the 7 receipts from your Austin trip in Drive.</span></div>' +
+          '<div class="gm-step has-icon"><span class="gm-ico gm-step__icon is-logo" data-gm-icon="gdrive"></span><span>Google Drive</span></div>' +
+          '<div class="gm-step has-icon"><span class="gm-ico gm-step__icon" data-gm-icon="monitor"></span><span>Verify totals and categories in the new sheet.</span></div>' +
+          '<div class="gm-step"><span>Adding the sheet to your Expenses folder.</span></div>' +
+        '</div></div>' +
+        '<div class="gm-answer"><p>I’ve put the 7 receipts from your Austin trip into a Google Sheet:</p>' +
+        /* Google file link: the product's own mark (gsheets / gslides / gdocs) + dotted underline.
+           pageEmoji (📄) is the May demo's generic-document variant. .is-hover darkens the underline */
+        '<div class="gm-doc-link gm-doc-link--app"><span class="gm-ico" data-gm-icon="gsheets"></span><span class="gm-doc-link__text">Austin Client Trip Expenses (Oct 6–9)</span></div>' +
+        '<p>The total comes to $1,284.60. Two dinners had no itemized receipt, so I flagged them for you to check.</p></div>' +
+        '<div class="gm-msg-actions"><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="thumbUp"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="thumbDown"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="redo"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="share"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="copy"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="more"></span></button></div>' +
+        '</div>' +
+      '</div></div>' +
+      '<div class="gm-chat__dock"><div class="gm-composer"><div class="gm-composer__input"><span class="gm-composer__placeholder">Ask Gemini</span></div><div class="gm-composer__bar"><button class="gm-icon-btn gm-composer__plus"><span class="gm-ico" data-gm-icon="plus"></span></button><span class="gm-composer__spacer"></span><button class="gm-model-chip"><span>Flash</span><span class="gm-ico gm-model-chip__down" data-gm-icon="chevronDown"></span><span class="gm-ico gm-model-chip__up" data-gm-icon="chevronUp"></span></button><button class="gm-icon-btn gm-composer__mic"><span class="gm-ico" data-gm-icon="mic"></span></button><button class="gm-send"><span class="gm-ico gm-send__arrow" data-gm-icon="send"></span></button></div></div><div class="gm-disclaimer">Gemini is AI and can make mistakes.</div></div>' +
+      '</section></main></div></div>';
+  }).join(''));
+</script>
+</div>
+
+<!-- ================================================================== -->
+<h2>6. Collapsed thought line + Gmail draft card <small>.gm-thought-line, .gm-mail (draft card described in UI-NOTES, extrapolated)</small></h2>
+<div class="pair">
+<script>
+  document.write([0, 1].map(function (d) {
+    return '<div class="sk-gemini cell" data-theme="' + (d ? 'dark' : 'light') + '"><div class="gm-turn-model" style="max-width:600px">' +
+      '<div class="gm-thought-line">Drafting the follow-up to Maya Chen<span class="gm-ico" data-gm-icon="chevronRight"></span></div>' +
+      '<div class="gm-answer"><p>Here’s a draft you can send from <span class="gm-mention">@Gmail</span>:</p></div>' +
+      '<div class="gm-mail"><div class="gm-mail__head"><span class="gm-ico" data-gm-icon="gmail"></span><span class="gm-mail__name">Gmail</span>' +
+        '<div class="gm-mail__tools"><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="undo"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="redoArrow"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="copy"></span></button></div></div>' +
+        '<div class="gm-mail__row">To <span class="gm-mail__to"><span class="gm-avatar">M</span>Maya Chen</span><span style="margin-left:auto">Cc Bcc</span></div>' +
+        '<div class="gm-mail__row"><span class="gm-mail__subject">Pitch deck for Friday</span></div>' +
+        '<div class="gm-mail__body">Hi Maya, the client deck is ready for review. I kept the pricing slide at the end so we can walk through it together on Friday.</div>' +
+        '<div class="gm-mail__foot"><button class="gm-btn gm-btn--text">Edit in Gmail</button><button class="gm-btn gm-btn--filled">Send<span class="gm-ico" data-gm-icon="sendPlane"></span></button></div>' +
+      '</div></div></div>';
+  }).join(''));
+</script>
+</div>
+
+<!-- ================================================================== -->
+<h2>7. Task view <small>.gm-tasks &gt; .gm-tasks__list + .gm-task-card (May 2026 Spark demo; Task mode since Oct)</small></h2>
+<div class="pair">
+<script>
+  document.write([0, 1].map(function (d) {
+    var rows = [
+      ['Block party planning', 'Organized party logistics and updated all planning…', '<span class="gm-ico" data-gm-icon="pin"></span>', false],
+      ['School year checklist', 'Created a master family checklist in Google Docs.', '32m ago <span class="gm-ico" data-gm-icon="more"></span>', true],
+      ['Neighbor invitation', 'Drafted the invitation and updated the block party…', '<i class="gm-unread"></i>', false],
+      ['Calendar color update', 'Updating meeting colors for specific…', '<span class="gm-needs">Needs input</span>', false]
+    ];
+    return '<div class="sk-gemini cell" data-theme="' + (d ? 'dark' : 'light') + '" style="padding:0;height:470px"><div class="gm-app"><main class="gm-main"><div class="gm-tasks">' +
+      '<div class="gm-tasks__list"><div class="gm-create-task"><span class="gm-ico" data-gm-icon="plus"></span>Create a task</div>' +
+      '<div class="gm-list-head">Recent<span class="gm-ico" data-gm-icon="chevronDown"></span></div>' +
+      rows.map(function (r) { return '<div class="gm-task-row' + (r[3] ? ' is-active' : '') + '"><div class="gm-task-row__body"><div class="gm-task-row__title">' + r[0] + '</div><div class="gm-task-row__sum">' + r[1] + '</div></div><div class="gm-task-row__meta">' + r[2] + '</div></div>'; }).join('') +
+      '</div>' +
+      '<div class="gm-task-card"><div class="gm-task-card__head">School year checklist<span class="gm-done-chip">Complete</span><button class="gm-icon-btn" style="width:32px;height:32px"><span class="gm-ico" data-gm-icon="more"></span></button></div>' +
+      '<div style="padding:8px 22px"><div class="gm-turn-user" style="margin-bottom:18px"><div class="gm-bubble" style="max-width:90%">Make a checklist of what the kids need before the end of the school year.</div></div>' +
+      '<div class="gm-thought-line">Categorizing end-of-year school requirements<span class="gm-ico" data-gm-icon="chevronRight"></span></div>' +
+      '<div class="gm-answer"><p>I made a Google Doc with every deadline, sorted by date.</p></div></div></div>' +
+      '</div></main></div></div>';
+  }).join(''));
+</script>
+</div>
+
+<!-- ================================================================== -->
+<h2>8. Canvas split <small>.gm-split &gt; .gm-split__chat + .gm-canvas (Oct 2026 toolbar extrapolated)</small></h2>
+<div class="pair">
+<script>
+  document.write([0, 1].map(function (d) {
+    return '<div class="sk-gemini cell" data-theme="' + (d ? 'dark' : 'light') + '" style="padding:0;height:380px"><div class="gm-app"><main class="gm-main"><div class="gm-split">' +
+      '<div class="gm-split__chat"><div style="padding-top:20px"><div class="gm-turn-user"><div class="gm-bubble">Make a 3D vase designer</div></div><div class="gm-turn-model"><p style="margin:0">Here’s a parametric vase designer you can tweak and export.</p></div></div></div>' +
+      '<div class="gm-canvas"><div class="gm-canvas__bar"><span class="gm-canvas__title">Parametric Vase Designer</span>' +
+      '<div class="gm-canvas__seg"><span><span class="gm-ico" data-gm-icon="code"></span>Code</span><span class="is-active">Preview</span></div>' +
+      '<button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="share"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="download"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="close"></span></button></div>' +
+      '<div class="gm-canvas__body"><div class="gm-canvas__code">const vase = new Vase({\n  height: 180,\n  twist: 0.35,\n  pattern: "scales",\n});</div></div></div>' +
+      '</div></main></div></div>';
+  }).join(''));
+</script>
+</div>
+
+<!-- ================================================================== -->
+<h2>9. Mobile: home, drawer, Gemini Live <small>.gm-mobile (1x phone px; put inside the device skin's screen)</small></h2>
+<div class="row">
+  <div class="phone sk-gemini" data-theme="dark"><div class="gm-mobile">
+    <div class="gm-m-home"><span class="gm-ico" data-gm-icon="spark"></span><div class="gm-m-greeting">Hi Ari, what&rsquo;s on your mind?</div></div>
+    <div class="gm-m-topbar"><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="menu"></span></button><span class="gm-m-topbar__model">Flash<span class="gm-ico" data-gm-icon="chevronDown"></span></span><span class="gm-avatar"><img src="img/avatar-alex.jpg" alt=""></span></div>
+    <div class="gm-m-composer"><div class="gm-m-composer__text">Ask Gemini</div><div class="gm-m-composer__bar"><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="plus"></span></button><button class="gm-model-chip"><span>Flash</span><span class="gm-ico gm-model-chip__down" data-gm-icon="chevronDown"></span></button><button class="gm-icon-btn"><span class="gm-ico" data-gm-icon="mic"></span></button></div></div>
+  </div></div>
+  <div class="phone sk-gemini" data-theme="light"><div class="gm-mobile">
+    <div class="gm-drawer">
+      <div class="gm-drawer__head">Gemini<span class="gm-ico" data-gm-icon="close"></span></div>
+      <div class="gm-nav-item"><span class="gm-ico" data-gm-icon="newChat"></span>New chat</div>
+      <div class="gm-nav-item"><span class="gm-ico" data-gm-icon="search"></span>Search chats</div>
+      <div class="gm-nav-item is-brief"><span class="gm-ico" data-gm-icon="dailyBrief"></span>Daily brief</div>
+      <div class="gm-nav-item"><span class="gm-ico" data-gm-icon="images"></span>Images</div>
+      <div class="gm-nav-item"><span class="gm-ico" data-gm-icon="videos"></span>Videos</div>
+      <div class="gm-nav-item"><span class="gm-ico" data-gm-icon="library"></span>Library</div>
+      <div class="gm-nav-section">Notebooks</div>
+      <div class="gm-nav-item"><span class="gm-ico" data-gm-icon="plus"></span>New notebook</div>
+      <div class="gm-nav-section">Recents</div>
+      <div class="gm-recent">Veggie meal prep<span class="gm-ico" data-gm-icon="pin"></span></div>
+      <div class="gm-recent">Northern California road trips</div>
+      <div class="gm-recent">Mushroom ceviche recipe</div>
+      <div class="gm-recent">Explain mitochondria</div>
+      <div class="gm-profile"><span class="gm-avatar gm-avatar--ring"><img src="img/avatar-camille.jpg" alt=""></span><div><div class="gm-profile__name">Camille Walsh</div><div class="gm-profile__plan">Ultra</div></div><span class="gm-ico" data-gm-icon="settings"></span></div>
+    </div>
+  </div></div>
+  <div class="phone sk-gemini" data-theme="dark"><div class="gm-mobile">
+    <!-- Live runs in place: huge white transcript, optional app card, 5-button bar with the glowing pill -->
+    <div class="gm-live"><div class="gm-live__glow"></div>
+      <div class="gm-live__transcript">Here are all the photos of receipts you took during your work trip.</div>
+      <div class="gm-live__card" style="top:270px;height:300px"><div class="gm-live__card-head"><span class="gm-ico" data-gm-icon="gphotos"></span>Google Photos</div></div>
+      <div class="gm-live__bar">
+        <div class="gm-live__btn"><span class="gm-ico" data-gm-icon="camera"></span></div>
+        <div class="gm-live__btn"><span class="gm-ico" data-gm-icon="shareScreen"></span></div>
+        <div class="gm-live__orb"><div class="gm-live__orb-core"></div></div>
+        <div class="gm-live__btn"><span class="gm-ico" data-gm-icon="mic"></span></div>
+        <div class="gm-live__btn"><span class="gm-ico" data-gm-icon="close"></span></div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ================================================================== -->
+<h2>10. Expanded sidebar (macOS app, May 2026) + pointer <small>.gm-sidebar, .gm-pointer</small></h2>
+<div class="pair">
+  <div class="sk-gemini cell" data-theme="light" style="padding:0;height:460px;background:#dfe7f2">
+    <aside class="gm-sidebar" style="height:444px">
+      <div class="gm-sidebar__top"><span class="gm-traffic"><i></i><i></i><i></i></span><span class="gm-ico" data-gm-icon="sidebar"></span></div>
+      <div class="gm-seg" style="margin:0 2px 10px"><span class="is-active">Chat</span><span>Spark<span class="gm-beta">BETA</span></span></div>
+      <div class="gm-nav">
+        <div class="gm-nav-item is-active"><span class="gm-ico" data-gm-icon="newChat"></span>New chat</div>
+        <div class="gm-nav-item"><span class="gm-ico" data-gm-icon="search"></span>Search chats</div>
+        <div class="gm-nav-item"><span class="gm-ico" data-gm-icon="library"></span>Library</div>
+      </div>
+      <div class="gm-nav-section">Notebooks</div>
+      <div class="gm-nav-item"><span class="gm-ico" data-gm-icon="plus"></span>New notebook</div>
+      <div class="gm-nav-item"><span class="gm-ico" data-gm-icon="notebook"></span>Trail running<span class="gm-ico gm-nav-item__trail" data-gm-icon="pin"></span></div>
+      <div class="gm-nav-section">Recents</div>
+      <div class="gm-recent">Veggie meal prep</div>
+      <div class="gm-recent">Northern California road trips</div>
+      <div class="gm-profile"><span class="gm-avatar"><img src="img/avatar-camille.jpg" alt=""></span><div><div class="gm-profile__name">Camille Walsh</div><div class="gm-profile__plan">Ultra</div></div></div>
+    </aside>
+  </div>
+  <div class="sk-gemini cell" data-theme="dark" style="height:460px">
+    <div class="gm-pointer" style="left:60px;top:60px" data-gm-icon="cursorArrow"></div>
+    <div class="gm-pointer" style="left:120px;top:60px;width:32px;height:32px" data-gm-icon="cursorHand"></div>
+  </div>
+</div>
+
+</div>
+<script>SKIN_GEMINI.mountIcons(document);</script>
+</body>
+</html>

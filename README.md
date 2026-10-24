@@ -111,8 +111,8 @@ From the deck's own checklist, checked against the code:
 | Step | What happens | Built by | State |
 |---|---|---|---|
 | ① Listen | Reson8 streams the room's speech into utterances (speaker, text, time) | Reson8 (`app/src/engine/reson8.ts`, `useLiveTranscript.ts`) | **Built**, falls back to browser speech |
-| ② Extract | Haiku 5.5 reads each new utterance with the recent context and pulls out decisions and questions. It calls MCP tools (`find_symbol`, `symbol_relations`, …) so each one points at real code | Claude Haiku 5.5 (`claude-haiku-5-5`) | **Not built.** A keyword matcher stands in (`app/src/engine/suggest.ts`) |
-| ③ Propose | Each extraction becomes a proposal on screen: **focus** a node, **ask** a question, or a whole new **graph** (`ViewSpec`) Haiku builds from the MCP results | Haiku 5.5 → app | Focus and ask: **built** (from the keyword matcher). New graph: **not built** |
+| ② Extract | Haiku 5.5 reads each new utterance with the recent context and pulls out decisions and questions. It calls MCP tools (`find_symbol`, `symbol_relations`, …) so each one points at real code | Claude Haiku 5.5 (`claude-haiku-5-5`) via the Claude SDK (`app/server/room.ts`) | **Built.** Tools: `propose_change`, `answer_question`, `show_view`; keyword matcher is the fallback |
+| ③ Propose | Each extraction becomes a card **on the graph**, linked to the nodes it touches (symbols not drawn yet hang off it as dashed nodes), with Accept / Decline. Views (blast radius, flow trace, call tree) come from `repo-graph-api` | Haiku 5.5 → app | **Built** |
 | ④ Decide | Accept or dismiss each proposal. Accepted ones apply to the graph and wait in "Ready for the agent" | app (`app/src/ui/LivePanel.tsx`) | **Built** |
 | ⑤ Hand off | One click turns the accepted batch into a handoff doc: decisions, who said them, code refs, the graph. It's published through the MCP server so the team's agent can pull it and act | app → MCP server → any agent | UI and payload **built** (`app/src/engine/agent.ts`). Server side **built**: `POST /handoffs` + `list_handoffs` / `get_handoff`; the app still needs `VITE_AGENT_URL` set |
 
@@ -492,6 +492,42 @@ they are, part 2 runs on recordings (open decisions 1, 3, 4).
 ---
 
 ## 16. Run the app
+
+### Live demo (everything connected)
+
+Three processes, then the app. Ports are chosen to avoid clashes; change them in `app/.env.local`.
+
+```bash
+# 1. MCP server (code tools + handoff store), HTTP on :8788
+cd repo-analysis-workbench && PYTHONUTF8=1 .venv/Scripts/python.exe src/mcp_server/server.py --transport http --port 8788
+# 2. repo-graph-api (ready-to-draw views + code bodies) on :18790; build its index once first
+cd repo-graph-api && ../repo-analysis-workbench/.venv/Scripts/python.exe -m pip install flask==3.0.3
+PYTHONUTF8=1 ../repo-analysis-workbench/.venv/Scripts/python.exe -m repo_graph_api.indexer --data ../repo-analysis-workbench/data
+PYTHONUTF8=1 WORKBENCH_WORKSPACE=../repo_analyse ../repo-analysis-workbench/.venv/Scripts/python.exe -m flask --app repo_graph_api run --port 18790
+# 3. the app
+cd app && npm install && npm run dev
+```
+
+`app/.env.local` (server-side only, never sent to the page):
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | (required for live) | Haiku 5.5, the listener (`/api/room/turn`) |
+| `RESON8_API_KEY` | | Live speech-to-text with diarisation (`/api/reson8-token`) |
+| `SPELUNK_MCP_URL` | `http://127.0.0.1:8788` | MCP server: Haiku's code tools, and `/api/handoffs` |
+| `SPELUNK_GRAPH_URL` | `http://127.0.0.1:18790` | repo-graph-api: `/api/graph/*` views and code |
+| `SPELUNK_REPO` | `rust-agent-framework` | Indexed repo the room opens on |
+
+**The loop:** the room opens on the real blast radius of `ApprovalRequiredTool`. Press **Play demo** (scripted voices) or
+**Listen to the room** (Reson8 mic). Haiku answers questions in the conversation and puts proposals on the graph.
+Accept them (on the graph or in Proposals), press **Send to the agent**: the handoff is stored by the MCP server.
+In Claude Code connected to the server (`claude mcp add --transport http repo-analysis http://127.0.0.1:8788/mcp`),
+ask "work the Spelunk handoff" (skill `spelunk-handoff`): it calls `list_handoffs` → `get_handoff` →
+`update_handoff_status`, and the card on the graph moves to *building* → *built* with the agent's note.
+Typed questions in the top bar go to Haiku too; structural ones ("how does A reach B?") draw the view at once.
+Without the backends the app falls back to the recorded React sample and the keyword matcher.
+
+### Sample only
 
 ```bash
 cd app

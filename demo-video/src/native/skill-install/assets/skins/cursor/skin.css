@@ -1,0 +1,979 @@
+/* ==========================================================================
+   Cursor skin: Cursor 3.x "Agents Window" (Aug to Oct 2026): sidebar, empty
+   New Chat, thread (prompt card + document reply), composer, model picker,
+   Context Usage popover, Changes/diff tab, cloud-agent Git header, Settings
+   cards, the `agent` CLI and an extrapolated classic-editor inline diff.
+
+   Root class: .sk-cursor (light by default). Dark: data-theme="dark" on the
+   root or on any ancestor.
+   Sizes are macOS logical points. Author the screen at native size (the demo
+   uses a 1280x720 screen: menu bar + full-size window) and scale the whole
+   thing (transform: scale(1.5)) for video, like a screen recording.
+   Fonts: the app uses the macOS system font. system-ui resolves to SF Pro in
+   the (macOS) renderer; Inter from assets/fonts/fonts.css is the fallback on
+   other machines. Code uses SF Mono where the browser exposes it, else Menlo
+   (Chrome on macOS), else JetBrains Mono. No @import here.
+   ========================================================================== */
+
+.sk-cursor {
+  /* ---- type ---- */
+  --cu-font: system-ui, BlinkMacSystemFont, -apple-system, "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
+  --cu-mono: "SF Mono", ui-monospace, Menlo, "JetBrains Mono", monospace;
+
+  /* ---- layout ---- */
+  --cu-side-w: 220px;
+  --cu-rail-w: 220px;
+  --cu-col-w: 640px;
+  --cu-stack-w: 578px;
+  --cu-bar-h: 38px;
+  --cu-win-radius: 12px;
+
+  /* ---- light surfaces (Aug 13 2026 workshop, sampled: cool sidebar #e4e7f2,
+         selected row #d9dce4, main #f1f5fb-#f3f5f7, composer/menu #fcfbfe) ---- */
+  --cu-bg: #f4f5f9;
+  --cu-sidebar: #e5e8f1;
+  --cu-side-edge: rgba(40, 50, 90, 0.07);
+  --cu-row-sel: #d9dce5;
+  --cu-row-hover: #e8eaf1;
+  --cu-card: #fcfcfe;
+  --cu-card-border: rgba(30, 35, 60, 0.08);
+  --cu-composer-bg: #fcfcfe;
+  --cu-composer-border: rgba(30, 35, 60, 0.07);
+  --cu-composer-shadow: 0 1px 2px rgba(20, 25, 50, 0.025), 0 6px 18px -10px rgba(20, 25, 50, 0.10);
+  --cu-glass-bg: rgba(252, 252, 254, 0.74);
+  --cu-glass-border: rgba(0, 0, 0, 0.07);
+  --cu-glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 14px 34px -12px rgba(0, 0, 0, 0.18);
+  --cu-menu-bg: #fcfcfe;
+  --cu-menu-border: rgba(30, 35, 60, 0.05);
+  --cu-menu-hover: #eff0f4;
+  --cu-menu-shadow: 0 0 0 0.5px rgba(20, 25, 50, 0.05), 0 2px 6px rgba(20, 25, 50, 0.05), 0 18px 40px -10px rgba(20, 25, 50, 0.20);
+  --cu-pop-bg: #fcfcfe;
+  --cu-panel-bg: #f7f8fa;
+  --cu-tab-active: #e6e8ee;
+  --cu-hair: rgba(30, 35, 60, 0.085);
+  --cu-hair-2: rgba(30, 35, 60, 0.06);
+
+  /* ---- light text ---- */
+  --cu-fg-strong: #0b0b0c;
+  --cu-fg: #1d1d1f;
+  --cu-doc-fg: #262628;
+  --cu-fg-2: #5a5a5f;
+  --cu-fg-3: #8c8c91;
+  --cu-fg-4: #b9b9be;
+  --cu-side-fg: #3a3a3e;
+  --cu-side-label: #8c8c91;
+  --cu-placeholder: #a2a2a7;
+  --cu-caret: #111111;
+  --cu-link: #4f7c98;
+
+  /* ---- light controls ---- */
+  --cu-plus-bg: #f3f2f5;
+  --cu-plus-border: #e3e1e6;
+  --cu-plus-fg: #6b6b70;
+  --cu-send-bg: #0b0b0b;
+  --cu-send-fg: #ffffff;
+  --cu-chip-bg: rgba(255, 255, 255, 0.55);
+  --cu-chip-border: rgba(0, 0, 0, 0.085);
+  --cu-chip-fg: #3f3f43;
+  --cu-kbd-bg: #ebebee;
+  --cu-btn-bg: #161616;
+  --cu-btn-fg: #ffffff;
+  --cu-btn-busy-bg: #8e8e8e;
+  --cu-btn-busy-fg: #ffffff;
+  --cu-outline-border: rgba(0, 0, 0, 0.13);
+  --cu-avatar-bg: #dcdce0;
+  --cu-avatar-fg: #55555a;
+  --cu-check-border: rgba(0, 0, 0, 0.2);
+  --cu-check-bg: #f4f4f6;
+  --cu-toggle-on: #1fa463;
+  --cu-toggle-off: #d5d5da;
+  --cu-filter-on: #7a6fd0;
+
+  /* ---- mode chips ---- */
+  --cu-plan-bg: #f3e6d4;
+  --cu-plan-fg: #9a6a35;
+  --cu-ask-bg: #dcefe4;
+  --cu-ask-fg: #2f7a56;
+
+  /* ---- status ---- */
+  --cu-unread: #3b82f6;
+  --cu-attn: #e3a43b;
+  --cu-green: #1f8a65;
+  --cu-green-bg: #e2f0e9;
+
+  /* ---- diff (Apr 2026 Changes panel, sampled) ---- */
+  --cu-add: #4d8a79;
+  --cu-del: #a8405c;
+  --cu-add-bg: #e3efea;
+  --cu-add-bar: #88b5a4;
+  --cu-add-ln: #5d8f80;
+  --cu-add-gutter: #eaf2ee;
+  --cu-del-bg: #f7e8ec;
+  --cu-del-bar: #d9a1b0;
+  --cu-del-ln: #a65a6d;
+  --cu-fold-bg: #f1f1f3;
+  --cu-new-tag: #5a9584;
+
+  /* ---- code (light: sampled from the Apr 2026 diff frame) ---- */
+  --cu-code-bg: #fcfcfc;
+  --cu-code-border: rgba(0, 0, 0, 0.075);
+  --cu-code-fg: #2b2b2e;
+  --cu-inline-code-bg: rgba(0, 0, 0, 0.055);
+  --cu-syn-kw: #8f1f45;
+  --cu-syn-id: #2f6588;
+  --cu-syn-type: #2f7a6a;
+  --cu-syn-str: #7d7bb8;
+  --cu-syn-fn: #2f6588;
+  --cu-syn-num: #b0612a;
+  --cu-syn-prop: #2f6588;
+  --cu-syn-com: #8f8f94;
+  --cu-syn-tag: #8f1f45;
+
+  /* ---- context-usage legend (Aug 25 2026, sampled) ---- */
+  --cu-u-system: #a3a3a3;
+  --cu-u-tools: #8f86e6;
+  --cu-u-rules: #5f9e74;
+  --cu-u-skills: #e2b75b;
+  --cu-u-mcp: #b08c98;
+  --cu-u-sub: #7ea6dc;
+  --cu-u-conv: #d0786f;
+  --cu-u-track: #e6e6e9;
+
+  /* ---- CLI (dark terminal in both themes, as in the docs video) ---- */
+  --cu-cli-bg: #121212;
+  --cu-cli-fg: #e4e4e4;
+  --cu-cli-dim: #6a6a6a;
+  --cu-cli-mid: #9a9a9a;
+  --cu-cli-accent: #75ada2;
+  --cu-cli-border: #2c2c2c;
+
+  font-family: var(--cu-font);
+  color: var(--cu-fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0;
+  font-feature-settings: "calt" 1, "kern" 1;
+}
+
+.sk-cursor[data-theme="dark"],
+[data-theme="dark"] .sk-cursor {
+  /* ---- dark surfaces (Aug 25 2026 workshop, sampled) ---- */
+  --cu-bg: #131313;
+  --cu-sidebar: #181818;
+  --cu-side-edge: rgba(255, 255, 255, 0.045);
+  --cu-row-sel: #262626;
+  --cu-row-hover: #2a2a2a;
+  --cu-card: #1e1e1e;
+  --cu-card-border: rgba(255, 255, 255, 0.055);
+  --cu-composer-bg: #1f1f1f;
+  --cu-composer-border: rgba(255, 255, 255, 0.07);
+  --cu-composer-shadow: 0 6px 18px -10px rgba(0, 0, 0, 0.6);
+  --cu-glass-bg: rgba(33, 33, 33, 0.78);
+  --cu-glass-border: rgba(255, 255, 255, 0.08);
+  --cu-glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 36px -12px rgba(0, 0, 0, 0.7);
+  --cu-menu-bg: #1c1c1c;
+  --cu-menu-border: rgba(255, 255, 255, 0.08);
+  --cu-menu-hover: #2a2a2a;
+  --cu-menu-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.35), 0 20px 44px -10px rgba(0, 0, 0, 0.7);
+  --cu-pop-bg: #181818;
+  --cu-panel-bg: #131313;
+  --cu-tab-active: #262626;
+  --cu-hair: rgba(255, 255, 255, 0.075);
+  --cu-hair-2: rgba(255, 255, 255, 0.05);
+
+  --cu-fg-strong: #f2f2f2;
+  --cu-fg: #e6e6e6;
+  --cu-doc-fg: #d4d4d4;
+  --cu-fg-2: #a9a9a9;
+  --cu-fg-3: #777777;
+  --cu-fg-4: #4c4c4c;
+  --cu-side-fg: #c9c9c9;
+  --cu-side-label: #6f6f6f;
+  --cu-placeholder: #646464;
+  --cu-caret: #e8e8e8;
+  --cu-link: #8bb1cc;
+
+  --cu-plus-bg: #232323;
+  --cu-plus-border: #2e2e2e;
+  --cu-plus-fg: #a3a3a3;
+  --cu-send-bg: #ebebeb;
+  --cu-send-fg: #111111;
+  --cu-chip-bg: #1a1a1a;
+  --cu-chip-border: rgba(255, 255, 255, 0.07);
+  --cu-chip-fg: #cdcdcd;
+  --cu-kbd-bg: #262626;
+  --cu-btn-bg: #ebebeb;
+  --cu-btn-fg: #121212;
+  --cu-btn-busy-bg: #4a4a4a;
+  --cu-btn-busy-fg: #d6d6d6;
+  --cu-outline-border: rgba(255, 255, 255, 0.14);
+  --cu-avatar-bg: #2e2e2e;
+  --cu-avatar-fg: #bdbdbd;
+  --cu-check-border: rgba(255, 255, 255, 0.22);
+  --cu-check-bg: #1c1c1c;
+  --cu-toggle-on: #00a862;
+  --cu-toggle-off: #3a3a3a;
+  --cu-filter-on: #9389e3;
+
+  --cu-plan-bg: #3a2f20;
+  --cu-plan-fg: #d8a86b;
+  --cu-ask-bg: #2c4338;
+  --cu-ask-fg: #7fc39d;
+
+  --cu-unread: #4f8ff7;
+  --cu-attn: #e8b04a;
+  --cu-green: #2fb37a;
+  --cu-green-bg: #163327;
+
+  --cu-add: #6fbf98;
+  --cu-del: #e07b93;
+  --cu-add-bg: rgba(70, 170, 125, 0.11);
+  --cu-add-bar: #3f8f6a;
+  --cu-add-ln: #6aa88a;
+  --cu-add-gutter: rgba(70, 170, 125, 0.07);
+  --cu-del-bg: rgba(224, 92, 122, 0.11);
+  --cu-del-bar: #a8475e;
+  --cu-del-ln: #c07386;
+  --cu-fold-bg: #1a1a1a;
+  --cu-new-tag: #6fbf98;
+
+  /* dark syntax: the Aug 25 code card is mostly neutral grey/white with
+     light steel-blue identifiers; strings are a quiet lavender, nothing loud */
+  --cu-code-bg: #171717;
+  --cu-code-border: rgba(255, 255, 255, 0.065);
+  --cu-code-fg: #d2d2d2;
+  --cu-inline-code-bg: rgba(255, 255, 255, 0.075);
+  --cu-syn-kw: #c9c9c9;
+  --cu-syn-id: #a7c1df;
+  --cu-syn-type: #a7c1df;
+  --cu-syn-str: #b9b2d6;
+  --cu-syn-fn: #a7c1df;
+  --cu-syn-num: #cfc3a4;
+  --cu-syn-prop: #d2d2d2;
+  --cu-syn-com: #6d6d6d;
+  --cu-syn-tag: #a7c1df;
+
+  --cu-u-system: #9a9a9a;
+  --cu-u-track: #2a2a2a;
+
+  color: var(--cu-fg);
+}
+
+.sk-cursor *,
+.sk-cursor *::before,
+.sk-cursor *::after { box-sizing: border-box; }
+
+/* ---------- icons ---------- */
+.sk-cursor .cu-i { display: inline-flex; width: 15px; height: 15px; flex: none; align-items: center; justify-content: center; }
+.sk-cursor .cu-i svg { width: 100%; height: 100%; display: block; }
+.sk-cursor .cu-i.sm { width: 13px; height: 13px; }
+.sk-cursor .cu-i.xs { width: 11px; height: 11px; }
+.sk-cursor .cu-i.lg { width: 17px; height: 17px; }
+.sk-cursor .cu-spacer { flex: 1; }
+
+/* ==========================================================================
+   Window + macOS chrome
+   ========================================================================== */
+.sk-cursor.cu-window,
+.sk-cursor .cu-window {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--cu-bg);
+  color: var(--cu-fg);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.sk-cursor.cu-window.is-floating,
+.sk-cursor .cu-window.is-floating {
+  border-radius: var(--cu-win-radius);
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.16), 0 1px 2px rgba(0, 0, 0, 0.06), 0 12px 24px -12px rgba(0, 0, 0, 0.12), 0 30px 70px -24px rgba(0, 0, 0, 0.22);
+}
+.sk-cursor[data-theme="dark"].cu-window.is-floating,
+[data-theme="dark"] .sk-cursor.cu-window.is-floating,
+[data-theme="dark"] .sk-cursor .cu-window.is-floating {
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.6), 0 12px 24px -12px rgba(0, 0, 0, 0.6), 0 30px 70px -24px rgba(0, 0, 0, 0.85);
+}
+
+/* Screen-recording presentation (Aug 25 2026 frames): the macOS menu bar over
+   the wallpaper, then the Cursor window filling the rest of the screen.
+   <div class="sk-cursor cu-screen"><div class="cu-menubar">…</div><div class="cu-window">…</div></div> */
+.sk-cursor.cu-screen,
+.sk-cursor .cu-screen { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; background: var(--cu-bg); position: relative; }
+.sk-cursor .cu-screen > .cu-window { flex: 1; min-height: 0; height: auto; }
+.sk-cursor .cu-menubar {
+  height: 24px; flex: none; display: flex; align-items: center; gap: 18px;
+  padding: 0 14px 0 17px; font-size: 13px; color: #ffffff; white-space: nowrap;
+  /* the translucent macOS Tahoe menu bar shows the wallpaper (sampled #6e738c centre) */
+  background: linear-gradient(90deg, #3d4057 0%, #5b6079 22%, #6e738c 48%, #7a7392 70%, #4b4a63 100%);
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.18);
+}
+.sk-cursor .cu-menubar b { font-weight: 700; }
+.sk-cursor .cu-menubar .cu-mb-apple { width: 14px; height: 16px; display: inline-flex; margin-right: 1px; }
+.sk-cursor .cu-menubar .cu-mb-apple svg { width: 100%; height: 100%; display: block; }
+.sk-cursor .cu-menubar .cu-mb-status { display: flex; align-items: center; gap: 15px; margin-left: auto; }
+.sk-cursor .cu-menubar .cu-mb-status .cu-i { width: 16px; height: 16px; color: #ffffff; }
+.sk-cursor .cu-menubar .cu-mb-status .cu-i.wide { width: 24px; }
+.sk-cursor .cu-menubar .cu-mb-clock { font-variant-numeric: tabular-nums; margin-left: 2px; }
+
+.sk-cursor .cu-traffic { display: flex; gap: 8px; align-items: center; }
+.sk-cursor .cu-traffic span {
+  width: 12px; height: 12px; border-radius: 50%;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.16);
+}
+.sk-cursor .cu-traffic span:nth-child(1) { background: #ff5f57; }
+.sk-cursor .cu-traffic span:nth-child(2) { background: #febc2e; }
+.sk-cursor .cu-traffic span:nth-child(3) { background: #28c840; }
+
+.sk-cursor .cu-iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 6px; color: var(--cu-fg-3); flex: none;
+}
+.sk-cursor .cu-iconbtn.is-on { color: var(--cu-fg-2); }
+.sk-cursor .cu-iconbtn.is-muted { color: var(--cu-fg-4); }
+
+/* ==========================================================================
+   Sidebar
+   ========================================================================== */
+.sk-cursor .cu-sidebar {
+  width: var(--cu-side-w); flex: none; height: 100%;
+  display: flex; flex-direction: column;
+  background: var(--cu-sidebar);
+  border-right: 1px solid var(--cu-side-edge);
+  color: var(--cu-side-fg);
+}
+.sk-cursor .cu-side-top {
+  height: var(--cu-bar-h); flex: none;
+  display: flex; align-items: center; gap: 4px;
+  padding: 0 8px 0 13px;
+}
+.sk-cursor .cu-side-top .cu-traffic { margin-right: 12px; }
+
+.sk-cursor .cu-nav { padding: 2px 7px 0; display: flex; flex-direction: column; }
+.sk-cursor .cu-nav-row {
+  display: flex; align-items: center; gap: 9px;
+  height: 29px; padding: 0 7px; border-radius: 7px;
+  font-size: 13px; color: var(--cu-side-fg); white-space: nowrap;
+}
+.sk-cursor .cu-nav-row .cu-i { color: var(--cu-side-fg); width: 15px; height: 15px; }
+.sk-cursor .cu-nav-row.is-active { background: var(--cu-row-sel); color: var(--cu-fg-strong); }
+.sk-cursor .cu-nav-row.is-active .cu-i { color: var(--cu-fg-strong); }
+
+.sk-cursor .cu-side-scroll {
+  flex: 1; min-height: 0; overflow: hidden; padding: 0 7px;
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 40px), transparent 100%);
+          mask-image: linear-gradient(#000 calc(100% - 40px), transparent 100%);
+}
+.sk-cursor .cu-group { margin-top: 12px; }
+.sk-cursor .cu-group-head {
+  display: flex; align-items: center; gap: 2px;
+  height: 27px; padding: 0 2px 0 7px;
+  font-size: 12px; color: var(--cu-side-label);
+}
+.sk-cursor .cu-group-head .cu-label { flex: 1; }
+.sk-cursor .cu-group-head .cu-iconbtn { width: 22px; height: 22px; color: var(--cu-side-label); }
+.sk-cursor .cu-group-head .cu-iconbtn .cu-i { width: 13px; height: 13px; }
+.sk-cursor .cu-group-head .cu-iconbtn.is-on { color: var(--cu-filter-on); }
+
+.sk-cursor .cu-repo {
+  display: flex; align-items: center; gap: 8px;
+  height: 29px; padding: 0 7px; font-size: 13px; color: var(--cu-side-fg);
+}
+.sk-cursor .cu-repo .cu-i { width: 15px; height: 15px; }
+
+.sk-cursor .cu-agent {
+  display: flex; align-items: center; gap: 8px;
+  height: 29px; padding: 0 7px; border-radius: 7px;
+  font-size: 13px; color: var(--cu-side-fg);
+}
+.sk-cursor .cu-agent-status {
+  width: 15px; height: 15px; flex: none;
+  display: flex; align-items: center; justify-content: center; color: var(--cu-fg-3);
+}
+.sk-cursor .cu-agent-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sk-cursor .cu-agent-meta { display: flex; align-items: center; gap: 7px; color: var(--cu-fg-3); flex: none; }
+.sk-cursor .cu-agent-meta .cu-i { width: 13px; height: 13px; }
+.sk-cursor .cu-agent-time {
+  flex: none; min-width: 20px; text-align: right;
+  font-size: 12.5px; color: var(--cu-fg-3); font-variant-numeric: tabular-nums;
+}
+.sk-cursor .cu-agent-diff { flex: none; font-size: 12px; font-variant-numeric: tabular-nums; }
+.sk-cursor .cu-agent.is-active { background: var(--cu-row-sel); color: var(--cu-fg-strong); }
+.sk-cursor .cu-agent.is-more { color: var(--cu-fg-3); }
+
+/* status glyphs inside .cu-agent-status */
+.sk-cursor .cu-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cu-unread); }
+.sk-cursor .cu-dot.is-attn { background: var(--cu-attn); }
+.sk-cursor .cu-ring { width: 7px; height: 7px; border-radius: 50%; border: 1.2px solid var(--cu-fg-3); }
+.sk-cursor .cu-braille { display: block; width: 12px; height: 12px; color: var(--cu-fg-2); }
+.sk-cursor .cu-braille svg { width: 100%; height: 100%; display: block; }
+.sk-cursor .cu-braille .bf { width: 100%; height: 100%; }
+
+.sk-cursor .cu-user {
+  flex: none; display: flex; align-items: center; gap: 9px;
+  padding: 9px 11px 11px 13px;
+}
+.sk-cursor .cu-avatar {
+  width: 26px; height: 26px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cu-avatar-bg); color: var(--cu-avatar-fg); font-size: 12px; font-weight: 500;
+}
+.sk-cursor .cu-user-text { flex: 1; min-width: 0; line-height: 1.25; }
+.sk-cursor .cu-user-name { font-size: 13px; color: var(--cu-side-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sk-cursor .cu-user-org { font-size: 12px; color: var(--cu-fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ==========================================================================
+   Main area: title bar, tabs, body
+   ========================================================================== */
+.sk-cursor .cu-main { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; position: relative; }
+.sk-cursor .cu-titlebar {
+  height: var(--cu-bar-h); flex: none;
+  display: flex; align-items: center; gap: 4px;
+  padding: 0 9px 0 16px; font-size: 13px; color: var(--cu-fg-2);
+}
+.sk-cursor .cu-titlebar .cu-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--cu-fg-2); }
+.sk-cursor .cu-titlebar .cu-title-meta { color: var(--cu-fg-3); display: inline-flex; align-items: center; margin-left: 4px; }
+.sk-cursor .cu-ide-link {
+  display: inline-flex; align-items: center; gap: 2px; font-size: 11.5px; color: var(--cu-fg-3);
+  padding: 0 6px; height: 24px; letter-spacing: 0.01em;
+}
+.sk-cursor .cu-ide-link .cu-i { width: 11px; height: 11px; }
+
+.sk-cursor .cu-body { flex: 1; min-height: 0; display: flex; position: relative; }
+.sk-cursor .cu-center { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+
+/* tab strip (Aug 2026: chat tab, "± Changes", canvas tab, "+") */
+.sk-cursor .cu-tabs {
+  height: var(--cu-bar-h); flex: none;
+  display: flex; align-items: center; gap: 2px; padding: 0 8px 0 8px;
+}
+.sk-cursor .cu-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 27px; padding: 0 9px; border-radius: 7px;
+  font-size: 13px; color: var(--cu-fg-3); white-space: nowrap; max-width: 210px;
+}
+.sk-cursor .cu-tab .cu-i { width: 14px; height: 14px; }
+.sk-cursor .cu-tab .cu-tab-text { overflow: hidden; text-overflow: ellipsis; }
+.sk-cursor .cu-tab.is-active { background: var(--cu-tab-active); color: var(--cu-fg); }
+.sk-cursor .cu-tab.is-icon { width: 30px; padding: 0; justify-content: center; }
+/* side-panel Changes tab: git glyph + coloured counts ("⑂ +2392 -1", Apr 2026 frame) */
+.sk-cursor .cu-tab.is-git { gap: 7px; font-variant-numeric: tabular-nums; }
+.sk-cursor .cu-tab.is-git .cu-add, .sk-cursor .cu-tab.is-git .cu-del { font-size: 13px; }
+.sk-cursor .cu-tab.is-git .cu-del { margin-left: -2px; }
+.sk-cursor .cu-tab-sep { width: 1px; height: 16px; background: var(--cu-hair); margin: 0 4px; }
+.sk-cursor .cu-tab .cu-tab-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--cu-fg-2); }
+
+/* ==========================================================================
+   Thread: user prompt card + document-style reply
+   ========================================================================== */
+.sk-cursor .cu-thread {
+  flex: 1; min-height: 0; width: 100%; max-width: var(--cu-col-w);
+  margin: 0 auto; padding: 0; overflow: hidden; position: relative;
+}
+/* the latest prompt stays pinned at the top while the reply scrolls under it */
+.sk-cursor .cu-prompt {
+  background: var(--cu-card); border: 1px solid var(--cu-card-border);
+  border-radius: 9px; padding: 9px 13px 10px;
+  font-size: 14px; line-height: 21px; color: var(--cu-fg);
+}
+/* pinned: the reply passes under the card and shows as a cut-off text line just
+   below its edge (Aug 25 frame). The page colour masks the strip above it. */
+.sk-cursor .cu-prompt.is-pinned {
+  position: absolute; left: 0; right: 0; top: 2px; z-index: 3;
+  box-shadow: 0 -8px 0 0 var(--cu-bg);
+}
+/* "Worked for 3m 41s ›": plain grey text at the head of a finished reply */
+.sk-cursor .cu-worked { display: flex; align-items: center; gap: 4px; font-size: 13.5px; color: var(--cu-fg-3); margin: 12px 0 8px; }
+.sk-cursor .cu-worked .cu-i { width: 11px; height: 11px; color: var(--cu-fg-4); }
+
+.sk-cursor .cu-doc { font-size: 14px; line-height: 22px; color: var(--cu-doc-fg); }
+.sk-cursor .cu-doc p { margin: 0 0 10px; }
+.sk-cursor .cu-doc h3 {
+  font-size: 17px; line-height: 24px; font-weight: 600; color: var(--cu-fg-strong);
+  margin: 16px 0 6px; letter-spacing: -0.014em;
+}
+.sk-cursor .cu-doc strong { font-weight: 600; color: var(--cu-fg-strong); }
+.sk-cursor .cu-doc ul, .sk-cursor .cu-doc ol { margin: 0 0 10px; padding-left: 20px; }
+.sk-cursor .cu-doc ul.is-run { margin-bottom: 4px; }
+.sk-cursor .cu-doc li { margin: 0 0 4px; padding-left: 2px; }
+.sk-cursor .cu-doc a, .sk-cursor .cu-link { color: var(--cu-link); text-decoration: none; }
+.sk-cursor .cu-code,
+.sk-cursor .cu-doc code {
+  font-family: var(--cu-mono); font-size: 12px; letter-spacing: 0;
+  background: var(--cu-inline-code-bg); color: var(--cu-fg); padding: 1px 4px; border-radius: 4px;
+}
+
+/* code-block card ("ColorPickerExample.tsx  Ln 154-158") */
+.sk-cursor .cu-codecard {
+  background: var(--cu-code-bg); border: 1px solid var(--cu-code-border);
+  border-radius: 8px; margin: 8px 0 12px; overflow: hidden;
+}
+.sk-cursor .cu-codecard-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px 0; font-size: 12px; color: var(--cu-fg-2);
+}
+.sk-cursor .cu-codecard-head .cu-i { width: 12px; height: 12px; color: var(--cu-fg-3); }
+.sk-cursor .cu-codecard-head .cu-lines { color: var(--cu-fg-3); font-size: 11.5px; }
+.sk-cursor .cu-pre {
+  margin: 0; padding: 9px 12px 11px;
+  font-family: var(--cu-mono); font-size: 12px; line-height: 19px; letter-spacing: 0;
+  color: var(--cu-code-fg); white-space: pre; overflow: hidden;
+}
+.sk-cursor .cu-pre .ln-row { display: block; min-height: 19px; }
+
+/* syntax tokens */
+.sk-cursor .k { color: var(--cu-syn-kw); }
+.sk-cursor .t { color: var(--cu-syn-type); }
+.sk-cursor .s { color: var(--cu-syn-str); }
+.sk-cursor .f { color: var(--cu-syn-fn); }
+.sk-cursor .n { color: var(--cu-syn-num); }
+.sk-cursor .p { color: var(--cu-syn-prop); }
+.sk-cursor .v { color: var(--cu-syn-id); }
+.sk-cursor .c { color: var(--cu-syn-com); font-style: italic; }
+.sk-cursor .g { color: var(--cu-syn-tag); }
+
+/* table (bordered, header row unfilled) */
+.sk-cursor .cu-table {
+  width: 100%; border-collapse: separate; border-spacing: 0;
+  border: 1px solid var(--cu-code-border); border-radius: 8px; overflow: hidden;
+  font-size: 13.5px; line-height: 20px; margin: 6px 0 12px; color: var(--cu-doc-fg);
+}
+.sk-cursor .cu-table th {
+  text-align: left; font-weight: 600; color: var(--cu-fg-strong);
+  padding: 8px 12px; background: transparent;
+}
+.sk-cursor .cu-table td { padding: 8px 12px; border-top: 1px solid var(--cu-code-border); background: var(--cu-code-bg); vertical-align: top; }
+.sk-cursor .cu-table th + th, .sk-cursor .cu-table td + td { border-left: 1px solid var(--cu-code-border); }
+.sk-cursor .cu-table td.mono { font-family: var(--cu-mono); font-size: 12px; letter-spacing: 0; }
+
+/* agent steps ("Explored 6 files, 2 searches ›") */
+.sk-cursor .cu-step {
+  display: flex; align-items: center; gap: 5px; min-height: 26px;
+  font-size: 13.5px; color: var(--cu-fg-3);
+}
+.sk-cursor .cu-step .cu-verb { color: var(--cu-fg-2); }
+.sk-cursor .cu-step .cu-i { width: 13px; height: 13px; color: var(--cu-fg-3); }
+.sk-cursor .cu-step .cu-file { color: var(--cu-fg-2); }
+.sk-cursor .cu-step .cu-chev { width: 11px; height: 11px; color: var(--cu-fg-4); }
+.sk-cursor .cu-add { color: var(--cu-add); font-variant-numeric: tabular-nums; }
+.sk-cursor .cu-del { color: var(--cu-del); font-variant-numeric: tabular-nums; }
+
+/* working shimmer: drive --cu-shimmer (0% to 100%) from the timeline, or add .is-live for CSS motion */
+.sk-cursor .cu-shimmer {
+  --cu-shimmer: 0%;
+  display: inline-block; font-size: 13.5px;
+  color: transparent;
+  background-image: linear-gradient(90deg, var(--cu-fg-3) 0%, var(--cu-fg-3) 38%, var(--cu-fg) 50%, var(--cu-fg-3) 62%, var(--cu-fg-3) 100%);
+  background-size: 300% 100%;
+  background-position: calc(100% - var(--cu-shimmer)) 0;
+  -webkit-background-clip: text; background-clip: text;
+}
+.sk-cursor .cu-shimmer.is-live { animation: cu-shimmer 1.6s linear infinite; }
+@keyframes cu-shimmer { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+
+/* assistant action row */
+.sk-cursor .cu-actions { display: flex; gap: 2px; justify-content: flex-end; color: var(--cu-fg-3); margin: 2px 0 10px; }
+.sk-cursor .cu-actions .cu-iconbtn { width: 24px; height: 24px; }
+.sk-cursor .cu-actions .cu-i { width: 14px; height: 14px; }
+
+/* ==========================================================================
+   Composer
+   ========================================================================== */
+.sk-cursor .cu-dock { flex: none; width: 100%; max-width: var(--cu-col-w); margin: 0 auto; padding: 8px 0 9px; position: relative; }
+.sk-cursor .cu-composer {
+  position: relative;
+  background: var(--cu-composer-bg); border: 1px solid var(--cu-composer-border);
+  border-radius: 12px; box-shadow: var(--cu-composer-shadow);
+  display: flex; align-items: center; gap: 8px;
+  min-height: 42px; padding: 0 7px;
+}
+/* empty-state composer: input on top, controls row at the bottom */
+.sk-cursor .cu-composer.is-tall {
+  flex-direction: column; align-items: stretch; gap: 0;
+  padding: 11px 8px 8px 8px; min-height: 100px;
+}
+.sk-cursor .cu-composer.is-tall .cu-input { min-height: 47px; padding: 0 5px; white-space: normal; }
+/* floats over a canvas / changes tab: frosted glass */
+.sk-cursor .cu-composer.is-glass {
+  background: var(--cu-glass-bg); border-color: var(--cu-glass-border); box-shadow: var(--cu-glass-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
+}
+.sk-cursor .cu-composer-row { display: flex; align-items: center; gap: 8px; }
+
+.sk-cursor .cu-input {
+  flex: 1; min-width: 0; display: block;
+  font-size: 14px; line-height: 21px; color: var(--cu-fg);
+  white-space: nowrap; overflow: hidden;
+}
+.sk-cursor .cu-input .cu-ph { color: var(--cu-placeholder); }
+.sk-cursor .cu-input .cu-typed { color: var(--cu-fg); }
+.sk-cursor .cu-caret {
+  display: inline-block; width: 1.5px; height: 17px; background: var(--cu-caret);
+  vertical-align: -3.5px; margin: 0 0 0 1px; border-radius: 1px;
+}
+.sk-cursor .cu-caret.is-before { margin: 0 1px 0 0; }
+
+/* "+": a thin outlined circle with a barely-there fill */
+.sk-cursor .cu-plus {
+  width: 26px; height: 26px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cu-plus-bg); border: 1px solid var(--cu-plus-border); color: var(--cu-plus-fg);
+}
+.sk-cursor .cu-plus .cu-i { width: 14px; height: 14px; }
+
+.sk-cursor .cu-mode {
+  display: inline-flex; align-items: center; gap: 5px; flex: none;
+  height: 24px; padding: 0 7px; border-radius: 12px;
+  font-size: 13px; white-space: nowrap;
+}
+.sk-cursor .cu-mode .cu-i { width: 13px; height: 13px; }
+.sk-cursor .cu-mode .cu-x { width: 11px; height: 11px; opacity: 0.85; margin-left: 1px; }
+.sk-cursor .cu-mode.is-plan { background: var(--cu-plan-bg); color: var(--cu-plan-fg); }
+.sk-cursor .cu-mode.is-ask { background: var(--cu-ask-bg); color: var(--cu-ask-fg); }
+
+/* model label: plain text, name + grey effort + ⌄ ("Cursor Grok 4.7 High Fast").
+   No fill, not even while its menu is open (Aug 13 frame). */
+.sk-cursor .cu-model {
+  display: inline-flex; align-items: center; gap: 4px; flex: none;
+  height: 26px; padding: 0 6px; border-radius: 7px;
+  font-size: 13px; color: var(--cu-fg-2); white-space: nowrap;
+}
+.sk-cursor .cu-model .cu-name { color: var(--cu-fg-2); }
+.sk-cursor .cu-model .cu-effort { color: var(--cu-fg-3); }
+.sk-cursor .cu-model .cu-i { width: 11px; height: 11px; color: var(--cu-fg-3); margin-left: 2px; }
+.sk-cursor .cu-model.is-pressed .cu-name { color: var(--cu-fg); }
+
+/* send button: data-state="mic" | "send" | "stop" */
+.sk-cursor .cu-send {
+  position: relative; width: 28px; height: 28px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cu-send-bg); color: var(--cu-send-fg);
+}
+.sk-cursor .cu-send .cu-i { width: 15px; height: 15px; position: absolute; }
+.sk-cursor .cu-send .cu-send-mic, .sk-cursor .cu-send .cu-send-arrow, .sk-cursor .cu-send .cu-send-stop { display: none; }
+.sk-cursor .cu-send[data-state="mic"] .cu-send-mic { display: flex; }
+.sk-cursor .cu-send[data-state="send"] .cu-send-arrow { display: flex; }
+.sk-cursor .cu-send[data-state="stop"] .cu-send-stop { display: flex; }
+.sk-cursor .cu-send .cu-send-stop { width: 10px; height: 10px; }
+
+/* row under the composer: branch + location (+ spinner while busy) */
+.sk-cursor .cu-under {
+  display: flex; align-items: center; gap: 14px; padding: 7px 5px 0;
+  font-size: 12.5px; color: var(--cu-fg-3);
+}
+.sk-cursor .cu-pick { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.sk-cursor .cu-pick .cu-i { width: 13px; height: 13px; }
+.sk-cursor .cu-pick .cu-i.chev { width: 10px; height: 10px; margin-left: 0; }
+.sk-cursor .cu-loader { display: inline-flex; flex: none; width: 13px; height: 13px; color: var(--cu-fg-3); }
+.sk-cursor .cu-loader svg { width: 100%; height: 100%; display: block; }
+
+/* frosted status label that floats above the composer ("Worked for 2m 22s").
+   CANVAS TAB ONLY (Aug 13 canvas frame). Never over the Changes diff, and never
+   in a chat thread, where "Worked for …" is plain grey text (.cu-worked). */
+.sk-cursor .cu-glass-pill {
+  display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 8px;
+  background: var(--cu-glass-bg); border: 1px solid var(--cu-glass-border);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
+  font-size: 13px; color: var(--cu-fg-2); white-space: nowrap;
+}
+
+/* ==========================================================================
+   New-chat empty state
+   ========================================================================== */
+.sk-cursor .cu-empty {
+  flex: 1; min-height: 0; position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding-bottom: 30px;
+}
+.sk-cursor .cu-empty-stack { width: var(--cu-stack-w); max-width: calc(100% - 48px); position: relative; }
+.sk-cursor .cu-ctx {
+  display: flex; align-items: center; gap: 13px; padding: 0 3px 9px;
+  font-size: 12.5px; color: var(--cu-fg-2);
+}
+.sk-cursor .cu-ctx .cu-pick { color: var(--cu-fg-2); }
+.sk-cursor .cu-ctx .cu-pick .cu-i.chev { color: var(--cu-fg-3); }
+.sk-cursor .cu-suggest { display: flex; gap: 7px; padding-top: 9px; }
+.sk-cursor .cu-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 27px; padding: 0 10px; border-radius: 9px;
+  background: var(--cu-chip-bg); border: 1px solid var(--cu-chip-border);
+  font-size: 12.5px; color: var(--cu-chip-fg); white-space: nowrap;
+}
+.sk-cursor .cu-chip .cu-kbd { color: var(--cu-fg-4); display: inline-flex; align-items: center; gap: 1px; font-size: 12px; }
+.sk-cursor .cu-chip .cu-kbd .cu-i { width: 11px; height: 11px; }
+.sk-cursor .cu-hint {
+  position: absolute; left: 0; right: 0; bottom: 18px; text-align: center;
+  font-size: 12px; color: var(--cu-fg-3);
+}
+.sk-cursor .cu-hint code {
+  font-family: var(--cu-font); font-size: 11.5px; background: var(--cu-kbd-bg);
+  color: var(--cu-fg-2); padding: 1px 5px; border-radius: 4px;
+}
+
+/* ==========================================================================
+   Menus: model picker, @-menu
+   ========================================================================== */
+.sk-cursor .cu-menu {
+  width: 238px; background: var(--cu-menu-bg);
+  border: 1px solid var(--cu-menu-border); border-radius: 11px;
+  box-shadow: var(--cu-menu-shadow); padding: 0 0 4px; overflow: hidden;
+  font-size: 13px; color: var(--cu-fg);
+}
+.sk-cursor .cu-menu-search {
+  display: flex; align-items: center; height: 33px; padding: 0 11px;
+  border-bottom: 1px solid var(--cu-hair-2); color: var(--cu-placeholder); font-size: 13px;
+}
+.sk-cursor .cu-menu-search .cu-caret { height: 15px; margin: 0 1px 0 0; vertical-align: -2px; }
+.sk-cursor .cu-menu-group { padding: 4px 4px 0; }
+.sk-cursor .cu-menu-item {
+  display: flex; align-items: center; gap: 4px;
+  height: 27px; padding: 0 7px; border-radius: 6px; white-space: nowrap;
+}
+.sk-cursor .cu-menu-item .cu-name { color: var(--cu-fg); }
+.sk-cursor .cu-menu-item .cu-effort { color: var(--cu-fg-3); }
+.sk-cursor .cu-menu-item .cu-check { width: 13px; height: 13px; color: var(--cu-fg-2); visibility: hidden; margin-left: auto; }
+.sk-cursor .cu-menu-item.is-selected .cu-check { visibility: visible; }
+.sk-cursor .cu-menu-item.is-hover { background: var(--cu-menu-hover); }
+.sk-cursor .cu-menu-item .cu-desc { color: var(--cu-fg-3); font-size: 12.5px; }
+.sk-cursor .cu-menu-item .cu-status { color: var(--cu-fg-3); font-size: 12.5px; margin-left: auto; }
+.sk-cursor .cu-menu-item .cu-status.is-warn { color: var(--cu-attn); }
+.sk-cursor .cu-menu-item > .cu-i:first-child { color: var(--cu-fg-2); width: 14px; height: 14px; margin-right: 4px; }
+.sk-cursor .cu-menu-sep { height: 1px; background: var(--cu-hair-2); margin: 4px 0 0; }
+.sk-cursor .cu-menu-label { font-size: 12px; color: var(--cu-fg-3); padding: 6px 11px 3px; }
+
+/* Context Usage popover */
+.sk-cursor .cu-ctxpop {
+  background: var(--cu-pop-bg); border: 1px solid var(--cu-menu-border);
+  border-radius: 10px; box-shadow: var(--cu-menu-shadow);
+  padding: 9px 14px 8px; font-size: 13px; color: var(--cu-fg);
+}
+.sk-cursor .cu-ctxpop-head { display: flex; align-items: center; color: var(--cu-fg-2); height: 22px; }
+.sk-cursor .cu-ctxpop-head .cu-i { width: 12px; height: 12px; color: var(--cu-fg-3); margin-left: auto; }
+.sk-cursor .cu-ctxpop-sum { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--cu-fg-2); margin: 6px 0 7px; }
+.sk-cursor .cu-ubar { display: flex; height: 4px; border-radius: 2px; background: var(--cu-u-track); overflow: hidden; gap: 1px; margin-bottom: 8px; }
+.sk-cursor .cu-ubar span { display: block; height: 100%; }
+.sk-cursor .cu-urow { display: flex; align-items: center; gap: 9px; height: 24px; padding: 0 6px; margin: 0 -6px; border-radius: 5px; }
+.sk-cursor .cu-urow.is-hover { background: var(--cu-menu-hover); }
+.sk-cursor .cu-urow .cu-sw { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.sk-cursor .cu-urow .cu-ulabel { flex: 1; color: var(--cu-fg); }
+.sk-cursor .cu-urow .cu-uval { color: var(--cu-fg-2); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+
+/* ==========================================================================
+   Right rail (panel overview: Open Tabs / On <repo>)
+   ========================================================================== */
+.sk-cursor .cu-rail { width: var(--cu-rail-w); flex: none; padding: 6px 14px 0 10px; font-size: 13px; }
+.sk-cursor .cu-rail-label { font-size: 12px; color: var(--cu-fg-3); padding: 0 4px; height: 24px; display: flex; align-items: center; margin-top: 8px; }
+.sk-cursor .cu-rail-row { display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 4px; color: var(--cu-fg-2); border-radius: 6px; white-space: nowrap; }
+.sk-cursor .cu-rail-row .cu-i { width: 14px; height: 14px; color: var(--cu-fg-2); }
+.sk-cursor .cu-rail-row .cu-i.chev { width: 12px; height: 12px; color: var(--cu-fg-3); margin-left: auto; }
+
+/* ==========================================================================
+   Changes / diff review (tab or right panel)
+   ========================================================================== */
+/* Split view (Apr 2026 Changes frame + Aug 13 cloud-agent frame): the chat
+   column keeps its own title bar, thread and composer; the panel sits to its
+   right with its own tab row. The composer never floats over the diff.
+   <div class="cu-split"><section class="cu-chatcol">…</section><section class="cu-panel is-side">…</section></div> */
+.sk-cursor .cu-split { flex: 1; min-height: 0; display: flex; height: 100%; }
+.sk-cursor .cu-chatcol { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+.sk-cursor .cu-chatcol .cu-body { padding: 0 20px; }
+.sk-cursor .cu-panel {
+  flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; position: relative;
+  background: var(--cu-panel-bg);
+}
+.sk-cursor .cu-panel.is-side { flex: none; width: var(--cu-panel-w, 55%); border-left: 1px solid var(--cu-hair); }
+.sk-cursor .cu-panel > .cu-tabs { border-bottom: 1px solid var(--cu-hair-2); padding: 0 8px 0 6px; }
+.sk-cursor .cu-panel-bar {
+  height: 42px; flex: none; display: flex; align-items: center; gap: 10px;
+  padding: 0 10px 0 10px; border-bottom: 1px solid var(--cu-hair-2); font-size: 13px; color: var(--cu-fg-2);
+}
+.sk-cursor .cu-loc {
+  display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
+  border-radius: 8px; background: var(--cu-tab-active); color: var(--cu-fg-2);
+}
+.sk-cursor .cu-loc .cu-i { width: 14px; height: 14px; }
+
+.sk-cursor .cu-splitbtn { display: inline-flex; align-items: stretch; height: 27px; border-radius: 7px; overflow: hidden; background: var(--cu-btn-bg); color: var(--cu-btn-fg); font-size: 13px; font-weight: 500; }
+.sk-cursor .cu-splitbtn .cu-sb-main { display: inline-flex; align-items: center; gap: 6px; padding: 0 11px; white-space: nowrap; }
+.sk-cursor .cu-splitbtn .cu-sb-more { display: inline-flex; align-items: center; justify-content: center; width: 25px; border-left: 1px solid rgba(127, 127, 127, 0.35); }
+.sk-cursor .cu-splitbtn .cu-sb-more .cu-i { width: 11px; height: 11px; }
+.sk-cursor .cu-splitbtn.is-busy { background: var(--cu-btn-busy-bg); color: var(--cu-btn-busy-fg); }
+.sk-cursor .cu-splitbtn .cu-loader { color: currentColor; width: 12px; height: 12px; }
+/* after the PR exists: grey "View PR ↗" (EXTRAPOLATED from the busy grey + the cloud-agent PR header) */
+.sk-cursor .cu-splitbtn.is-ghost { background: var(--cu-tab-active); color: var(--cu-fg); font-weight: 500; }
+.sk-cursor .cu-splitbtn.is-ghost .cu-sb-more { border-left-color: var(--cu-hair); }
+.sk-cursor .cu-splitbtn .cu-sb-main .cu-i { width: 11px; height: 11px; }
+
+/* PR header that replaces the Local/branch bar once the PR is created
+   (anatomy from the Aug 13 cloud-agent Git panel: title, #N ↗, green Open chip,
+   branch → base, Diff | Review | Commits N) */
+.sk-cursor .cu-pr-head { flex: none; border-bottom: 1px solid var(--cu-hair-2); padding: 8px 10px 6px 12px; display: flex; flex-direction: column; gap: 6px; }
+.sk-cursor .cu-pr-head .cu-pr-top { height: 27px; }
+.sk-cursor .cu-pr-head .cu-pr-meta { height: 22px; }
+.sk-cursor .cu-pr-head .cu-subtabs { height: 28px; margin-left: -6px; }
+
+.sk-cursor .cu-changes-sum {
+  height: 42px; flex: none; display: flex; align-items: center; gap: 8px;
+  padding: 0 14px 0 12px; border-bottom: 1px solid var(--cu-hair-2); font-size: 13px; color: var(--cu-fg-2);
+}
+.sk-cursor .cu-changes-sum .cu-i { width: 14px; height: 14px; color: var(--cu-fg-3); }
+.sk-cursor .cu-changes-sum .cu-i.chev { width: 11px; height: 11px; }
+
+.sk-cursor .cu-checkbox {
+  width: 14px; height: 14px; border-radius: 4px; flex: none;
+  border: 1px solid var(--cu-check-border); background: var(--cu-check-bg);
+}
+/* In the real panel the file header sticks to the top while its diff passes
+   under it. For seek-safe video, scroll .cu-panel-inner with a transform and
+   show a .cu-sticky-head copy of the header (absolute, top 0) from the moment
+   the real header reaches the top. Never leave a headerless, half-cut line
+   directly under the summary row. */
+.sk-cursor .cu-panel-scroll { flex: 1; min-height: 0; overflow: hidden; position: relative; }
+.sk-cursor .cu-panel-inner { padding: 10px 10px 0; }
+.sk-cursor .cu-filecard {
+  background: var(--cu-card); border: 1px solid var(--cu-card-border);
+  border-radius: 8px; margin: 0 0 8px; overflow: clip;
+}
+.sk-cursor .cu-filecard-head {
+  display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px 0 10px;
+  font-size: 13px; color: var(--cu-fg); background: var(--cu-card);
+}
+.sk-cursor .cu-sticky-head {
+  position: absolute; top: -1px; left: 10px; right: 10px; z-index: 3;
+  border: 1px solid var(--cu-card-border); border-top: 0;
+  box-shadow: inset 0 -1px 0 var(--cu-hair-2);
+  height: 38px;
+}
+.sk-cursor .cu-filecard-head .cu-path { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sk-cursor .cu-filecard-head .cu-path .cu-dir { color: var(--cu-fg-2); }
+.sk-cursor .cu-filecard-head .cu-i { width: 13px; height: 13px; color: var(--cu-fg-3); }
+.sk-cursor .cu-filecard-head .cu-new { color: var(--cu-new-tag); font-size: 12.5px; }
+.sk-cursor .cu-ftype {
+  width: 18px; flex: none; text-align: center; font-size: 8.5px; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--cu-fg-3); font-family: var(--cu-font);
+}
+.sk-cursor .cu-ftype.ts { color: #4f7f9c; }
+.sk-cursor .cu-ftype.sql { color: #b0782f; }
+
+.sk-cursor .cu-diff {
+  font-family: var(--cu-mono); font-size: 12px; line-height: 20px; letter-spacing: 0;
+  color: var(--cu-code-fg); border-top: 1px solid var(--cu-hair-2);
+}
+.sk-cursor .cu-dl { display: flex; white-space: pre; position: relative; }
+.sk-cursor .cu-dl .ln { width: 44px; flex: none; text-align: right; padding-right: 14px; color: var(--cu-fg-4); }
+.sk-cursor .cu-dl .code { flex: 1; min-width: 0; overflow: hidden; padding-right: 10px; }
+.sk-cursor .cu-dl.is-add { background: var(--cu-add-bg); }
+.sk-cursor .cu-dl.is-add .ln { color: var(--cu-add-ln); background: var(--cu-add-gutter); }
+.sk-cursor .cu-dl.is-add::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--cu-add-bar); }
+.sk-cursor .cu-dl.is-del { background: var(--cu-del-bg); }
+.sk-cursor .cu-dl.is-del::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--cu-del-bar); }
+.sk-cursor .cu-dl.is-del .ln { color: var(--cu-del-ln); }
+.sk-cursor .cu-dl-fold {
+  display: flex; align-items: center; gap: 8px; height: 26px; padding-left: 16px;
+  background: var(--cu-fold-bg); color: var(--cu-fg-3); font-family: var(--cu-font); font-size: 12px; letter-spacing: 0;
+}
+.sk-cursor .cu-dl-fold .cu-i { width: 12px; height: 12px; }
+
+/* cloud agent Git panel header (cursor.com/agents) */
+.sk-cursor .cu-pr { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+.sk-cursor .cu-pr-top { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.sk-cursor .cu-pr-top .cu-pr-title { font-weight: 500; color: var(--cu-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sk-cursor .cu-pr-top .cu-pr-num { color: var(--cu-fg-3); display: inline-flex; align-items: center; gap: 2px; }
+.sk-cursor .cu-pr-meta { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--cu-fg-2); }
+.sk-cursor .cu-badge-open {
+  display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 6px;
+  background: var(--cu-green-bg); color: var(--cu-green); font-size: 12.5px;
+}
+.sk-cursor .cu-badge-open .cu-i { width: 12px; height: 12px; }
+.sk-cursor .cu-subtabs { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--cu-fg-2); }
+.sk-cursor .cu-subtabs .cu-tab { height: 26px; }
+.sk-cursor .cu-count { color: var(--cu-fg-3); margin-left: 4px; }
+
+/* ==========================================================================
+   Settings (Cursor Settings / dashboard)
+   ========================================================================== */
+.sk-cursor .cu-settings { font-size: 14px; color: var(--cu-fg); }
+.sk-cursor .cu-set-label { font-size: 13px; color: var(--cu-fg-2); margin: 0 0 10px 4px; }
+.sk-cursor .cu-set-card {
+  background: var(--cu-card); border: 1px solid var(--cu-card-border); border-radius: 12px; padding: 0 16px; margin-bottom: 22px;
+}
+.sk-cursor[data-theme="dark"] .cu-set-card,
+[data-theme="dark"] .sk-cursor .cu-set-card { background: #252524; border-color: transparent; }
+.sk-cursor .cu-set-row { display: flex; align-items: center; gap: 16px; padding: 13px 0; border-top: 1px solid var(--cu-hair); }
+.sk-cursor .cu-set-row:first-child { border-top: 0; }
+.sk-cursor .cu-set-text { flex: 1; min-width: 0; }
+.sk-cursor .cu-set-title { font-size: 14px; color: var(--cu-fg); display: flex; align-items: center; gap: 8px; }
+.sk-cursor .cu-set-desc { font-size: 13px; color: var(--cu-fg-3); margin-top: 2px; }
+.sk-cursor .cu-connected { font-size: 12.5px; color: var(--cu-green); background: var(--cu-green-bg); padding: 1px 6px; border-radius: 4px; }
+.sk-cursor .cu-toggle { width: 36px; height: 21px; border-radius: 11px; background: var(--cu-toggle-off); position: relative; flex: none; }
+.sk-cursor .cu-toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 17px; height: 17px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+.sk-cursor .cu-toggle.is-on { background: var(--cu-toggle-on); }
+.sk-cursor .cu-toggle.is-on::after { left: 17px; }
+.sk-cursor .cu-btn-outline {
+  display: inline-flex; align-items: center; height: 27px; padding: 0 11px; border-radius: 7px;
+  border: 1px solid var(--cu-outline-border); font-size: 13px; color: var(--cu-fg); white-space: nowrap;
+}
+.sk-cursor .cu-field {
+  display: inline-flex; align-items: center; height: 27px; padding: 0 10px; min-width: 180px; border-radius: 7px;
+  border: 1px solid var(--cu-outline-border); font-size: 13px; color: var(--cu-fg);
+}
+.sk-cursor .cu-select {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; height: 27px; padding: 0 8px 0 10px; min-width: 150px; border-radius: 7px;
+  border: 1px solid var(--cu-outline-border); font-size: 13px; color: var(--cu-fg);
+}
+.sk-cursor .cu-select .cu-i { width: 12px; height: 12px; color: var(--cu-fg-3); }
+
+/* ==========================================================================
+   Classic editor with inline diff (EXTRAPOLATED: no current official frame)
+   ========================================================================== */
+.sk-cursor .cu-editor { display: flex; flex-direction: column; height: 100%; background: var(--cu-bg); min-width: 0; }
+.sk-cursor .cu-ed-tabs { display: flex; align-items: stretch; height: 34px; flex: none; background: var(--cu-sidebar); border-bottom: 1px solid var(--cu-hair-2); }
+.sk-cursor .cu-ed-tab { display: flex; align-items: center; gap: 6px; padding: 0 12px; font-size: 12.5px; color: var(--cu-fg-3); border-right: 1px solid var(--cu-hair-2); white-space: nowrap; }
+.sk-cursor .cu-ed-tab.is-active { background: var(--cu-bg); color: var(--cu-fg); }
+.sk-cursor .cu-ed-tab .cu-i { width: 11px; height: 11px; }
+.sk-cursor .cu-ed-crumbs { height: 24px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 14px; font-size: 12px; color: var(--cu-fg-3); }
+.sk-cursor .cu-ed-crumbs .cu-i { width: 10px; height: 10px; }
+.sk-cursor .cu-ed-code { flex: 1; min-height: 0; overflow: hidden; position: relative; font-family: var(--cu-mono); font-size: 12px; line-height: 20px; color: var(--cu-code-fg); }
+.sk-cursor .cu-ed-code .cu-dl .ln { width: 52px; }
+.sk-cursor .cu-hunk-actions {
+  position: absolute; right: 14px; display: flex; gap: 4px; font-family: var(--cu-font); font-size: 11.5px; z-index: 1;
+}
+.sk-cursor .cu-hunk-actions span { height: 20px; padding: 0 7px; border-radius: 5px; display: inline-flex; align-items: center; gap: 4px; }
+.sk-cursor .cu-hunk-actions .is-undo { background: var(--cu-tab-active); color: var(--cu-fg-2); }
+.sk-cursor .cu-hunk-actions .is-keep { background: var(--cu-btn-bg); color: var(--cu-btn-fg); }
+.sk-cursor .cu-hunk-actions kbd { font-family: var(--cu-font); opacity: 0.6; font-size: 11px; }
+.sk-cursor .cu-review-bar {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px; padding: 5px 6px 5px 12px; border-radius: 10px;
+  background: var(--cu-menu-bg); border: 1px solid var(--cu-menu-border); box-shadow: var(--cu-menu-shadow);
+  font-family: var(--cu-font); font-size: 12.5px; color: var(--cu-fg-2); white-space: nowrap;
+}
+.sk-cursor .cu-review-bar .cu-btn-outline { height: 24px; font-size: 12.5px; }
+.sk-cursor .cu-review-bar .cu-btn-solid { height: 24px; padding: 0 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; background: var(--cu-btn-bg); color: var(--cu-btn-fg); }
+.sk-cursor .cu-review-bar kbd { font-family: var(--cu-font); opacity: 0.6; font-size: 11.5px; }
+
+/* ==========================================================================
+   CLI (`agent`): dark terminal in both themes
+   ========================================================================== */
+.sk-cursor .cu-cli {
+  background: var(--cu-cli-bg); color: var(--cu-cli-fg);
+  font-family: var(--cu-mono); font-size: 14px; line-height: 23px; letter-spacing: 0;
+  padding: 26px 30px; border-radius: 12px; white-space: pre-wrap;
+}
+.sk-cursor .cu-cli .dim { color: var(--cu-cli-dim); }
+.sk-cursor .cu-cli .mid { color: var(--cu-cli-mid); }
+.sk-cursor .cu-cli b { font-weight: 700; color: #f2f2f2; }
+.sk-cursor .cu-cli .hex { display: inline-block; width: 13px; height: 14px; vertical-align: -2px; margin-right: 6px; color: #9a9a9a; }
+.sk-cursor .cu-cli .hex svg { width: 100%; height: 100%; display: block; }
+.sk-cursor .cu-cli .cu-cli-box { border: 1.5px solid var(--cu-cli-accent); padding: 12px 18px; margin: 12px 0; }
+.sk-cursor .cu-cli .cu-cli-box .ttl { color: var(--cu-cli-accent); font-weight: 700; }
+.sk-cursor .cu-cli .cu-cli-input { border: 1px solid var(--cu-cli-border); padding: 6px 12px; margin-top: 12px; }
+.sk-cursor .cu-cli .acc { color: var(--cu-cli-accent); }
+
+/* ==========================================================================
+   macOS pointer (for demo clicks): <div class="cu-pointer">{icons.pointer}</div>
+   ========================================================================== */
+.sk-cursor .cu-pointer { position: absolute; left: 0; top: 0; width: 20px; height: 20px; z-index: 50; pointer-events: none; transform-origin: 18% 10%; }
+.sk-cursor .cu-pointer svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.35)); }

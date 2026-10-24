@@ -1,0 +1,732 @@
+/* ==========================================================================
+   Messaging skin: iMessage (iOS 26), WhatsApp (iOS 26, Liquid Glass), Slack (macOS desktop)
+   --------------------------------------------------------------------------
+   Roots (each one is self-contained and themable):
+     .sk-ios.sk-imsg   iPhone screen running Messages        402 x 874 pt
+     .sk-ios.sk-wa     iPhone screen running WhatsApp        402 x 874 pt
+     .sk-slack         Slack desktop window (macOS)          any size; 1100 x 620 is the demo size
+     .msg-phone        optional bare iPhone 17 Pro body around an .sk-ios screen
+   Theme: data-theme="dark" on the root or on any ancestor. Light is the default.
+   States on the iOS roots:  .kb-up  (keyboard shown, composer rides on top of it)
+   Fonts: Inter stands in for SF Pro (iOS). Slack is set in Lato, its real typeface (Slack-Lato is
+   Lato), shipped with the skin in fonts/ (OFL). JetBrains Mono for Slack code.
+   The component links assets/fonts/fonts.css. All sizes are iOS points / CSS px:
+   present the device with `zoom` on a wrapper (about 1.55 for a phone, 1.72 for Slack).
+   ========================================================================== */
+
+/* Lato (SIL OFL 1.1, fonts/Lato-OFL.txt): Slack's typeface. 400 body, 700 bold, 900 names/titles. */
+@font-face { font-family: 'Lato'; font-style: normal; font-weight: 400; font-display: block; src: url('fonts/Lato-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Lato'; font-style: italic; font-weight: 400; font-display: block; src: url('fonts/Lato-latin-400-italic.woff2') format('woff2'); }
+@font-face { font-family: 'Lato'; font-style: normal; font-weight: 700; font-display: block; src: url('fonts/Lato-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Lato'; font-style: normal; font-weight: 900; font-display: block; src: url('fonts/Lato-latin-900-normal.woff2') format('woff2'); }
+
+/* ------------------------------------------------------------------------ */
+/* 1. iOS shared: screen, status bar, glass, edge effect, keyboard          */
+/* ------------------------------------------------------------------------ */
+.sk-ios {
+  --ios-label: #000000;
+  --ios-label-2: rgba(60, 60, 67, 0.6);
+  --ios-label-3: rgba(60, 60, 67, 0.3);
+  --ios-blue: #0088ff;            /* iOS 26 systemBlue (light) */
+  --ios-glass: rgba(255, 255, 255, 0.66);
+  --ios-glass-rim: rgba(255, 255, 255, 0.9);
+  --ios-glass-hi: rgba(255, 255, 255, 1);
+  --ios-glass-ring: rgba(0, 0, 0, 0.06);
+  --ios-glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --ios-kb-bg: rgba(216, 218, 224, 0.86);
+  --ios-kb-key: #ffffff;
+  --ios-kb-fn: #abb0bb;
+  --ios-kb-text: #000000;
+  --ios-kb-shadow: rgba(0, 0, 0, 0.22);
+  --ios-kb-line: rgba(60, 60, 67, 0.2);
+  --edge-bg: #ffffff;             /* colour the scroll-edge effect blends into */
+  position: relative;
+  width: 402px;
+  height: 874px;
+  overflow: hidden;
+  font-family: "Inter", -apple-system, system-ui, sans-serif;
+  font-feature-settings: "cv11", "ss03";
+  color: var(--ios-label);
+  letter-spacing: -0.022em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  box-sizing: border-box;
+}
+.sk-ios *, .sk-ios *::before, .sk-ios *::after { box-sizing: border-box; }
+.sk-ios[data-theme="dark"], [data-theme="dark"] .sk-ios {
+  --ios-label: #ffffff;
+  --ios-label-2: rgba(235, 235, 245, 0.6);
+  --ios-label-3: rgba(235, 235, 245, 0.3);
+  --ios-blue: #0091ff;            /* iOS 26 systemBlue (dark) */
+  --ios-glass: rgba(40, 40, 42, 0.66);
+  --ios-glass-rim: rgba(255, 255, 255, 0.14);
+  --ios-glass-hi: rgba(255, 255, 255, 0.22);
+  --ios-glass-ring: rgba(0, 0, 0, 0.6);
+  --ios-glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --ios-kb-bg: rgba(34, 34, 36, 0.9);
+  --ios-kb-key: #5d5d61;
+  --ios-kb-fn: #3c3c3f;
+  --ios-kb-text: #ffffff;
+  --ios-kb-shadow: rgba(0, 0, 0, 0.5);
+  --ios-kb-line: rgba(235, 235, 245, 0.18);
+  --edge-bg: #000000;
+}
+.sk-ios [data-ic] { display: inline-flex; flex: none; }
+.sk-ios [data-ic] svg { display: block; width: 100%; height: 100%; }
+
+/* Status bar: time in the left ear, cellular / Wi-Fi / battery in the right ear. */
+.ios-status {
+  position: absolute; z-index: 30; left: 0; right: 0; top: 0; height: 54px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 3px 32px 0 50px; pointer-events: none; color: var(--ios-label);
+}
+.ios-time { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
+.ios-status-r { display: flex; align-items: center; gap: 6px; }
+.ios-status-r .sig { width: 18px; height: 12px; }
+.ios-status-r .wifi { width: 17px; height: 12px; }
+.ios-status-r .bat { width: 28px; height: 13px; margin-left: 1px; }
+
+/* Home indicator */
+.ios-home { position: absolute; z-index: 40; left: 0; right: 0; bottom: 8px; margin: 0 auto; width: 139px; height: 5px; border-radius: 3px; background: var(--ios-label); }
+
+/* Liquid Glass material (iOS 26): translucent fill, bright specular rim, soft lift shadow. */
+.ios-glass {
+  background: var(--ios-glass);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  backdrop-filter: blur(16px) saturate(1.8);
+  box-shadow:
+    inset 0 0 0 0.5px var(--ios-glass-rim),
+    inset 0 1px 1px -0.5px var(--ios-glass-hi),
+    0 0 0 0.5px var(--ios-glass-ring),
+    var(--ios-glass-shadow);
+}
+/* Round glass button (back, FaceTime). 44 pt target, 22 pt glyph. */
+.ios-btn { position: absolute; width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: var(--ios-label); }
+.ios-btn [data-ic] { width: 22px; height: 22px; }
+/* Back button carrying an unread count: "‹ 3" capsule. */
+.ios-btn.count { width: auto; padding: 0 14px 0 10px; gap: 3px; font-size: 17px; font-weight: 500; letter-spacing: -0.02em; }
+
+/* Scroll-edge effect: content fades and blurs as it slides under the floating header / composer. */
+.ios-edge-top, .ios-edge-bottom { position: absolute; left: 0; right: 0; pointer-events: none; z-index: 4; }
+.ios-edge-top {
+  top: 0; height: var(--edge-top-h, 176px);
+  background: linear-gradient(to bottom, var(--edge-bg) 0%, var(--edge-bg) 80%, transparent 100%);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  -webkit-mask-image: linear-gradient(#000 80%, transparent); mask-image: linear-gradient(#000 80%, transparent);
+}
+.ios-edge-bottom {
+  bottom: 0; height: var(--edge-bottom-h, 110px);
+  background: linear-gradient(to top, var(--edge-bg) 0%, var(--edge-bg) 34%, transparent 100%);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to top, #000 50%, transparent); mask-image: linear-gradient(to top, #000 50%, transparent);
+}
+
+/* --- iOS 26 keyboard: glass tray with rounded top, QuickType bar, 4 key rows, emoji + dictation foot.
+       336 pt tall on a 402 pt wide iPhone. Add .caps to show capital letters (auto-capitalisation). */
+.ios-kb {
+  position: absolute; z-index: 20; left: 0; right: 0; bottom: 0; height: 336px;
+  background: var(--ios-kb-bg);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6);
+  border-radius: 28px 28px 0 0;
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.5);
+  color: var(--ios-kb-text);
+}
+[data-theme="dark"] .ios-kb, .sk-ios[data-theme="dark"] .ios-kb { box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.12); }
+.ios-kb-predict { height: 46px; display: flex; align-items: center; padding: 2px 10px 0; }
+.ios-kb-predict > span { flex: 1; text-align: center; font-size: 17px; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; color: var(--ios-kb-text); }
+.ios-kb-predict > i { flex: none; width: 1px; height: 22px; background: var(--ios-kb-line); }
+.ios-kb-rows { padding: 4px 3px 0; }
+.ios-kb-row { display: flex; justify-content: center; gap: 6px; height: 43px; margin-bottom: 11px; }
+.ios-kb-row.r2 { padding: 0 20px; }
+.ios-kb-key {
+  flex: 0 0 34.2px; height: 43px; border-radius: 9px;
+  background: var(--ios-kb-key); color: var(--ios-kb-text);
+  box-shadow: 0 1px 0 var(--ios-kb-shadow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 23px; font-weight: 400; letter-spacing: 0; line-height: 1;
+  padding-bottom: 2px;
+}
+.ios-kb.caps .ios-kb-key.l { text-transform: uppercase; font-size: 21px; }
+.ios-kb-key.fn { background: var(--ios-kb-fn); flex-basis: 43px; }
+.ios-kb-key.fn [data-ic] { width: 23px; height: 23px; }
+.ios-kb-row.r3 .ios-kb-key.fn:first-child { margin-right: 8px; }
+.ios-kb-row.r3 .ios-kb-key.fn:last-child { margin-left: 8px; }
+.ios-kb-key.wide { flex-basis: 89px; font-size: 16px; letter-spacing: -0.01em; }
+.ios-kb-key.space { flex: 1 1 auto; font-size: 16px; letter-spacing: -0.01em; }
+.ios-kb-key.down { background: var(--ios-kb-fn); }
+.ios-kb-foot { position: absolute; left: 0; right: 0; bottom: 0; height: 66px; display: flex; justify-content: space-between; padding: 6px 24px 0; color: var(--ios-kb-text); }
+.ios-kb-foot [data-ic] { width: 27px; height: 27px; opacity: 0.85; }
+
+/* --- Bare iPhone 17 Pro body (430 x 902; screen 402 x 874 inset 14). The device skin owns the
+       richer phone; use this when a component only needs the messaging skin. */
+.msg-phone {
+  --phone-ring: #d9dadd; --phone-ring-2: #a6a8ad; --phone-ring-3: #f4f4f5; --phone-bezel: #060606;
+  position: relative; width: 430px; height: 902px; padding: 14px; border-radius: 70px;
+  background: var(--phone-bezel);
+  box-shadow:
+    0 0 0 2px var(--phone-ring),
+    0 0 0 3px var(--phone-ring-2),
+    0 0 0 3.6px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 3px rgba(0, 0, 0, 0.14),
+    0 40px 80px -28px rgba(0, 0, 0, 0.34);
+}
+[data-theme="dark"] .msg-phone, .msg-phone[data-theme="dark"] {
+  --phone-ring: #4a4c53; --phone-ring-2: #2a2c31; --phone-bezel: #030303;
+  box-shadow:
+    0 0 0 2px var(--phone-ring),
+    0 0 0 3px var(--phone-ring-2),
+    0 0 0 3.8px rgba(255, 255, 255, 0.07),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 2px 3px rgba(0, 0, 0, 0.5),
+    0 40px 80px -28px rgba(0, 0, 0, 0.9);
+}
+.msg-phone > .sk-ios { border-radius: 56px; }
+.msg-phone-island { position: absolute; z-index: 50; top: 25px; left: 0; right: 0; margin: 0 auto; width: 124px; height: 36px; border-radius: 18px; background: #000; }
+.msg-phone-btn { position: absolute; width: 3.5px; border-radius: 2px; background: var(--phone-ring-2); }
+.msg-phone-btn.action { left: -5.5px; top: 152px; height: 32px; }
+.msg-phone-btn.volup { left: -5.5px; top: 214px; height: 60px; }
+.msg-phone-btn.voldn { left: -5.5px; top: 288px; height: 60px; }
+.msg-phone-btn.side { right: -5.5px; top: 246px; height: 94px; }
+.msg-phone-btn.cam { right: -5.5px; top: 470px; height: 52px; border-radius: 2px; }
+
+/* ------------------------------------------------------------------------ */
+/* 2. iMessage (Messages app, iOS 26)                                        */
+/* ------------------------------------------------------------------------ */
+.sk-imsg {
+  --imsg-bg: #ffffff;
+  --imsg-sent: #0a84ff;
+  --imsg-sent-text: #ffffff;
+  --imsg-sms: #34c759;
+  --imsg-recv: #e9e9eb;
+  --imsg-recv-text: #000000;
+  --imsg-meta: #8a8a8e;
+  --imsg-dot: #8e8e93;
+  --imsg-mono-a: #a7adba;
+  --imsg-mono-b: #868a95;
+  --edge-bg: var(--imsg-bg);
+  background: var(--imsg-bg);
+}
+.sk-imsg[data-theme="dark"], [data-theme="dark"] .sk-imsg {
+  --imsg-bg: #000000;
+  --edge-bg: var(--imsg-bg);
+  --imsg-sent: #0a84ff;
+  --imsg-sms: #30d158;
+  --imsg-recv: #262629;
+  --imsg-recv-text: #ffffff;
+  --imsg-meta: #8d8d93;
+  --imsg-dot: #8d8d93;
+  --imsg-mono-a: #8e8e93;
+  --imsg-mono-b: #69696e;
+}
+
+/* Header: avatar centred under the Dynamic Island, name in a glass capsule, glass back + FaceTime. */
+.imsg-head { position: absolute; z-index: 6; left: 0; right: 0; top: 0; height: 150px; pointer-events: none; }
+.imsg-head .ios-btn.back { left: 16px; top: 64px; }
+.imsg-head .ios-btn.facetime { right: 16px; top: 64px; }
+.imsg-head .ios-btn.facetime [data-ic] { width: 25px; height: 25px; }
+.imsg-av { position: absolute; top: 58px; left: 0; right: 0; margin: 0 auto; width: 54px; height: 54px; border-radius: 50%; overflow: hidden; }
+.imsg-av > img, .imsg-av > svg { display: block; width: 100%; height: 100%; }
+.ios-mono {
+  display: flex; align-items: center; justify-content: center; border-radius: 50%;
+  background: linear-gradient(180deg, var(--imsg-mono-a, #a7adba), var(--imsg-mono-b, #868a95));
+  color: #fff; font-weight: 600; font-size: 22px; letter-spacing: 0.01em;
+}
+.imsg-name {
+  position: absolute; top: 116px; left: 0; right: 0; margin: 0 auto; width: max-content;
+  height: 26px; border-radius: 13px; padding: 0 8px 0 12px;
+  display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; color: var(--ios-label);
+}
+.imsg-name [data-ic] { width: 11px; height: 11px; color: var(--imsg-meta); margin-top: 1px; }
+
+/* Thread: anchored to the bottom; the newest message sits just above the composer.
+   Older messages overflow upward and slide under the header's edge effect, as in iOS.
+   Nothing draws below the newest message (clip-path), so an arriving bubble never shows
+   through the glass composer: it is inserted in place at the end of the list. */
+.imsg-thread {
+  --thread-pb: 96px;
+  position: absolute; inset: 0; padding: 150px 0 var(--thread-pb); display: flex; flex-direction: column; justify-content: flex-end;
+  clip-path: inset(0 0 calc(var(--thread-pb) - 6px) 0);
+  /* content is gone by the time it reaches the status bar (pairs with .ios-edge-top) */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 64px, #000 150px); mask-image: linear-gradient(to bottom, transparent 64px, #000 150px);
+}
+.imsg-stamp { text-align: center; font-size: 11px; line-height: 13px; font-weight: 500; color: var(--imsg-meta); margin: 14px 0 8px; letter-spacing: 0; }
+/* iMessage prints a centred stamp when more than about an hour separates two messages; the stamp
+   also ends the bubble group above it, so the bubble before a stamp keeps its tail. */
+.imsg-stamp b { font-weight: 600; }
+.imsg-row { position: relative; display: flex; padding: 0 16px; margin-top: 2px; }
+.imsg-row.sent { justify-content: flex-end; }
+.imsg-row.gap { margin-top: 10px; }
+.imsg-row.tb { margin-top: 15px; } /* a bubble carrying a tapback gets room above it */
+
+.imsg-b {
+  --bub: var(--imsg-recv);
+  position: relative; max-width: 270px; padding: 7px 13px 8px; border-radius: 19px;
+  background: var(--bub); color: var(--imsg-recv-text);
+  font-size: 17px; line-height: 22px; letter-spacing: -0.022em; overflow-wrap: break-word;
+}
+.imsg-row.sent .imsg-b { --bub: var(--imsg-sent); color: var(--imsg-sent-text); }
+.imsg-row.sent.sms .imsg-b { --bub: var(--imsg-sms); }
+.imsg-b.emoji-only { background: none; padding: 0 2px; font-size: 44px; line-height: 50px; }
+/* Tail on the last bubble of a group (iOS curl). Uses a cutter in the page colour, so the
+   thread must sit on a flat --imsg-bg (the default Messages background). */
+.imsg-b.tail::before, .imsg-b.tail::after { content: ""; position: absolute; bottom: 0; height: 21px; }
+.imsg-b.tail::after { height: 25px; }
+.imsg-row.sent .imsg-b.tail::before { right: -7px; width: 20px; background: var(--bub); border-bottom-left-radius: 16px 14px; }
+.imsg-row.sent .imsg-b.tail::after { right: -26px; width: 26px; background: var(--imsg-bg); border-bottom-left-radius: 10px; }
+.imsg-row.recv .imsg-b.tail::before { left: -7px; width: 20px; background: var(--bub); border-bottom-right-radius: 16px 14px; }
+.imsg-row.recv .imsg-b.tail::after { left: -26px; width: 26px; background: var(--imsg-bg); border-bottom-right-radius: 10px; }
+.imsg-b a, .imsg-b .lnk { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* "Delivered" / "Read 9:41 AM" under the LAST sent bubble only. It disappears as soon as the other
+   side replies (remove it, or collapse it in time with the reply). */
+.imsg-receipt { position: relative; height: 16px; text-align: right; padding: 3px 19px 0; font-size: 11px; line-height: 13px; font-weight: 500; color: var(--imsg-meta); letter-spacing: 0; }
+.imsg-receipt b { font-weight: 600; }
+.imsg-receipt > span { position: absolute; right: 19px; top: 3px; white-space: nowrap; }
+
+/* Typing indicator: grey bubble, three dots, thought-bubble tail of two circles. */
+.imsg-typing { position: relative; width: 62px; height: 38px; border-radius: 19px; background: var(--imsg-recv); display: flex; align-items: center; justify-content: center; gap: 5px; }
+.imsg-typing::before, .imsg-typing::after { content: ""; position: absolute; border-radius: 50%; background: var(--imsg-recv); }
+.imsg-typing::before { width: 15px; height: 15px; left: -2px; bottom: -2px; }
+.imsg-typing::after { width: 7px; height: 7px; left: -8px; bottom: -8px; }
+.imsg-typing i { display: block; width: 8.5px; height: 8.5px; border-radius: 50%; background: var(--imsg-dot); }
+
+/* Rich link: grey card for sent and received alike. Large (og:image on top: title + domain below) or
+   compact (title + domain left, the site's own icon right, e.g. data-ic="gcal" for calendar.google.com). */
+.imsg-b.rich { --bub: var(--imsg-recv); padding: 0; color: var(--imsg-recv-text); }
+.imsg-row.sent .imsg-b.rich { --bub: var(--imsg-recv); color: var(--imsg-recv-text); }
+.imsg-link { width: 270px; border-radius: 19px; overflow: hidden; position: relative; z-index: 1; }
+.imsg-link-img { height: 150px; background: #d1d1d6 center / cover no-repeat; position: relative; }
+.imsg-link-cap { padding: 9px 14px 10px; min-width: 0; }
+.imsg-link-title { font-size: 15px; line-height: 19px; font-weight: 600; letter-spacing: -0.015em; }
+.imsg-link-sub { font-size: 13px; line-height: 17px; color: var(--imsg-meta); margin-top: 1px; letter-spacing: -0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.imsg-link.compact { display: flex; align-items: center; gap: 12px; padding: 11px 12px 11px 14px; }
+.imsg-link.compact .imsg-link-cap { flex: 1; padding: 0; }
+.imsg-link-ico { flex: none; width: 46px; height: 46px; border-radius: 11px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.imsg-link-ico[data-ic] > svg { width: 100%; height: 100%; }
+/* Site icon on a white app-icon tile (Google Calendar, Docs…): the glyph inset like a touch icon. */
+.imsg-link-ico.site { background: #ffffff; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.1); padding: 7px; }
+/* Apple Calendar date tile: only for Apple .ics invites (an Apple Calendar link), never for a web link. */
+.imsg-cal { flex-direction: column; justify-content: flex-start; padding-top: 5px; background: #fff; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12); }
+.imsg-cal .d { font-size: 8.5px; line-height: 10px; font-weight: 700; color: #ff3b30; letter-spacing: 0.04em; }
+.imsg-cal .n { font-size: 24px; line-height: 27px; font-weight: 400; color: #000; letter-spacing: -0.02em; }
+
+/* Tapback badge on the top corner of a bubble (blue = you reacted). */
+.imsg-tapback { position: absolute; z-index: 3; top: -17px; width: 35px; height: 30px; border-radius: 16px; background: var(--imsg-sent); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2.5px var(--imsg-bg); }
+.imsg-tapback [data-ic] { width: 16px; height: 16px; }
+.imsg-row.recv .imsg-tapback { right: -16px; }
+.imsg-row.sent .imsg-tapback { left: -16px; }
+.imsg-tapback::before, .imsg-tapback::after { content: ""; position: absolute; border-radius: 50%; background: var(--imsg-sent); box-shadow: 0 0 0 2px var(--imsg-bg); }
+.imsg-tapback::before { width: 9px; height: 9px; left: 2px; bottom: -3px; }
+.imsg-tapback::after { width: 4px; height: 4px; left: -2px; bottom: -8px; }
+.imsg-tapback.grey { background: var(--imsg-recv); color: var(--imsg-meta); }
+.imsg-tapback.grey::before, .imsg-tapback.grey::after { background: var(--imsg-recv); }
+
+/* Composer: glass "+" circle, glass field. Idle: placeholder "iMessage" + mic.
+   Typing (.imsg-field.has-text): text + caret, the mic is replaced by the blue ↑ send button. */
+.imsg-composer { position: absolute; z-index: 8; left: 0; right: 0; bottom: 34px; padding: 0 16px; display: flex; align-items: flex-end; gap: 10px; }
+.imsg-plus { position: relative; flex: none; width: 40px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; color: var(--ios-label); }
+.imsg-plus [data-ic] { width: 20px; height: 20px; }
+.imsg-field { position: relative; flex: 1; min-width: 0; min-height: 40px; border-radius: 20px; display: flex; align-items: flex-end; padding: 0 5px 0 16px; font-size: 17px; line-height: 22px; letter-spacing: -0.022em; }
+.imsg-field .ph, .imsg-field .txt { flex: 1; min-width: 0; padding: 9px 0; }
+.imsg-field .ph { color: var(--imsg-meta); }
+.imsg-field .txt { color: var(--ios-label); overflow-wrap: break-word; }
+.imsg-field .mic { width: 30px; height: 30px; margin: 5px 0; padding: 4px; color: var(--imsg-meta); }
+.imsg-send { flex: none; width: 30px; height: 30px; margin: 5px 0; border-radius: 50%; background: var(--imsg-sent); color: #fff; display: flex; align-items: center; justify-content: center; }
+.imsg-send [data-ic] { width: 17px; height: 17px; }
+.imsg-field .imsg-send { display: none; }
+.imsg-field.has-text .imsg-send { display: flex; }
+.imsg-field.has-text .mic, .imsg-field.has-text .ph { display: none; }
+.imsg-field:not(.has-text) .txt { display: none; }
+.imsg-caret { display: inline-block; width: 2px; height: 22px; margin: 0 0 -5px 1px; border-radius: 1px; background: var(--ios-blue); }
+/* Keyboard up: the composer rides 8 pt above the keyboard. */
+.sk-imsg.kb-up .imsg-composer { bottom: 344px; }
+.sk-imsg.kb-up .imsg-thread { --thread-pb: 398px; }
+
+/* ------------------------------------------------------------------------ */
+/* 3. WhatsApp (iOS 26, Liquid Glass chat screen)                           */
+/* ------------------------------------------------------------------------ */
+.sk-wa {
+  --wa-wall: #efeae2;
+  --wa-doodle-opacity: 0.055;
+  --wa-out: #d9fdd3;
+  --wa-in: #ffffff;
+  --wa-text: #111b21;
+  --wa-meta: #667781;
+  --wa-meta-out: #667781;
+  --wa-tick: #53bdeb;
+  --wa-link: #027eb5;
+  --wa-green: #1daa61;
+  --wa-chip: #ffffff;
+  --wa-chip-text: #54656f;
+  --wa-preview-out: #d1f4cc;
+  --wa-preview-in: #f5f6f6;
+  --wa-bubble-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+  --wa-avatar-bg: #dfe5e7;
+  --wa-avatar-fg: #ffffff;
+  --edge-bg: var(--wa-wall);
+  background: var(--wa-wall);
+  color: var(--wa-text);
+}
+.sk-wa[data-theme="dark"], [data-theme="dark"] .sk-wa {
+  --wa-wall: #0b141a;
+  --wa-doodle-opacity: 0.045;
+  --wa-out: #144d37;
+  --wa-in: #242626;
+  --wa-text: #e9edef;
+  --wa-meta: #8696a0;
+  --wa-meta-out: rgba(233, 237, 239, 0.6);
+  --wa-tick: #53bdeb;
+  --wa-link: #53bdeb;
+  --wa-green: #21c063;
+  --wa-chip: #1d1f1f;
+  --wa-chip-text: #8696a0;
+  --wa-preview-out: #0f3e2c;
+  --wa-preview-in: #1c1e1e;
+  --wa-bubble-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.3);
+  --wa-avatar-bg: #6a7175;
+  --wa-avatar-fg: #cfd4d6;
+  /* the nav bar is a translucent material over the same wallpaper: the scroll edge blends into the
+     wallpaper colour, never into black (the generic dark iOS --edge-bg) */
+  --edge-bg: var(--wa-wall);
+}
+/* Default doodle wallpaper: a faint line-drawn tile over the beige (light) / near-black (dark) base. */
+.wa-wall { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.wa-wall::before {
+  content: ""; position: absolute; inset: 0; opacity: var(--wa-doodle-opacity);
+  background-size: 168px 168px, 168px 168px;
+  background-position: 0 0, 84px 92px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='236' height='236' viewBox='0 0 236 236' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M28 42c-6-5-12-9-12-15a6 6 0 0 1 12-2 6 6 0 0 1 12 2c0 6-6 10-12 15z'/><path d='M110 12l3.5 7.5 8 1-6 5.5 1.6 8-7.1-4-7.1 4 1.6-8-6-5.5 8-1z'/><path d='M178 28h4l2 6-3 2a14 14 0 0 0 7 7l2-3 6 2v4a3 3 0 0 1-3 3 23 23 0 0 1-21-21 3 3 0 0 1 3-3z'/><path d='M52 80h26a6 6 0 0 1 6 6v12a6 6 0 0 1-6 6H64l-8 7v-7h-4a6 6 0 0 1-6-6V86a6 6 0 0 1 6-6z'/><path d='M140 98a3 3 0 0 1 3-3h4l3-4h8l3 4h4a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3h-22a3 3 0 0 1-3-3z'/><circle cx='154' cy='104' r='5'/><path d='M210 108v18a4 4 0 1 1-3-4M210 108l12-3v15a4 4 0 1 1-3-4'/><path d='M22 168h22a8 8 0 0 0 0-16 11 11 0 0 0-21-2 7 7 0 0 0-1 18z'/><circle cx='112' cy='166' r='11'/><path d='M107.5 168.5c2.5 3 6.5 3 9 0M108.5 162.5h.01M115.5 162.5h.01'/><path d='M178 182h20v8a8 8 0 0 1-8 8h-4a8 8 0 0 1-8-8zM198 185h3a3 3 0 0 1 0 6h-3M184 176v3M190 176v3'/><path d='M74 202l-8 14h8l-4 12 12-16h-8l4-10z'/><circle cx='150' cy='222' r='9'/><path d='M150 217v5l3 2'/><path d='M226 214a10 10 0 1 1-13-13 8 8 0 0 0 13 13z'/><path d='M92 52l6 6M98 52l-6 6M220 60h.01M60 136h.01M192 140l5-5M236 140h.01'/><rect x='14' y='206' width='18' height='14' rx='3'/><path d='M14 210l9 5 9-5'/></svg>"), url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='236' height='236' viewBox='0 0 236 236' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'><path d='M28 42c-6-5-12-9-12-15a6 6 0 0 1 12-2 6 6 0 0 1 12 2c0 6-6 10-12 15z'/><path d='M110 12l3.5 7.5 8 1-6 5.5 1.6 8-7.1-4-7.1 4 1.6-8-6-5.5 8-1z'/><path d='M178 28h4l2 6-3 2a14 14 0 0 0 7 7l2-3 6 2v4a3 3 0 0 1-3 3 23 23 0 0 1-21-21 3 3 0 0 1 3-3z'/><path d='M52 80h26a6 6 0 0 1 6 6v12a6 6 0 0 1-6 6H64l-8 7v-7h-4a6 6 0 0 1-6-6V86a6 6 0 0 1 6-6z'/><path d='M140 98a3 3 0 0 1 3-3h4l3-4h8l3 4h4a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3h-22a3 3 0 0 1-3-3z'/><circle cx='154' cy='104' r='5'/><path d='M210 108v18a4 4 0 1 1-3-4M210 108l12-3v15a4 4 0 1 1-3-4'/><path d='M22 168h22a8 8 0 0 0 0-16 11 11 0 0 0-21-2 7 7 0 0 0-1 18z'/><circle cx='112' cy='166' r='11'/><path d='M107.5 168.5c2.5 3 6.5 3 9 0M108.5 162.5h.01M115.5 162.5h.01'/><path d='M178 182h20v8a8 8 0 0 1-8 8h-4a8 8 0 0 1-8-8zM198 185h3a3 3 0 0 1 0 6h-3M184 176v3M190 176v3'/><path d='M74 202l-8 14h8l-4 12 12-16h-8l4-10z'/><circle cx='150' cy='222' r='9'/><path d='M150 217v5l3 2'/><path d='M226 214a10 10 0 1 1-13-13 8 8 0 0 0 13 13z'/><path d='M92 52l6 6M98 52l-6 6M220 60h.01M60 136h.01M192 140l5-5M236 140h.01'/><rect x='14' y='206' width='18' height='14' rx='3'/><path d='M14 210l9 5 9-5'/></svg>");
+}
+[data-theme="dark"] .wa-wall::before, .sk-wa[data-theme="dark"] .wa-wall::before { filter: invert(1); }
+
+/* Header: glass back button (with unread count), avatar + name + status, glass capsule with video + call. */
+.wa-head { position: absolute; z-index: 6; left: 0; right: 0; top: 0; height: 112px; }
+.wa-head .ios-btn.back { left: 14px; top: 58px; }
+.wa-title { position: absolute; left: 0; right: 0; top: 58px; height: 44px; display: flex; align-items: center; gap: 9px; padding: 0 128px 0 0; }
+.wa-head .ios-btn.back + .wa-title { left: 66px; }
+.wa-head .ios-btn.back.count + .wa-title { left: 84px; }
+.wa-av { flex: none; width: 38px; height: 38px; border-radius: 50%; overflow: hidden; }
+.wa-av > [data-ic], .wa-av > img, .wa-av > svg { display: block; width: 100%; height: 100%; }
+.wa-title-text { min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.wa-name { display: flex; align-items: center; gap: 4px; font-size: 17px; line-height: 21px; font-weight: 600; letter-spacing: -0.02em; color: var(--ios-label); white-space: nowrap; }
+.wa-name [data-ic] { width: 15px; height: 15px; }
+.wa-sub-wrap { position: relative; height: 15px; }
+.wa-sub { position: absolute; left: 0; top: 0; font-size: 12.5px; line-height: 15px; color: var(--wa-meta); letter-spacing: -0.005em; white-space: nowrap; }
+.wa-actions-pill { position: absolute; right: 14px; top: 58px; height: 44px; width: 100px; border-radius: 22px; display: flex; align-items: center; justify-content: space-around; padding: 0 8px; color: var(--ios-label); }
+.wa-actions-pill [data-ic] { width: 25px; height: 25px; }
+.wa-actions-pill [data-ic="wa-phone"] { width: 22px; height: 22px; }
+
+/* Thread: bottom-anchored. Nothing draws below the newest bubble (clip-path), so a new message is
+   inserted in place at the end of the list and never rises from behind the composer. */
+.wa-thread {
+  --thread-pb: 92px;
+  position: absolute; z-index: 1; inset: 0; padding: 112px 0 var(--thread-pb); display: flex; flex-direction: column; justify-content: flex-end;
+  clip-path: inset(0 0 calc(var(--thread-pb) - 6px) 0);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 56px, #000 118px); mask-image: linear-gradient(to bottom, transparent 56px, #000 118px);
+}
+.wa-chip { align-self: center; margin: 10px 0 8px; padding: 5px 12px; border-radius: 10px; background: var(--wa-chip); color: var(--wa-chip-text); font-size: 12.5px; line-height: 15px; font-weight: 500; letter-spacing: 0; box-shadow: var(--wa-bubble-shadow); }
+.wa-row { position: relative; display: flex; padding: 0 16px; margin-top: 2px; }
+.wa-row.out { justify-content: flex-end; }
+.wa-row.gap { margin-top: 10px; }
+.wa-b {
+  --bub: var(--wa-in);
+  position: relative; width: fit-content; max-width: 296px; padding: 6px 10px 7px 11px; border-radius: 16px;
+  background: var(--bub); color: var(--wa-text); box-shadow: var(--wa-bubble-shadow);
+  font-size: 16.5px; line-height: 21.5px; letter-spacing: -0.018em; overflow-wrap: break-word;
+}
+.wa-row.out .wa-b { --bub: var(--wa-out); }
+/* iOS tail: a curl off the bottom corner of the last bubble in a group. */
+.wa-row.out .wa-b.tail { border-bottom-right-radius: 4px; }
+.wa-row.in .wa-b.tail { border-bottom-left-radius: 4px; }
+.wa-b.tail::after {
+  content: ""; position: absolute; bottom: 0; width: 16px; height: 18px; background: var(--bub);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 18'><path d='M0 0H8C8 7.4 9.7 13.3 15.1 16.9c.55.37.3 1.1-.35 1.1H0z'/></svg>") no-repeat 0 0 / 100% 100%;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 18'><path d='M0 0H8C8 7.4 9.7 13.3 15.1 16.9c.55.37.3 1.1-.35 1.1H0z'/></svg>") no-repeat 0 0 / 100% 100%;
+}
+.wa-row.out .wa-b.tail::after { right: -7px; }
+.wa-row.in .wa-b.tail::after { left: -7px; transform: scaleX(-1); }
+/* Time + ticks float in the bottom-right corner; .wa-sp reserves exactly their width on the last line,
+   so a short message keeps its time inline ("Anything you need for tonight? 8:05") and the bubble
+   hugs the text. Only a last line too long to share drops the time to its own line, as in the app.
+   34 pt fits "8:05"/"18:20"; 52 pt fits "9:41" + ticks. */
+.wa-sp { display: inline-block; width: 34px; height: 1px; }
+.wa-row.out .wa-sp { width: 52px; }
+.wa-meta { position: absolute; right: 9px; bottom: 5px; display: flex; align-items: center; gap: 3px; font-size: 11.5px; line-height: 14px; color: var(--wa-meta); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.wa-row.out .wa-meta { color: var(--wa-meta-out); }
+.wa-meta [data-ic] { width: 17px; height: 11px; color: var(--wa-meta-out); }
+.wa-meta.read [data-ic] { color: var(--wa-tick); }
+.wa-b .lnk { color: var(--wa-link); }
+/* Typing bubble (shown in the thread while the header says "typing…") */
+.wa-typing { position: relative; width: 64px; height: 36px; border-radius: 16px 16px 16px 4px; background: var(--wa-in); box-shadow: var(--wa-bubble-shadow); display: flex; align-items: center; justify-content: center; gap: 5px; }
+.wa-typing i { display: block; width: 7.5px; height: 7.5px; border-radius: 50%; background: var(--wa-meta); }
+/* Link preview inside a bubble (above the link text). Optional .wa-preview-img for an og:image. */
+.wa-preview { margin: -1px -5px 6px -6px; border-radius: 11px; overflow: hidden; background: var(--wa-preview-in); display: flex; }
+.wa-row.out .wa-preview { background: var(--wa-preview-out); }
+.wa-preview-img { flex: none; width: 82px; background: #c9d1d4 center / cover no-repeat; position: relative; }
+.wa-preview-body { padding: 8px 11px 9px; min-width: 0; }
+.wa-preview-title { font-size: 14.5px; line-height: 19px; font-weight: 600; letter-spacing: -0.012em; color: var(--wa-text); }
+.wa-preview-desc { font-size: 13px; line-height: 17px; color: var(--wa-meta); margin-top: 2px; letter-spacing: -0.005em; }
+.wa-preview-url { font-size: 12.5px; line-height: 16px; color: var(--wa-meta); margin-top: 3px; letter-spacing: 0; }
+
+/* Composer. Idle: glass "+", glass field (sticker glyph inside), camera, mic.
+   Typing (.wa-composer.has-text): text + caret, camera + mic give way to the green send circle. */
+.wa-composer { position: absolute; z-index: 8; left: 0; right: 0; bottom: 34px; padding: 0 12px 0 12px; display: flex; align-items: flex-end; gap: 8px; color: var(--ios-label); }
+.wa-plus { flex: none; width: 40px; height: 40px; border-radius: 20px; display: flex; align-items: center; justify-content: center; }
+.wa-plus [data-ic] { width: 22px; height: 22px; }
+.wa-field { flex: 1; min-width: 0; min-height: 40px; border-radius: 20px; display: flex; align-items: flex-end; padding: 0 9px 0 15px; font-size: 16.5px; line-height: 22px; letter-spacing: -0.018em; }
+.wa-field .ph, .wa-field .txt { flex: 1; min-width: 0; padding: 9px 0; }
+.wa-field .ph { color: transparent; }
+.wa-field .txt { color: var(--ios-label); overflow-wrap: break-word; display: none; }
+.wa-field > [data-ic] { width: 24px; height: 24px; margin: 8px 0; color: var(--ios-label); }
+.wa-icon { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+.wa-icon [data-ic] { width: 26px; height: 26px; }
+.wa-send { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--wa-green); color: #fff; display: none; align-items: center; justify-content: center; }
+.wa-send [data-ic] { width: 20px; height: 20px; margin-left: 2px; }
+.wa-composer.has-text .wa-icon { display: none; }
+.wa-composer.has-text .wa-send { display: flex; }
+.wa-composer.has-text .wa-field .ph { display: none; }
+.wa-composer.has-text .wa-field .txt { display: block; }
+.wa-caret { display: inline-block; width: 2px; height: 22px; margin: 0 0 -5px 1px; border-radius: 1px; background: var(--wa-green); }
+.sk-wa.kb-up .wa-composer { bottom: 344px; }
+.sk-wa.kb-up .wa-thread { --thread-pb: 396px; }
+
+/* ------------------------------------------------------------------------ */
+/* 4. Slack desktop (macOS app, 2023+ layout: tab rail + sidebar + channel)  */
+/* ------------------------------------------------------------------------ */
+.sk-slack {
+  /* Aubergine theme chrome */
+  --sl-frame: #3f0e40;
+  --sl-side: #4d1f4e;
+  --sl-side-text: rgba(255, 255, 255, 0.74);
+  --sl-side-strong: #ffffff;
+  --sl-side-active: #f9edff;
+  --sl-side-active-text: #39063a;
+  --sl-rail-active: rgba(255, 255, 255, 0.22);
+  --sl-search: rgba(255, 255, 255, 0.2);
+  --sl-presence: #2bac76;
+  --sl-badge: #cd2553;
+  /* Content (light) */
+  --sl-bg: #ffffff;
+  --sl-text: #1d1c1d;
+  --sl-text-2: #616061;
+  --sl-text-3: rgba(29, 28, 29, 0.5);
+  --sl-line: rgba(29, 28, 29, 0.13);
+  --sl-line-2: rgba(29, 28, 29, 0.3);
+  --sl-tint: rgba(29, 28, 29, 0.04);
+  --sl-hover: #f8f8f8;
+  --sl-link: #1264a3;
+  --sl-mention: #1264a3;
+  --sl-mention-bg: rgba(29, 155, 209, 0.1);
+  --sl-code: #e01e5a;
+  --sl-green: #007a5a;
+  --sl-app-badge: rgba(29, 28, 29, 0.13);
+  --sl-react-bg: rgba(29, 28, 29, 0.06);
+  --sl-react-mine-bg: rgba(29, 155, 209, 0.1);
+  --sl-react-mine-line: #1d9bd1;
+  --sl-attach-bar: #dddddd;
+  --sl-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 30px 70px -24px rgba(0, 0, 0, 0.32);
+  position: relative; overflow: hidden; border-radius: 12px;
+  width: var(--sl-w, 1100px); height: var(--sl-h, 630px);
+  display: grid; grid-template-columns: 70px minmax(0, 1fr); grid-template-rows: 40px minmax(0, 1fr);
+  background: var(--sl-frame); box-shadow: var(--sl-shadow);
+  /* Slack-Lato = Lato. Only 400 / 700 / 900 exist: names and titles are 900, bold UI is 700. */
+  font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--sl-text);
+  font-size: 15px; line-height: 22px; letter-spacing: 0;
+  -webkit-font-smoothing: antialiased; box-sizing: border-box;
+}
+.sk-slack *, .sk-slack *::before, .sk-slack *::after { box-sizing: border-box; }
+.sk-slack[data-theme="dark"], [data-theme="dark"] .sk-slack {
+  --sl-frame: #23092a;
+  --sl-side: #331537;
+  --sl-side-text: rgba(255, 255, 255, 0.7);
+  --sl-side-active: #e9dcef;
+  --sl-side-active-text: #2e0a30;
+  --sl-rail-active: rgba(255, 255, 255, 0.18);
+  --sl-search: rgba(255, 255, 255, 0.14);
+  --sl-bg: #1a1d21;
+  --sl-text: #d1d2d3;
+  --sl-text-2: #ababad;
+  --sl-text-3: rgba(232, 232, 232, 0.45);
+  --sl-line: rgba(232, 232, 232, 0.13);
+  --sl-line-2: rgba(232, 232, 232, 0.3);
+  --sl-tint: rgba(232, 232, 232, 0.04);
+  --sl-hover: #222529;
+  --sl-link: #1d9bd1;
+  --sl-mention: #1d9bd1;
+  --sl-mention-bg: rgba(29, 155, 209, 0.14);
+  --sl-code: #e8912d;
+  --sl-app-badge: rgba(232, 232, 232, 0.13);
+  --sl-react-bg: rgba(232, 232, 232, 0.08);
+  --sl-react-mine-bg: rgba(29, 155, 209, 0.16);
+  --sl-attach-bar: #35373b;
+  --sl-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 30px 70px -24px rgba(0, 0, 0, 0.85);
+}
+.sk-slack [data-ic] { display: inline-flex; flex: none; width: 20px; height: 20px; }
+.sk-slack [data-ic] svg { display: block; width: 100%; height: 100%; }
+
+/* Title bar: traffic lights, history arrows, centred workspace search, help. */
+.sl-top { grid-column: 1 / -1; position: relative; display: flex; align-items: center; height: 40px; padding: 0 12px 0 14px; color: rgba(255, 255, 255, 0.88); }
+.sl-lights { display: flex; gap: 8px; }
+.sl-lights i { display: block; width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.14); }
+.sl-lights i:nth-child(1) { background: #ff5f57; }
+.sl-lights i:nth-child(2) { background: #febc2e; }
+.sl-lights i:nth-child(3) { background: #28c840; }
+.sl-search-wrap { position: absolute; left: 0; right: 0; top: 7px; margin: 0 auto; width: min(calc(100% - 340px), 640px); display: flex; align-items: center; gap: 8px; }
+.sl-history { position: absolute; right: calc(100% + 12px); top: 3px; display: flex; gap: 8px; align-items: center; }
+.sl-history [data-ic] { width: 20px; height: 20px; opacity: 0.88; }
+.sl-history [data-ic].dim { opacity: 0.42; }
+.sl-search { flex: 1; height: 26px; border-radius: 7px; background: var(--sl-search); display: flex; align-items: center; gap: 7px; padding: 0 10px; font-size: 13px; color: rgba(255, 255, 255, 0.86); letter-spacing: 0; }
+.sl-search [data-ic] { width: 15px; height: 15px; }
+.sl-top-r { margin-left: auto; display: flex; align-items: center; }
+.sl-top-r [data-ic] { width: 20px; height: 20px; }
+
+/* Tab rail */
+.sl-rail { display: flex; flex-direction: column; align-items: center; padding: 6px 0 12px; color: #fff; min-height: 0; }
+.sl-ws { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 900; color: #fff; margin-bottom: 14px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.sl-tab { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 10px; font-size: 11px; line-height: 13px; font-weight: 700; letter-spacing: 0; color: rgba(255, 255, 255, 0.92); }
+.sl-tab-ic { position: relative; width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+.sl-tab-ic [data-ic] { width: 20px; height: 20px; }
+.sl-tab.on .sl-tab-ic { background: var(--sl-rail-active); }
+.sl-tab-ic .dot { position: absolute; right: 3px; top: 3px; width: 8px; height: 8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--sl-frame); }
+.sl-rail-foot { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.sl-new { width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; }
+.sl-me { position: relative; width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; }
+.sl-me img { width: 100%; height: 100%; border-radius: 9px; object-fit: cover; display: block; }
+.sl-me::after { content: ""; position: absolute; right: -3px; bottom: -3px; width: 11px; height: 11px; border-radius: 50%; background: var(--sl-presence); box-shadow: 0 0 0 3px var(--sl-frame); }
+
+/* Main panel: sidebar + channel, inset into the theme frame with rounded corners. */
+.sl-panel { position: relative; display: grid; grid-template-columns: var(--sl-side-w, 250px) minmax(0, 1fr); margin: 0 4px 4px 0; border-radius: 8px; overflow: hidden; min-height: 0; }
+
+/* Sidebar */
+.sl-side { background: var(--sl-side); color: var(--sl-side-text); padding: 0 0 12px; overflow: hidden; display: flex; flex-direction: column; }
+.sl-side-head { flex: none; height: 49px; display: flex; align-items: center; gap: 4px; padding: 0 10px 0 16px; color: #fff; }
+.sl-side-head .ws { font-size: 18px; line-height: 24px; font-weight: 900; letter-spacing: 0; }
+.sl-side-head .ws-chev { width: 16px; height: 16px; opacity: 0.9; }
+.sl-side-head .acts { margin-left: auto; display: flex; gap: 2px; }
+.sl-side-head .acts span { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+.sl-side-head .acts [data-ic] { width: 18px; height: 18px; }
+.sl-item { flex: none; height: 28px; margin: 0 8px; padding: 0 10px 0 11px; border-radius: 6px; display: flex; align-items: center; gap: 8px; font-size: 15px; line-height: 28px; white-space: nowrap; }
+.sl-item [data-ic] { width: 17px; height: 17px; opacity: 0.9; }
+.sl-item .lbl { overflow: hidden; text-overflow: ellipsis; }
+.sl-item.unread { color: var(--sl-side-strong); font-weight: 700; }
+.sl-item.on { background: var(--sl-side-active); color: var(--sl-side-active-text); font-weight: 700; }
+.sl-item .sl-badge { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--sl-badge); color: #fff; font-size: 11.5px; font-weight: 700; line-height: 18px; text-align: center; letter-spacing: 0; }
+.sl-item .mini { width: 20px; height: 20px; border-radius: 5px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; overflow: hidden; position: relative; letter-spacing: -0.02em; }
+.sl-item .mini img { width: 12px; height: 12px; }
+.sl-item .mini.photo img { width: 100%; height: 100%; object-fit: cover; }
+.sl-sec { flex: none; height: 28px; margin: 10px 8px 0; padding: 0 10px 0 8px; display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 400; }
+.sl-sec [data-ic] { width: 16px; height: 16px; opacity: 0.9; }
+
+/* Channel pane */
+.sl-main { background: var(--sl-bg); color: var(--sl-text); display: flex; flex-direction: column; min-width: 0; min-height: 0; position: relative; }
+.sl-ch-head { flex: none; height: 49px; display: flex; align-items: center; padding: 0 12px 0 20px; gap: 4px; }
+.sl-ch-name { display: flex; align-items: center; gap: 4px; font-size: 18px; line-height: 24px; font-weight: 900; letter-spacing: 0; color: var(--sl-text); }
+.sl-ch-name [data-ic] { width: 18px; height: 18px; }
+.sl-ch-name .chev { width: 15px; height: 15px; color: var(--sl-text-2); margin-left: 2px; }
+.sl-ch-r { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.sl-members { height: 28px; padding: 0 8px 0 4px; border-radius: 7px; box-shadow: inset 0 0 0 1px var(--sl-line-2); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--sl-text-2); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.sl-members .stack { display: flex; }
+.sl-members .stack span { width: 20px; height: 20px; border-radius: 5px; margin-left: -4px; box-shadow: 0 0 0 2px var(--sl-bg); font-size: 8px; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.sl-members .stack img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sl-members .stack span:first-child { margin-left: 0; }
+.sl-huddle { height: 28px; padding: 0 6px 0 8px; border-radius: 7px; box-shadow: inset 0 0 0 1px var(--sl-line-2); display: flex; align-items: center; gap: 4px; color: var(--sl-text-2); }
+.sl-huddle [data-ic] { width: 18px; height: 18px; }
+.sl-huddle .chev { width: 14px; height: 14px; }
+.sl-icon-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--sl-text-2); }
+.sl-icon-btn [data-ic] { width: 18px; height: 18px; }
+.sl-tabs { flex: none; height: 38px; display: flex; align-items: stretch; gap: 18px; padding: 0 20px; box-shadow: inset 0 -1px 0 var(--sl-line); font-size: 13px; font-weight: 700; color: var(--sl-text-2); letter-spacing: 0; position: relative; z-index: 2; background: var(--sl-bg); }
+.sl-tabs > span { display: flex; align-items: center; gap: 6px; position: relative; }
+.sl-tabs [data-ic] { width: 16px; height: 16px; }
+.sl-tabs > span.on { color: var(--sl-text); }
+.sl-tabs > span.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; border-radius: 2px 2px 0 0; background: var(--sl-text); }
+
+/* Message list (anchored to the bottom like the real app; older messages scroll up under the tabs) */
+.sl-list { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 0 8px; overflow: hidden; }
+.sl-day { flex: none; position: relative; height: 28px; margin: 12px 0 4px; display: flex; align-items: center; justify-content: center; }
+.sl-day::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--sl-line); }
+.sl-day > span { position: relative; height: 28px; padding: 0 10px 0 16px; border-radius: 14px; background: var(--sl-bg); box-shadow: inset 0 0 0 1px var(--sl-line); display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 700; color: var(--sl-text); letter-spacing: 0; }
+.sl-day [data-ic] { width: 14px; height: 14px; }
+.sl-msg { flex: none; position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 8px; padding: 8px 20px 8px; }
+.sl-msg.cont { padding-top: 2px; }
+.sl-msg.cont .sl-av { visibility: hidden; height: 0; }
+.sl-msg.hl { background: var(--sl-hover); }
+.sl-av { width: 36px; height: 36px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; margin-top: 2px; letter-spacing: -0.01em; }
+.sl-av img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.sl-msg-head { display: flex; align-items: baseline; gap: 6px; line-height: 22px; }
+.sl-name { font-size: 15px; font-weight: 900; color: var(--sl-text); letter-spacing: 0; }
+.sl-app { align-self: center; height: 16px; padding: 0 3px; border-radius: 3px; background: var(--sl-app-badge); color: var(--sl-text-2); font-size: 10px; line-height: 16px; font-weight: 700; letter-spacing: 0.03em; }
+.sl-time { font-size: 12px; color: var(--sl-text-2); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.sl-text { font-size: 15px; line-height: 22px; color: var(--sl-text); }
+.sl-text p { margin: 0; }
+.sl-text p + p { margin-top: 6px; }
+.sl-text b { font-weight: 700; }
+.sl-mention { color: var(--sl-mention); background: var(--sl-mention-bg); border-radius: 3px; padding: 0 2px; font-weight: 400; }
+.sl-text code, .sl-code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; line-height: 18px; color: var(--sl-code); background: var(--sl-tint); box-shadow: inset 0 0 0 1px var(--sl-line); border-radius: 3px; padding: 2px 3px 1px; letter-spacing: 0; }
+.sl-text a, .sl-link { color: var(--sl-link); text-decoration: none; }
+
+/* Reactions and thread summary */
+.sl-reacts { display: flex; gap: 4px; margin-top: 6px; }
+.sl-react { height: 24px; padding: 0 7px 0 6px; border-radius: 12px; background: var(--sl-react-bg); display: flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 700; color: var(--sl-text-2); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.sl-react .emo { font-size: 14px; line-height: 16px; }
+.sl-react.mine { background: var(--sl-react-mine-bg); box-shadow: inset 0 0 0 1px var(--sl-react-mine-line); color: var(--sl-link); }
+.sl-react.add { width: 30px; padding: 0; justify-content: center; }
+.sl-react.add [data-ic] { width: 16px; height: 16px; }
+.sl-thread { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; letter-spacing: 0; }
+.sl-thread .faces { display: flex; gap: 4px; }
+.sl-thread .faces span { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; overflow: hidden; }
+.sl-thread .faces img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sl-thread .n { color: var(--sl-link); font-weight: 700; }
+.sl-thread .last { color: var(--sl-text-2); }
+
+/* Link unfurl (Slack attachment with a left colour bar), the anatomy an app unfurl uses:
+     .sl-unfurl-author  small round author icon + author name (bold)
+     .sl-unfurl-title   bold link title
+     .sl-unfurl-desc    plain description
+     .sl-unfurl-foot    service icon · "owner/repo | Added by GitHub" (grey 12 px)
+   The GitHub app's PR unfurl: green bar (#1F883D open, #8250DF merged), author = PR opener. */
+.sl-unfurl { position: relative; margin-top: 6px; padding: 0 0 0 14px; max-width: 540px; }
+.sl-unfurl::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 8px; background: var(--bar, var(--sl-attach-bar)); }
+.sl-unfurl-author { display: flex; align-items: center; gap: 6px; font-size: 15px; line-height: 22px; font-weight: 700; color: var(--sl-text); }
+.sl-unfurl-author img, .sl-unfurl-author .ico { width: 16px; height: 16px; border-radius: 50%; flex: none; display: block; object-fit: cover; }
+.sl-unfurl-svc { display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 18px; font-weight: 700; color: var(--sl-text); }
+.sl-unfurl-svc img { width: 16px; height: 16px; border-radius: 3px; }
+.sl-unfurl-title { font-size: 15px; line-height: 22px; font-weight: 700; color: var(--sl-link); }
+.sl-unfurl-desc { font-size: 15px; line-height: 22px; color: var(--sl-text); }
+.sl-unfurl-foot { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; line-height: 18px; color: var(--sl-text-2); font-variant-numeric: tabular-nums; }
+.sl-unfurl-foot img { width: 16px; height: 16px; border-radius: 3px; }
+.sl-unfurl-foot i { font-style: normal; opacity: 0.6; }
+
+/* Block Kit card + buttons (bot messages with actions) */
+.sl-card { margin-top: 8px; max-width: 540px; border-radius: 12px; box-shadow: inset 0 0 0 1px var(--sl-line); padding: 12px 16px 14px; background: var(--sl-bg); }
+.sl-card-head { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--sl-text-2); letter-spacing: 0; }
+.sl-card-title { margin-top: 8px; font-size: 15px; line-height: 22px; font-weight: 900; color: var(--sl-link); }
+.sl-btns { display: flex; gap: 8px; margin-top: 10px; }
+.sl-btn { height: 32px; padding: 0 14px; border-radius: 8px; display: flex; align-items: center; font-size: 14px; font-weight: 700; letter-spacing: 0; box-shadow: inset 0 0 0 1px var(--sl-line-2); color: var(--sl-text); background: var(--sl-bg); }
+.sl-btn.primary { background: var(--sl-green); color: #fff; box-shadow: none; }
+
+/* Composer: formatting bar, input, action bar with the send split-button. */
+.sl-composer { flex: none; margin: 0 20px; border-radius: 9px; box-shadow: inset 0 0 0 1px var(--sl-line-2); background: var(--sl-bg); }
+.sl-composer.focus { box-shadow: inset 0 0 0 1px var(--sl-text-2); }
+.sl-fmt { height: 36px; padding: 0 6px; display: flex; align-items: center; gap: 2px; border-radius: 9px 9px 0 0; background: var(--sl-tint); color: var(--sl-text-3); }
+.sl-fmt span { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+.sl-fmt [data-ic] { width: 18px; height: 18px; }
+.sl-fmt .sep { width: 1px; height: 20px; background: var(--sl-line); margin: 0 4px; }
+.sl-input { min-height: 42px; padding: 10px 12px 8px; font-size: 15px; line-height: 22px; color: var(--sl-text); }
+.sl-input .ph { color: var(--sl-text-3); }
+.sl-caret { display: inline-block; width: 1.5px; height: 18px; margin: 0 0 -3px 1px; background: var(--sl-text); }
+.sl-bar { height: 40px; padding: 0 6px 4px; display: flex; align-items: center; gap: 2px; color: var(--sl-text-2); }
+.sl-bar > span { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.sl-bar > span [data-ic] { width: 18px; height: 18px; }
+.sl-bar .plus { border-radius: 50%; background: var(--sl-tint); box-shadow: inset 0 0 0 1px var(--sl-line); }
+.sl-bar .sep { width: 1px; height: 20px; background: var(--sl-line); margin: 0 4px; }
+.sl-send { margin-left: auto; display: flex; align-items: center; height: 28px; border-radius: 6px; color: var(--sl-text-3); width: auto !important; }
+.sl-send .go { width: 32px; height: 28px; border-radius: 6px 0 0 6px; display: flex; align-items: center; justify-content: center; }
+.sl-send .go [data-ic] { width: 16px; height: 16px; }
+.sl-send .more { width: 22px; height: 28px; display: flex; align-items: center; justify-content: center; box-shadow: inset 1px 0 0 var(--sl-line); }
+.sl-send .more [data-ic] { width: 14px; height: 14px; }
+.sl-send.ready { background: var(--sl-green); color: #fff; }
+.sl-send.ready .more { box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.3); }
+/* "Grok Bot is typing…" line under the composer */
+.sl-typing { flex: none; height: 22px; padding: 2px 20px 0; font-size: 12px; line-height: 18px; color: var(--sl-text-2); letter-spacing: 0; }
+.sl-typing b { font-weight: 700; color: var(--sl-text); }

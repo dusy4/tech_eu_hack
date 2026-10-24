@@ -13,6 +13,7 @@ export type AgentCodeLanguage =
   | "bash"
   | "diff"
   | "json"
+  | "rust"
   | "text"
   | "tsx"
   | "typescript";
@@ -47,7 +48,7 @@ function getAgentCodeHighlighter() {
   if (!agentCodeHighlighter) {
     agentCodeHighlighter = createHighlighter({
       themes: [LIGHT_THEME, DARK_THEME],
-      langs: ["bash", "diff", "json", "tsx", "typescript"],
+      langs: ["bash", "diff", "json", "rust", "tsx", "typescript"],
     });
   }
   return agentCodeHighlighter;

@@ -1,0 +1,737 @@
+/* =====================================================================
+   DEVICE SKIN  ·  .sk-device
+   iPhone (iOS 26 Liquid Glass) frame, status bar and lock screen with
+   notifications · macOS 26 Tahoe desktop, menu bar, window, notification
+   banner · Safari 26 and Chrome (GM3) browser frames · macOS cursors.
+
+   All sizes are authored at 1 CSS px = 1 pt (iPhone screen 402×874,
+   Mac desktop 1512×851). Scale a piece with `zoom` on its wrapper
+   (keeps text crisp), e.g. zoom:1.06 for a phone at 1080p.
+
+   Theme: put data-theme="dark" on .sk-device (or any ancestor).
+   Fonts: Inter stands in for SF Pro (the library has one UI face); load
+   assets/fonts/fonts.css. Inter's opsz axis switches to its Display cut at
+   large sizes, the way SF Pro switches from Text to Display.
+   ===================================================================== */
+
+.sk-device{
+  --dv-sans:'Inter',-apple-system,system-ui,sans-serif;
+  --dv-mono:'JetBrains Mono',ui-monospace,monospace;
+
+  /* --- traffic lights (identical in light and dark) --- */
+  --dv-tl-close:#FF5F57; --dv-tl-close-edge:#E2463F;
+  --dv-tl-min:#FEBC2E;   --dv-tl-min-edge:#E1A116;
+  --dv-tl-zoom:#28C840;  --dv-tl-zoom-edge:#17AD2D;
+  --dv-tl-off:#D6D6D6;   --dv-tl-off-edge:#C4C4C4;
+
+  /* --- iPhone hardware (iPhone 17 Pro · light = Silver, dark = Deep Blue) --- */
+  --dv-hw-rim:linear-gradient(160deg,#FBFBFC 0%,#D5D7DC 14%,#F1F2F4 32%,#C4C7CD 55%,#EEEFF2 78%,#CBCED4 100%);
+  --dv-hw-rim-edge:rgba(0,0,0,.20);
+  --dv-hw-rim-inner:rgba(255,255,255,.75);
+  --dv-hw-btn:linear-gradient(90deg,#AEB1B8,#E9EAED 55%,#B9BCC2);
+  --dv-hw-bezel:#060606;
+
+  /* --- iOS appearance --- */
+  --dv-ios-label:#000000;
+  --dv-ios-label-2:rgba(48,48,54,.84);
+  --dv-ios-plate:rgba(246,246,248,.74);
+  --dv-ios-plate-rim:rgba(255,255,255,.75);
+  --dv-ios-plate-edge:rgba(0,0,0,.04);
+  --dv-ios-plate-shadow:0 10px 30px -8px rgba(20,30,70,.22);
+  --dv-ios-peek:rgba(246,246,248,.50);
+  --dv-ios-peek-2:rgba(246,246,248,.34);
+  --dv-ios-glass-btn:rgba(255,255,255,.16);
+  --dv-ios-glass-filter:blur(14px) saturate(125%) brightness(1.05);
+  --dv-ios-glass-btn-rim:rgba(255,255,255,.55);
+  --dv-ios-screen-bg:#FFFFFF;
+  --dv-ios-home:#000000;
+  --dv-ios-lock-ink:#FFFFFF;
+  --dv-ios-wall:
+    radial-gradient(70% 42% at 8% 98%, rgba(255,176,118,.95) 0%, rgba(255,176,118,0) 70%),
+    radial-gradient(64% 38% at 102% 72%, rgba(255,128,196,.70) 0%, rgba(255,128,196,0) 70%),
+    radial-gradient(90% 40% at 38% 46%, rgba(150,200,255,.55) 0%, rgba(150,200,255,0) 70%),
+    radial-gradient(110% 55% at 50% -6%, #1D52D6 0%, rgba(29,82,214,0) 72%),
+    linear-gradient(180deg,#1E56D9 0%,#2F6BE6 22%,#5B8DF0 40%,#A3B3F2 62%,#E2B6E0 84%,#F7C6B2 100%);
+
+  /* --- macOS appearance --- */
+  --dv-mac-ink:rgba(0,0,0,.86);
+  --dv-mac-ink-2:rgba(0,0,0,.55);
+  --dv-mac-ink-3:rgba(0,0,0,.26);
+  --dv-mac-window:#FFFFFF;
+  --dv-mac-toolbar:#F6F6F6;
+  --dv-mac-titlebar:#F3F3F3;
+  --dv-mac-sidebar:rgba(236,238,242,.86);
+  --dv-mac-sep:rgba(0,0,0,.09);
+  --dv-mac-window-edge:rgba(0,0,0,.20);
+  --dv-mac-window-rim:rgba(255,255,255,0);
+  --dv-mac-shadow:0 0 0 .5px rgba(0,0,0,.20), 0 28px 70px -10px rgba(0,0,0,.38), 0 10px 24px -6px rgba(0,0,0,.18);
+  --dv-mac-capsule:rgba(255,255,255,.92);
+  --dv-mac-capsule-edge:rgba(0,0,0,.075);
+  --dv-mac-capsule-shadow:0 1px 2px rgba(0,0,0,.06), 0 2px 8px -2px rgba(0,0,0,.08);
+  --dv-mac-field:rgba(255,255,255,.92);
+  --dv-mac-accent:#0A84FF;
+  --dv-mac-menubar-ink:rgba(0,0,0,.88);
+  --dv-mac-notif:rgba(246,246,247,.80);
+  --dv-mac-notif-rim:rgba(255,255,255,.70);
+  --dv-mac-notif-edge:rgba(0,0,0,.10);
+  --dv-mac-notif-shadow:0 12px 32px -6px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.06);
+  --dv-mac-notif-close:rgba(255,255,255,.96);
+  --dv-mac-notif-close-press:#DCDCDF;
+  --dv-mac-notif-time:rgba(0,0,0,.58);
+  /* Safari Start Page */
+  --dv-sp-bg:#FFFFFF;
+  --dv-sp-tile:#FFFFFF;
+  --dv-sp-tile-ink:#000000;
+  --dv-sp-tile-edge:rgba(0,0,0,.10);
+  --dv-sp-card:#F4F4F5;
+  --dv-mac-wall:
+    radial-gradient(60% 38% at 82% 100%, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 70%),
+    radial-gradient(120% 34% at 30% 104%, rgba(36,104,222,.85) 0%, rgba(36,104,222,0) 72%),
+    radial-gradient(90% 40% at 100% 62%, rgba(96,156,240,.60) 0%, rgba(96,156,240,0) 70%),
+    radial-gradient(80% 45% at 0% 40%, rgba(255,255,255,.45) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(180deg,#E7F0FA 0%,#C6DCF6 30%,#8DB8F0 62%,#4F8AE6 86%,#2F6CD9 100%);
+
+  /* --- Chrome (GM3 / Chrome Refresh) --- */
+  --dv-cr-frame:#DDE3EA;
+  --dv-cr-toolbar:#FFFFFF;
+  --dv-cr-omnibox:#E9EEF6;
+  --dv-cr-ink:#1F1F1F;
+  --dv-cr-ink-2:#474747;
+  --dv-cr-ink-3:#5F6368;
+  --dv-cr-tab-ink:#474747;
+  --dv-cr-tab-sep:#A9B0B8;
+  --dv-cr-hover:rgba(31,31,31,.08);
+  --dv-cr-select:#D3E3FD;
+  --dv-cr-link:#0B57D0;
+  --dv-cr-chip:#FFFFFF;
+  --dv-cr-popup:#FFFFFF;
+  --dv-cr-popup-row:#E9EEF6;
+  --dv-cr-popup-shadow:0 4px 8px 3px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.30);
+  --dv-cr-avatar:#C2E7FF; --dv-cr-avatar-ink:#004A77;
+  --dv-cr-content-edge:rgba(0,0,0,.08);
+  --dv-cr-spinner:#0B57D0;
+  --dv-cr-ntp:#FFFFFF;
+  --dv-cr-ntp-search:#E9EEF6;
+  --dv-cr-ntp-ink-2:#474747;
+  /* Google wordmark: full colour in light, single white in dark (Chrome's dark NTP logo) */
+  --dv-g-blue:#4285F4; --dv-g-red:#EA4335; --dv-g-yellow:#FBBC05; --dv-g-green:#34A853;
+  --dv-cr-window-shadow:0 0 0 .5px rgba(0,0,0,.22), 0 28px 70px -10px rgba(0,0,0,.36), 0 10px 24px -6px rgba(0,0,0,.16);
+
+  /* --- app icons --- */
+  --dv-ai-chatgpt-bg:#FFFFFF;     --dv-ai-chatgpt-ink:#000000;
+  --dv-ai-messages-bg:linear-gradient(180deg,#67F27C 0%,#0DBD2C 100%); --dv-ai-messages-ink:#FFFFFF;
+  --dv-ai-mail-bg:linear-gradient(180deg,#24A4FF 0%,#1A62F2 100%);    --dv-ai-mail-ink:#FFFFFF; --dv-appicon-mail-line:#2C78F5;
+  --dv-ai-whatsapp-bg:linear-gradient(180deg,#5EF07A 0%,#20C44A 100%); --dv-ai-whatsapp-ink:#FFFFFF;
+  --dv-ai-slack-bg:#FFFFFF;
+  --dv-ai-grok-bg:#000000;        --dv-ai-grok-ink:#FFFFFF;
+  --dv-ai-claude-bg:#D97757;      --dv-ai-claude-ink:#FFFFFF;
+  --dv-ai-edge:rgba(0,0,0,.10);
+
+  font-family:var(--dv-sans);
+  -webkit-font-smoothing:antialiased;
+  font-optical-sizing:auto;
+  color:var(--dv-mac-ink);
+}
+
+/* ------------------------------ DARK ------------------------------ */
+.sk-device[data-theme="dark"],
+[data-theme="dark"] .sk-device{
+  --dv-hw-rim:linear-gradient(160deg,#5A6372 0%,#262C36 14%,#46505E 32%,#1D222A 55%,#4A5361 78%,#262B34 100%);
+  --dv-hw-rim-edge:rgba(255,255,255,.10);
+  --dv-hw-rim-inner:rgba(255,255,255,.16);
+  --dv-hw-btn:linear-gradient(90deg,#1F242C,#56606E 55%,#262B33);
+  --dv-hw-bezel:#000000;
+
+  --dv-ios-label:#FFFFFF;
+  --dv-ios-label-2:rgba(235,235,245,.60);
+  --dv-ios-plate:rgba(34,34,38,.66);
+  --dv-ios-plate-rim:rgba(255,255,255,.16);
+  --dv-ios-plate-edge:rgba(0,0,0,.30);
+  --dv-ios-plate-shadow:0 10px 30px -8px rgba(0,0,0,.55);
+  --dv-ios-peek:rgba(34,34,38,.50);
+  --dv-ios-peek-2:rgba(34,34,38,.34);
+  --dv-ios-glass-btn:rgba(30,30,36,.34);
+  --dv-ios-glass-filter:blur(14px) saturate(115%) brightness(.92);
+  --dv-ios-glass-btn-rim:rgba(255,255,255,.22);
+  --dv-ios-screen-bg:#000000;
+  --dv-ios-home:#FFFFFF;
+  --dv-ios-wall:
+    radial-gradient(72% 40% at 6% 100%, rgba(255,112,64,.62) 0%, rgba(255,112,64,0) 70%),
+    radial-gradient(64% 38% at 104% 74%, rgba(176,72,255,.50) 0%, rgba(176,72,255,0) 70%),
+    radial-gradient(90% 40% at 40% 48%, rgba(40,96,230,.40) 0%, rgba(40,96,230,0) 70%),
+    radial-gradient(110% 55% at 50% -6%, #0E2A7A 0%, rgba(14,42,122,0) 72%),
+    linear-gradient(180deg,#040A22 0%,#0A1A52 36%,#16195A 62%,#2A1440 84%,#3A1424 100%);
+
+  --dv-mac-ink:rgba(255,255,255,.88);
+  --dv-mac-ink-2:rgba(255,255,255,.60);
+  --dv-mac-ink-3:rgba(255,255,255,.28);
+  --dv-mac-window:#1E1E1E;
+  --dv-mac-toolbar:#2A2A2A;
+  --dv-mac-titlebar:#2C2C2C;
+  --dv-mac-sidebar:rgba(52,52,56,.80);
+  --dv-mac-sep:rgba(255,255,255,.10);
+  --dv-mac-window-edge:rgba(0,0,0,.85);
+  --dv-mac-window-rim:rgba(255,255,255,.16);
+  --dv-mac-shadow:0 0 0 .5px rgba(0,0,0,.85), 0 28px 70px -10px rgba(0,0,0,.70), 0 10px 24px -6px rgba(0,0,0,.45);
+  --dv-mac-capsule:rgba(255,255,255,.085);
+  --dv-mac-capsule-edge:rgba(255,255,255,.10);
+  --dv-mac-capsule-shadow:0 1px 2px rgba(0,0,0,.30);
+  --dv-mac-field:rgba(255,255,255,.085);
+  --dv-mac-menubar-ink:rgba(255,255,255,.94);
+  --dv-mac-notif:rgba(40,40,42,.74);
+  --dv-mac-notif-rim:rgba(255,255,255,.14);
+  --dv-mac-notif-edge:rgba(0,0,0,.55);
+  --dv-mac-notif-shadow:0 12px 32px -6px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.3);
+  --dv-mac-notif-close:rgba(70,70,72,.96);
+  --dv-mac-notif-close-press:#5C5C60;
+  --dv-mac-notif-time:rgba(255,255,255,.55);
+  --dv-sp-bg:#1E1E1E;
+  --dv-sp-tile:#FFFFFF;
+  --dv-sp-tile-ink:#000000;
+  --dv-sp-tile-edge:rgba(255,255,255,.10);
+  --dv-sp-card:#2A2A2C;
+  --dv-mac-wall:
+    radial-gradient(60% 38% at 82% 100%, rgba(80,150,255,.35) 0%, rgba(80,150,255,0) 70%),
+    radial-gradient(120% 34% at 30% 104%, rgba(30,92,210,.70) 0%, rgba(30,92,210,0) 72%),
+    radial-gradient(90% 40% at 100% 62%, rgba(40,90,190,.45) 0%, rgba(40,90,190,0) 70%),
+    radial-gradient(80% 45% at 0% 40%, rgba(20,50,120,.45) 0%, rgba(20,50,120,0) 70%),
+    linear-gradient(180deg,#030914 0%,#06142E 30%,#0B2554 62%,#123A80 86%,#1A4C9C 100%);
+
+  --dv-cr-frame:#1F1F1F;
+  --dv-cr-toolbar:#353535;
+  --dv-cr-omnibox:#262626;
+  --dv-cr-ink:#E3E3E3;
+  --dv-cr-ink-2:#C7C7C7;
+  --dv-cr-ink-3:#9AA0A6;
+  --dv-cr-tab-ink:#C7C7C7;
+  --dv-cr-tab-sep:#5F6368;
+  --dv-cr-hover:rgba(227,227,227,.10);
+  --dv-cr-select:#004A77;
+  --dv-cr-link:#A8C7FA;
+  --dv-cr-chip:#3C3C3C;
+  --dv-cr-popup:#353535;
+  --dv-cr-popup-row:#444546;
+  --dv-cr-popup-shadow:0 4px 8px 3px rgba(0,0,0,.30), 0 1px 3px rgba(0,0,0,.50);
+  --dv-cr-avatar:#004A77; --dv-cr-avatar-ink:#C2E7FF;
+  --dv-cr-content-edge:rgba(255,255,255,.06);
+  --dv-cr-spinner:#A8C7FA;
+  --dv-cr-ntp:#1F1F1F;
+  --dv-cr-ntp-search:#303134;
+  --dv-cr-ntp-ink-2:#C4C7C5;
+  --dv-g-blue:#FFFFFF; --dv-g-red:#FFFFFF; --dv-g-yellow:#FFFFFF; --dv-g-green:#FFFFFF;
+  --dv-cr-window-shadow:0 0 0 .5px rgba(0,0,0,.9), inset 0 0 0 .5px rgba(255,255,255,.14), 0 28px 70px -10px rgba(0,0,0,.75), 0 10px 24px -6px rgba(0,0,0,.5);
+
+  --dv-ai-chatgpt-bg:#000000;     --dv-ai-chatgpt-ink:#FFFFFF;
+  --dv-ai-messages-bg:linear-gradient(180deg,#2B2B2E 0%,#0E0E10 100%); --dv-ai-messages-ink:#35D058;
+  --dv-ai-mail-bg:linear-gradient(180deg,#2B2B2E 0%,#0E0E10 100%);     --dv-ai-mail-ink:#3D8BFF; --dv-appicon-mail-line:#151517;
+  --dv-ai-whatsapp-bg:linear-gradient(180deg,#2B2B2E 0%,#0E0E10 100%); --dv-ai-whatsapp-ink:#2BD35B;
+  --dv-ai-slack-bg:#1D1C21;
+  --dv-ai-edge:rgba(255,255,255,.12);
+
+  color:var(--dv-mac-ink);
+}
+
+.sk-device *,.sk-device *::before,.sk-device *::after{box-sizing:border-box}
+.sk-device svg{display:block;width:100%;height:100%}
+
+/* =====================================================================
+   APP ICONS  ·  <span class="dv-appicon dv-appicon--chatgpt">{glyph}</span>
+   Size with --s (px). Continuous-corner approximation = 22.5 %.
+   ===================================================================== */
+.dv-appicon{
+  --s:38px;
+  width:var(--s);height:var(--s);flex:none;
+  border-radius:calc(var(--s) * .235);
+  display:grid;place-items:center;position:relative;overflow:hidden;
+  box-shadow:inset 0 0 0 .5px var(--dv-ai-edge);
+}
+.dv-appicon::after{ /* Liquid Glass top-edge highlight */
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28);
+}
+.dv-appicon > svg{width:62%;height:62%}
+.dv-appicon--chatgpt{background:var(--dv-ai-chatgpt-bg);color:var(--dv-ai-chatgpt-ink)}
+.dv-appicon--chatgpt > svg{width:64%;height:64%}
+.dv-appicon--messages{background:var(--dv-ai-messages-bg);color:var(--dv-ai-messages-ink)}
+.dv-appicon--messages > svg{width:74%;height:74%;margin-top:2%}
+.dv-appicon--mail{background:var(--dv-ai-mail-bg);color:var(--dv-ai-mail-ink)}
+.dv-appicon--mail > svg{width:72%;height:72%}
+.dv-appicon--whatsapp{background:var(--dv-ai-whatsapp-bg);color:var(--dv-ai-whatsapp-ink)}
+.dv-appicon--whatsapp > svg{width:70%;height:70%}
+.dv-appicon--slack{background:var(--dv-ai-slack-bg)}
+.dv-appicon--slack > svg{width:54%;height:54%}
+.dv-appicon--grok{background:var(--dv-ai-grok-bg);color:var(--dv-ai-grok-ink)}
+.dv-appicon--grok > svg{width:58%;height:58%}
+.dv-appicon--claude{background:var(--dv-ai-claude-bg);color:var(--dv-ai-claude-ink)}
+.dv-appicon--claude > svg{width:60%;height:60%}
+/* macOS app icons sit inside a transparent margin and carry a drop shadow */
+.dv-appicon--mac{box-shadow:inset 0 0 0 .5px var(--dv-ai-edge), 0 1px 2px rgba(0,0,0,.18)}
+
+/* =====================================================================
+   iPHONE  ·  .dv-iphone > .dv-iphone__glass > .dv-screen
+   430 × 902 body · 402 × 874 screen · Dynamic Island 125 × 37
+   ===================================================================== */
+.dv-iphone{
+  position:relative;width:430px;height:902px;flex:none;
+  border-radius:72px;padding:4.5px;
+  background:var(--dv-hw-rim);
+  /* sharp contact edge + soft diffuse drop (light from above) */
+  box-shadow:0 0 0 .5px var(--dv-hw-rim-edge), inset 0 0 0 .75px var(--dv-hw-rim-inner),
+             0 2px 3px rgba(0,0,0,.10), 0 30px 60px -18px rgba(0,0,0,.34), 0 70px 120px -40px rgba(0,0,0,.30);
+}
+.dv-iphone__glass{
+  width:100%;height:100%;border-radius:67.5px;padding:9.5px;
+  background:var(--dv-hw-bezel);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.95), inset 0 0 0 2px rgba(255,255,255,.06);
+}
+.dv-iphone__btn{position:absolute;width:4px;border-radius:2px;background:var(--dv-hw-btn);box-shadow:0 0 0 .5px var(--dv-hw-rim-edge)}
+.dv-iphone__btn--action{left:-3px;top:178px;height:36px}
+.dv-iphone__btn--vol-up{left:-3px;top:244px;height:66px}
+.dv-iphone__btn--vol-down{left:-3px;top:326px;height:66px}
+.dv-iphone__btn--power{right:-3px;top:262px;height:104px}
+/* Camera Control: a flush sapphire button, drawn as a darker inset slot */
+.dv-iphone__btn--camera{right:-1.5px;top:560px;height:58px;width:2.5px;border-radius:1.5px;background:linear-gradient(90deg,rgba(0,0,0,.35),rgba(0,0,0,.15))}
+
+.dv-screen{
+  position:relative;width:402px;height:874px;overflow:hidden;
+  border-radius:58px;background:var(--dv-ios-screen-bg);
+  isolation:isolate;
+}
+.dv-island{
+  position:absolute;z-index:20;top:11px;left:50%;width:125px;height:37px;margin-left:-62.5px;
+  border-radius:19px;background:#000;
+}
+.dv-island::after{ /* front camera lens glint */
+  content:"";position:absolute;right:13px;top:12px;width:13px;height:13px;border-radius:50%;
+  background:radial-gradient(circle at 40% 38%, #262b3a 0%, #0b0d14 55%, #000 100%);
+}
+
+/* ---- status bar ---- */
+.dv-statusbar{
+  position:absolute;z-index:15;left:0;right:0;top:0;height:54px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:3px 0 0;color:var(--dv-ios-label);
+}
+.dv-statusbar--light{color:#FFFFFF}
+.dv-statusbar__time{
+  width:140px;text-align:center;padding-left:14px;
+  font:600 17px/1 var(--dv-sans);letter-spacing:-.01em;font-variant-numeric:tabular-nums;
+}
+.dv-statusbar__icons{width:140px;display:flex;align-items:center;justify-content:center;gap:6px;padding-right:12px}
+.dv-statusbar__icons .dv-sb-signal{width:18px;height:12px}
+.dv-statusbar__icons .dv-sb-wifi{width:16px;height:12px}
+.dv-statusbar__icons .dv-sb-battery{width:28px;height:13px}
+
+.dv-home-indicator{
+  position:absolute;z-index:15;bottom:8px;left:50%;width:140px;height:5px;margin-left:-70px;
+  border-radius:3px;background:var(--dv-ios-home);
+}
+.dv-home-indicator--light{background:#FFFFFF}
+
+/* ---- wallpaper ---- */
+.dv-wall-ios{position:absolute;inset:0;background:var(--dv-ios-wall);z-index:0}
+
+/* =====================================================================
+   iOS LOCK SCREEN  ·  .dv-lock (inside .dv-screen)
+   ===================================================================== */
+.dv-lock{position:absolute;inset:0;z-index:5;color:var(--dv-ios-lock-ink)}
+.dv-lock__padlock{position:absolute;top:58px;left:50%;width:13px;height:17px;margin-left:-6.5px;color:#fff;opacity:.95}
+.dv-lock__date{
+  position:absolute;top:84px;left:0;right:0;text-align:center;
+  font:600 21px/1 var(--dv-sans);letter-spacing:-.005em;color:#FFFFFF;
+  text-shadow:0 1px 10px rgba(0,0,0,.10);
+}
+.dv-lock__time{
+  position:absolute;top:110px;left:0;right:0;text-align:center;
+  font:600 112px/1 var(--dv-sans);letter-spacing:-.035em;font-variant-numeric:tabular-nums;
+  color:rgba(255,255,255,.94);
+  text-shadow:0 1px 0 rgba(255,255,255,.25), 0 2px 18px rgba(0,0,0,.12);
+}
+.dv-lock__qa{
+  position:absolute;bottom:50px;width:50px;height:50px;border-radius:50%;
+  display:grid;place-items:center;color:#fff;
+  background:var(--dv-ios-glass-btn);
+  /* Liquid Glass: bright specular rim on top, soft inner shade at the bottom */
+  box-shadow:inset 0 0 0 .75px var(--dv-ios-glass-btn-rim), inset 0 1.5px 1px -.5px rgba(255,255,255,.45), inset 0 -6px 12px -8px rgba(0,0,0,.18), 0 2px 8px -4px rgba(0,0,0,.20);
+  -webkit-backdrop-filter:var(--dv-ios-glass-filter);backdrop-filter:var(--dv-ios-glass-filter);
+}
+.dv-lock__qa svg{width:24px;height:24px}
+.dv-lock__qa--left svg{width:27px;height:27px}
+.dv-lock__qa--left{left:46px}
+.dv-lock__qa--right{right:46px}
+
+/* ---- notifications (iOS 26) ---- */
+.dv-notif-area{position:absolute;left:10px;right:10px;bottom:126px;z-index:6}
+/* List view with enough notifications to reach the clock: the list starts under it (newest on top) */
+.dv-notif-area--list{top:246px;bottom:auto}
+.dv-notif-stack{position:relative}
+.dv-notif-list{display:flex;flex-direction:column;gap:8px}
+.dv-notif{
+  position:relative;width:100%;
+  display:flex;align-items:center;gap:11px;
+  padding:14px 16px 14px 14px;border-radius:26px;
+  background:var(--dv-ios-plate);
+  -webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);
+  box-shadow:inset 0 0 0 .75px var(--dv-ios-plate-rim), 0 0 0 .5px var(--dv-ios-plate-edge), var(--dv-ios-plate-shadow);
+  color:var(--dv-ios-label);
+}
+.dv-notif > .dv-appicon{--s:38px}
+/* Communication notification (iOS 15+: Messages, WhatsApp, Slack DMs…): the sender's round contact
+   avatar with a small app-icon badge at its bottom-right, instead of the bare app icon. */
+.dv-notif__sender{position:relative;width:38px;height:38px;flex:none}
+.dv-avatar{
+  width:100%;height:100%;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(180deg,#A5ABB8 0%,#858994 100%);
+  color:#FFFFFF;font:600 15px/1 var(--dv-sans);letter-spacing:.01em;
+}
+.dv-notif__sender > .dv-appicon{
+  --s:17px;position:absolute;right:-4px;bottom:-3px;
+  box-shadow:inset 0 0 0 .5px var(--dv-ai-edge), 0 .5px 1.5px rgba(0,0,0,.22);
+}
+.dv-notif__main{flex:1;min-width:0}
+.dv-notif__head{display:flex;align-items:baseline;gap:8px}
+.dv-notif__title{flex:1;min-width:0;font:600 15px/20px var(--dv-sans);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv-notif__time{flex:none;font:400 13px/20px var(--dv-sans);color:var(--dv-ios-label-2)}
+.dv-notif__body{
+  font:400 15px/20px var(--dv-sans);letter-spacing:-.01em;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;
+}
+/* "Stack" presentation: slivers of older notifications peek out under the front card */
+.dv-notif-peek{
+  position:absolute;left:0;right:0;bottom:0;height:40px;border-radius:22px;
+  background:var(--dv-ios-peek);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);backdrop-filter:blur(20px) saturate(160%);
+  box-shadow:inset 0 0 0 .75px var(--dv-ios-plate-rim);
+}
+/* clip-path keeps only the part below the card in front (glass would otherwise show the overlap).
+   Always give the clip the same rounded corners as the card: Chrome clips the backdrop blur to the
+   clip-path, not to border-radius, so a square clip leaves blurred square corners. */
+.dv-notif-peek--1{transform:translateY(9px) scaleX(.94);clip-path:inset(30px 0 0 0 round 0 0 22px 22px)}
+.dv-notif-peek--2{transform:translateY(17px) scaleX(.88);clip-path:inset(31px 0 0 0 round 0 0 22px 22px);background:var(--dv-ios-peek-2)}
+
+/* =====================================================================
+   macOS 26 DESKTOP  ·  .dv-desktop (1512 × 851 pt, zoom to frame)
+   ===================================================================== */
+.dv-desktop{position:relative;width:1512px;height:851px;overflow:hidden;background:var(--dv-mac-wall);isolation:isolate}
+.dv-wall-mac{position:absolute;inset:0;background:var(--dv-mac-wall)}
+
+/* menu bar — Tahoe: fully transparent, ink adapts to the wallpaper */
+.dv-menubar{
+  position:absolute;z-index:30;left:0;right:0;top:0;height:24px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 18px;
+  color:var(--dv-mac-menubar-ink);font:400 13px/24px var(--dv-sans);letter-spacing:-.003em;
+}
+.dv-menubar__left,.dv-menubar__right{display:flex;align-items:center;height:100%}
+.dv-menubar__left{gap:2px}
+.dv-menubar__apple{width:15px;height:15px;margin:-2px 12px 0 0}
+.dv-menubar__app{font-weight:700;padding:0 9px}
+.dv-menubar__item{padding:0 9px}
+.dv-menubar__right{gap:6px}
+.dv-menubar__icon{width:30px;height:24px;display:grid;place-items:center}
+.dv-menubar__icon svg{width:16px;height:13px}
+.dv-menubar__icon--cc svg{width:16px;height:14px}
+.dv-menubar__icon--bat svg{width:25px;height:12px}
+.dv-menubar__clock{padding:0 8px 0 6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---- window frame ---- */
+.dv-window{
+  position:absolute;overflow:hidden;
+  border-radius:16px;background:var(--dv-mac-window);
+  box-shadow:var(--dv-mac-shadow), inset 0 0 0 .5px var(--dv-mac-window-rim);
+  color:var(--dv-mac-ink);
+}
+.dv-window--toolbar{border-radius:26px}
+.dv-window__rim{ /* dark-mode hairline highlight, drawn above content */
+  position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:50;
+  box-shadow:inset 0 0 0 .5px var(--dv-mac-window-rim);
+}
+.dv-window__titlebar{
+  position:relative;height:32px;display:flex;align-items:center;justify-content:center;
+  background:var(--dv-mac-titlebar);border-bottom:.5px solid var(--dv-mac-sep);
+}
+.dv-window__titlebar .dv-traffic{position:absolute;left:12px;top:10px}
+.dv-window__title{font:600 13px/1 var(--dv-sans);color:var(--dv-mac-ink);letter-spacing:-.005em}
+.dv-window__body{position:absolute;left:0;right:0;bottom:0;top:32px;overflow:hidden}
+/* Tahoe floating sidebar: an inset glass panel */
+.dv-window__sidebar{
+  position:absolute;left:8px;top:8px;bottom:8px;width:220px;border-radius:18px;
+  background:var(--dv-mac-sidebar);
+  box-shadow:inset 0 0 0 .5px var(--dv-mac-capsule-edge), 0 1px 3px rgba(0,0,0,.06);
+  padding:52px 10px 10px;
+}
+.dv-window__sidebar .dv-traffic{position:absolute;left:12px;top:19px}
+.dv-sidebar__section{font:600 11px/1 var(--dv-sans);color:var(--dv-mac-ink-2);padding:14px 10px 6px}
+.dv-sidebar__row{display:flex;align-items:center;gap:8px;height:28px;padding:0 10px;border-radius:8px;font:400 13px/1 var(--dv-sans);color:var(--dv-mac-ink)}
+.dv-sidebar__row svg{width:16px;height:16px;color:var(--dv-mac-accent)}
+.dv-sidebar__row.is-selected{background:rgba(0,0,0,.07)}
+.sk-device[data-theme="dark"] .dv-sidebar__row.is-selected,[data-theme="dark"] .sk-device .dv-sidebar__row.is-selected{background:rgba(255,255,255,.10)}
+
+/* ---- traffic lights ---- */
+.dv-traffic{display:flex;gap:8px;flex:none}
+.dv-traffic > i{
+  display:block;width:12px;height:12px;border-radius:50%;
+  box-shadow:inset 0 0 0 .5px var(--edge);
+}
+.dv-traffic > i:nth-child(1){background:var(--dv-tl-close);--edge:var(--dv-tl-close-edge)}
+.dv-traffic > i:nth-child(2){background:var(--dv-tl-min);--edge:var(--dv-tl-min-edge)}
+.dv-traffic > i:nth-child(3){background:var(--dv-tl-zoom);--edge:var(--dv-tl-zoom-edge)}
+.dv-traffic--inactive > i{background:var(--dv-tl-off)!important;--edge:var(--dv-tl-off-edge)!important}
+.sk-device[data-theme="dark"] .dv-traffic--inactive > i,[data-theme="dark"] .sk-device .dv-traffic--inactive > i{background:#4A4A4C!important;--edge:#3A3A3C!important}
+.dv-traffic--lg{gap:9px}
+.dv-traffic--lg > i{width:14px;height:14px}
+
+/* ---- Liquid Glass toolbar capsules (Tahoe) ---- */
+.dv-capsule{
+  display:flex;align-items:center;height:36px;padding:0 4px;border-radius:18px;
+  background:var(--dv-mac-capsule);
+  box-shadow:inset 0 0 0 .5px var(--dv-mac-capsule-edge), var(--dv-mac-capsule-shadow);
+  color:var(--dv-mac-ink);
+}
+.dv-capsule__btn{width:36px;height:36px;display:grid;place-items:center;color:var(--dv-mac-ink);opacity:.82}
+.dv-capsule__btn svg{width:19px;height:19px}
+.dv-capsule__btn.is-disabled{opacity:.28}
+.dv-capsule__btn--narrow{width:22px}
+.dv-capsule__btn--narrow svg{width:13px;height:13px}
+
+/* =====================================================================
+   SAFARI 26  ·  .dv-window.dv-window--toolbar.dv-safari
+   ===================================================================== */
+.dv-safari__toolbar{
+  position:absolute;z-index:10;left:0;right:0;top:0;height:56px;
+  display:flex;align-items:center;gap:10px;padding:0 12px 0 20px;
+  background:var(--dv-mac-toolbar);
+  box-shadow:0 .5px 0 var(--dv-mac-sep);
+}
+.dv-safari__toolbar .dv-traffic{margin-right:10px}
+.dv-safari__spacer{flex:1}
+/* Centred in the window. In narrow windows it shrinks, then slides right so it never meets the
+   leading group (traffic lights + 2 capsules = 258px) or the trailing capsule (138px). */
+.dv-safari__address{
+  --lead:258px;--trail:138px;
+  --w:min(42%, calc(100% - var(--lead) - var(--trail)));
+  position:absolute;left:clamp(var(--lead), calc(50% - var(--w) / 2), calc(100% - var(--trail) - var(--w)));
+  top:10px;width:var(--w);height:36px;border-radius:18px;
+  display:flex;align-items:center;gap:4px;padding:0 6px 0 6px;
+  background:var(--dv-mac-field);
+  box-shadow:inset 0 0 0 .5px var(--dv-mac-capsule-edge), var(--dv-mac-capsule-shadow);
+}
+.dv-safari__address .dv-capsule__btn{width:30px;height:30px}
+.dv-safari__address .dv-capsule__btn svg{width:17px;height:17px}
+.dv-safari__url{
+  flex:1;text-align:center;font:400 14px/1 var(--dv-sans);color:var(--dv-mac-ink);letter-spacing:-.005em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.dv-safari__url.is-editing{text-align:left;padding-left:6px}
+.dv-safari__progress{position:absolute;left:14px;right:14px;bottom:0;height:2px;border-radius:1px;background:var(--dv-mac-accent);transform-origin:left center;transform:scaleX(0)}
+.dv-safari__page{position:absolute;left:0;right:0;bottom:0;top:56px;overflow:hidden;background:var(--dv-mac-window)}
+.dv-safari__url .dv-placeholder{color:var(--dv-mac-ink-2)}
+/* Unfocused empty field (Start Page): magnifier + placeholder centred together as one group */
+.dv-safari__ph{display:inline-flex;align-items:center;gap:5px;color:var(--dv-mac-ink-2)}
+.dv-safari__ph > span{width:15px;height:15px;flex:none;display:block}
+
+/* ---- Safari Start Page (no background image) ----
+   .dv-startpage > .dv-startpage__inner > section heading + .dv-favs grid, then .dv-privacy card */
+.dv-startpage{position:absolute;inset:0;overflow:hidden;background:var(--dv-sp-bg);color:var(--dv-mac-ink);padding-top:42px}
+.dv-startpage__inner{width:calc(100% - 96px);max-width:700px;margin:0 auto}
+.dv-startpage__head{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 16px}
+.dv-startpage__title{font:700 17px/1 var(--dv-sans);letter-spacing:-.012em;color:var(--dv-mac-ink)}
+.dv-startpage__more{font:500 12px/1 var(--dv-sans);color:var(--dv-mac-ink-2)}
+.dv-favs{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:18px 10px;margin-bottom:38px}
+.dv-fav{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.dv-fav__tile{
+  width:64px;height:64px;border-radius:14px;display:grid;place-items:center;flex:none;
+  background:var(--dv-sp-tile);color:var(--dv-sp-tile-ink);
+  box-shadow:0 0 0 .5px var(--dv-sp-tile-edge), 0 1px 2px rgba(0,0,0,.08), 0 4px 10px -4px rgba(0,0,0,.10);
+}
+.dv-fav__tile > svg{width:52%;height:52%}
+.dv-fav__tile--letter{font:600 26px/1 var(--dv-sans);letter-spacing:-.02em;color:#FFFFFF}
+.dv-fav__label{max-width:100%;font:400 12px/1.25 var(--dv-sans);color:var(--dv-mac-ink);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv-privacy{
+  display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;
+  background:var(--dv-sp-card);box-shadow:inset 0 0 0 .5px var(--dv-sp-tile-edge);
+  font:400 13px/18px var(--dv-sans);color:var(--dv-mac-ink);
+}
+.dv-privacy__icon{width:30px;height:34px;flex:none;color:var(--dv-mac-ink-2)}
+.dv-privacy__num{font:600 26px/1 var(--dv-sans);letter-spacing:-.02em;font-variant-numeric:tabular-nums;flex:none;min-width:34px}
+
+/* =====================================================================
+   CHROME (GM3 / Chrome Refresh, macOS)  ·  .dv-chrome
+   ===================================================================== */
+.dv-chrome{
+  position:absolute;overflow:hidden;border-radius:12px;
+  background:var(--dv-cr-frame);
+  box-shadow:var(--dv-cr-window-shadow);
+  color:var(--dv-cr-ink);font-family:var(--dv-sans);
+}
+.dv-chrome__rim{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:60;box-shadow:inset 0 0 0 .5px var(--dv-mac-window-rim)}
+.dv-chrome__tabstrip{
+  position:relative;height:44px;display:flex;align-items:flex-end;padding:0 8px 0 14px;
+}
+.dv-chrome__tabstrip > .dv-traffic{position:absolute;left:14px;top:21px} /* centre y 27 = tab centre */
+.dv-chrome__tabsearch{
+  position:absolute;left:80px;top:13px;width:28px;height:28px;border-radius:8px;
+  display:grid;place-items:center;color:var(--dv-cr-ink-2);
+}
+.dv-chrome__tabsearch svg{width:18px;height:18px}
+.dv-chrome__tabs{display:flex;align-items:flex-end;height:36px;margin-left:104px}
+.dv-chrome__tab{
+  position:relative;width:236px;height:34px;flex:none;
+  display:flex;align-items:center;gap:8px;padding:0 8px 0 14px;
+  color:var(--dv-cr-tab-ink);font:400 12px/1 var(--dv-sans);letter-spacing:.005em;
+}
+.dv-chrome__tab::after{ /* separator between inactive tabs */
+  content:"";position:absolute;right:0;top:9px;bottom:9px;width:1px;background:var(--dv-cr-tab-sep);opacity:.7;
+}
+.dv-chrome__tab.is-active::after,.dv-chrome__tab.no-sep::after{display:none}
+.dv-chrome__tab.is-active{
+  background:var(--dv-cr-toolbar);color:var(--dv-cr-ink);
+  border-radius:10px 10px 0 0;z-index:2;
+}
+.dv-chrome__tab.is-active::before{ /* left + right flared feet */
+  content:"";position:absolute;bottom:0;left:-10px;right:-10px;height:10px;pointer-events:none;
+  background:
+    radial-gradient(circle at 0 0, transparent 9.5px, var(--dv-cr-toolbar) 10px) left bottom / 10px 10px no-repeat,
+    radial-gradient(circle at 100% 0, transparent 9.5px, var(--dv-cr-toolbar) 10px) right bottom / 10px 10px no-repeat;
+}
+.dv-chrome__favicon{width:16px;height:16px;flex:none;display:grid;place-items:center;color:var(--dv-cr-ink-2)}
+.dv-chrome__favicon:empty{display:none} /* New Tab page: no favicon, the title starts at the left */
+.dv-chrome__favicon svg{width:16px;height:16px}
+.dv-chrome__favicon--spinner{color:var(--dv-cr-spinner)}
+/* long titles fade out at the right edge (Chrome never uses an ellipsis). Markup: the text in an inner <span>,
+   and data-layout-allow-overflow on .dv-chrome__tabtitle so `hyperframes check` accepts the intentional clip. */
+.dv-chrome__tabtitle{flex:1;min-width:0;white-space:nowrap;overflow:hidden;display:flex;
+  -webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);mask-image:linear-gradient(90deg,#000 80%,transparent)}
+.dv-chrome__tabtitle > span{flex:none}
+.dv-chrome__tabclose{width:18px;height:18px;flex:none;border-radius:50%;display:grid;place-items:center;color:var(--dv-cr-ink-2)}
+.dv-chrome__tabclose svg{width:14px;height:14px}
+.dv-chrome__newtab{width:28px;height:28px;margin:0 0 3px 8px;border-radius:50%;display:grid;place-items:center;color:var(--dv-cr-ink-2)}
+.dv-chrome__newtab svg{width:18px;height:18px}
+
+.dv-chrome__toolbar{
+  position:relative;z-index:3;height:46px;display:flex;align-items:center;gap:2px;padding:0 8px;
+  background:var(--dv-cr-toolbar);
+}
+.dv-chrome__btn{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;color:var(--dv-cr-ink-2)}
+.dv-chrome__btn svg{width:20px;height:20px}
+.dv-chrome__btn.is-disabled{opacity:.38}
+.dv-chrome__omnibox{
+  position:relative;flex:1;height:34px;margin:0 6px;border-radius:17px;
+  display:flex;align-items:center;gap:6px;padding:0 6px 0 4px;
+  background:var(--dv-cr-omnibox);
+}
+.dv-chrome__siteinfo{width:26px;height:26px;flex:none;border-radius:50%;display:grid;place-items:center;color:var(--dv-cr-ink-2);background:var(--dv-cr-chip)}
+.dv-chrome__siteinfo svg{width:16px;height:16px}
+.dv-chrome__siteinfo--plain{background:transparent}
+.dv-chrome__url{flex:1;min-width:0;font:400 14px/34px var(--dv-sans);letter-spacing:.003em;color:var(--dv-cr-ink);white-space:nowrap;overflow:hidden}
+.dv-chrome__url .dv-path{color:var(--dv-cr-ink-3)}
+.dv-chrome__url .dv-placeholder{color:var(--dv-cr-ink-3)}
+.dv-chrome__url .dv-sel{background:var(--dv-cr-select)}
+.dv-chrome__url .dv-auto{background:var(--dv-cr-select)}
+.dv-caret{display:inline-block;width:1.5px;height:17px;margin:0 0 -3px 1px;background:var(--dv-cr-ink)}
+.dv-chrome__star{width:28px;height:28px;flex:none;display:grid;place-items:center;color:var(--dv-cr-ink-2)}
+.dv-chrome__star svg{width:18px;height:18px}
+.dv-chrome__avatar{width:26px;height:26px;margin:0 4px;flex:none;border-radius:50%;display:grid;place-items:center;
+  background:var(--dv-cr-avatar);color:var(--dv-cr-avatar-ink);font:600 12px/1 var(--dv-sans)}
+.dv-chrome__page{position:absolute;left:0;right:0;bottom:0;top:90px;overflow:hidden;background:var(--dv-mac-window);
+  box-shadow:inset 0 .5px 0 var(--dv-cr-content-edge)}
+
+/* ---- Chrome New Tab Page (Google as the search engine) ----
+   .dv-ntp > __links (Gmail · Images · apps · avatar) + __logo (272×92 wordmark) + __search (realbox)
+   + __tiles (shortcuts) + __custom ("Customize Chrome"). Set --top on .dv-ntp to move the column. */
+.dv-ntp{--top:64px;position:absolute;inset:0;overflow:hidden;background:var(--dv-cr-ntp);color:var(--dv-cr-ink)}
+.dv-ntp__links{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:2px;font:400 13px/1 var(--dv-sans);color:var(--dv-cr-ink)}
+.dv-ntp__link{padding:9px 8px;letter-spacing:.005em}
+.dv-ntp__apps{width:40px;height:40px;display:grid;place-items:center;color:var(--dv-cr-ntp-ink-2)}
+.dv-ntp__apps svg{width:22px;height:22px}
+.dv-ntp__avatar{width:32px;height:32px;margin-left:4px;border-radius:50%;display:grid;place-items:center;
+  background:var(--dv-cr-avatar);color:var(--dv-cr-avatar-ink);font:600 14px/1 var(--dv-sans)}
+.dv-ntp__logo{position:absolute;left:50%;top:var(--top);width:272px;height:92px;margin-left:-136px}
+.dv-ntp__search{
+  position:absolute;left:50%;top:calc(var(--top) + 92px + 30px);width:584px;height:48px;margin-left:-292px;border-radius:24px;
+  display:flex;align-items:center;gap:12px;padding:0 10px 0 18px;background:var(--dv-cr-ntp-search);
+}
+.dv-ntp__search-icon{width:20px;height:20px;flex:none;color:var(--dv-cr-ntp-ink-2)}
+.dv-ntp__placeholder{flex:1;font:400 16px/1 var(--dv-sans);color:var(--dv-cr-ntp-ink-2);white-space:nowrap}
+.dv-ntp__search-btn{width:36px;height:36px;flex:none;display:grid;place-items:center}
+.dv-ntp__search-btn svg{width:22px;height:22px}
+.dv-ntp__tiles{position:absolute;left:0;right:0;top:calc(var(--top) + 92px + 30px + 48px + 22px);display:flex;justify-content:center;gap:4px}
+.dv-ntp__tile{width:112px;height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border-radius:16px}
+.dv-ntp__tile-icon{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--dv-cr-omnibox);color:var(--dv-cr-ink)}
+.dv-ntp__tile-icon svg{width:24px;height:24px}
+.dv-ntp__tile-label{max-width:96px;font:400 13px/1.2 var(--dv-sans);color:var(--dv-cr-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv-ntp__custom{position:absolute;right:16px;bottom:16px;height:36px;padding:0 16px 0 12px;border-radius:18px;display:flex;align-items:center;gap:8px;
+  background:var(--dv-cr-omnibox);color:var(--dv-cr-link);font:500 13px/1 var(--dv-sans)}
+.dv-ntp__custom svg{width:18px;height:18px}
+
+/* omnibox dropdown — the omnibox grows into a floating card */
+.dv-chrome__popup{
+  position:absolute;z-index:20;border-radius:20px;overflow:hidden;
+  background:var(--dv-cr-popup);box-shadow:var(--dv-cr-popup-shadow);
+  padding:0 0 8px;
+}
+.dv-chrome__popup .dv-chrome__omnibox{margin:4px 4px 0;background:transparent}
+.dv-chrome__popup-sep{height:1px;margin:3px 16px 6px;background:var(--dv-mac-sep)}
+.dv-chrome__row{
+  display:flex;align-items:center;gap:12px;height:40px;padding:0 16px 0 14px;
+  font:400 14px/1 var(--dv-sans);color:var(--dv-cr-ink);white-space:nowrap;
+}
+.dv-chrome__row{position:relative;margin-right:12px;border-radius:0 20px 20px 0}
+.dv-chrome__row.is-selected{background:var(--dv-cr-popup-row)}
+.dv-chrome__row.is-selected::before{ /* GM3 focus bar */
+  content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--dv-cr-link);
+}
+.dv-chrome__row-icon{width:30px;height:30px;flex:none;display:grid;place-items:center;color:var(--dv-cr-ink-2)}
+.dv-chrome__row-icon svg{width:20px;height:20px}
+.dv-chrome__row-icon--favicon{border-radius:8px;background:var(--dv-cr-omnibox)}
+.dv-chrome__row-icon--favicon svg{width:16px;height:16px}
+.dv-chrome__row b{font-weight:600}
+.dv-chrome__row .dv-dash{color:var(--dv-cr-ink-2);margin:0 6px}
+.dv-chrome__row .dv-link{color:var(--dv-cr-link)}
+
+/* =====================================================================
+   macOS NOTIFICATION BANNER (Tahoe)  ·  .dv-mac-notif
+   Lives top-right: top 33px, right 12px of the desktop.
+   ===================================================================== */
+.dv-mac-notif{
+  position:absolute;z-index:40;width:360px;
+  display:flex;align-items:center;gap:11px;padding:12px 14px 12px 12px;border-radius:22px;
+  background:var(--dv-mac-notif);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);
+  box-shadow:inset 0 0 0 .75px var(--dv-mac-notif-rim), inset 0 1px 0 var(--dv-mac-notif-rim), 0 0 0 .5px var(--dv-mac-notif-edge), var(--dv-mac-notif-shadow);
+  color:var(--dv-mac-ink);
+}
+.dv-mac-notif--corner{top:33px;right:12px}
+.dv-mac-notif .dv-appicon{--s:38px}
+.dv-mac-notif__main{flex:1;min-width:0}
+.dv-mac-notif__head{display:flex;align-items:baseline;gap:8px}
+.dv-mac-notif__title{flex:1;min-width:0;font:700 13px/17px var(--dv-sans);letter-spacing:-.003em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dv-mac-notif__time{flex:none;font:400 12px/17px var(--dv-sans);color:var(--dv-mac-notif-time)}
+.dv-mac-notif__body{font:400 13px/17px var(--dv-sans);color:var(--dv-mac-ink);letter-spacing:-.003em;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.dv-mac-notif__close{ /* appears on hover, top-left corner */
+  position:absolute;left:-6px;top:-6px;width:20px;height:20px;border-radius:50%;
+  display:grid;place-items:center;color:var(--dv-mac-ink);opacity:0;
+  background:var(--dv-mac-notif-close);
+  box-shadow:0 0 0 .5px rgba(0,0,0,.18), 0 1px 4px rgba(0,0,0,.18);
+}
+.dv-mac-notif__close svg{width:11px;height:11px}
+.dv-mac-notif.is-hover .dv-mac-notif__close{opacity:1}
+.dv-mac-notif__close.is-pressed{background:var(--dv-mac-notif-close-press)}
+
+/* =====================================================================
+   macOS CURSOR  ·  .dv-cursor (position with left/top = hotspot)
+   ===================================================================== */
+.dv-cursor{
+  position:absolute;z-index:100;width:22px;height:30px;left:0;top:0;pointer-events:none;
+  margin:-2px 0 0 -3px; /* hotspot = arrow tip */
+  filter:drop-shadow(0 1.5px 2.5px rgba(0,0,0,.35));
+  transform-origin:3px 2px;
+}
+.dv-cursor > span{position:absolute;inset:0;display:block}
+.dv-cursor .dv-cursor__hand{opacity:0;width:26px;height:30px;left:-5px;top:-1px}
+.dv-cursor .dv-cursor__ibeam{opacity:0;width:12px;height:24px;left:-3px;top:-10px} /* hotspot = middle of the I-beam */
+.dv-cursor.is-hand .dv-cursor__arrow,.dv-cursor.is-ibeam .dv-cursor__arrow{opacity:0}
+.dv-cursor.is-hand .dv-cursor__hand{opacity:1}
+.dv-cursor.is-ibeam .dv-cursor__ibeam{opacity:1}
+/* Launch-video style (as in Anthropic/Apple product renders): white arrow with a black outline */
+.dv-cursor--white .dv-cursor__arrow path{fill:#FFFFFF;stroke:#000000;stroke-width:1.3px}

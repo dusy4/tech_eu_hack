@@ -1,0 +1,694 @@
+/* =====================================================================
+   Claude Code skin  ·  .sk-cc
+   Terminal CLI (fullscreen / classic renderer) + desktop "Code" app
+   (sessions, new-session home, Projects beta, diff pane).
+   Light by default; dark via  .sk-cc[data-theme="dark"]  or an ancestor
+   [data-theme="dark"].  Every colour is a custom property.
+   Fonts come from assets/fonts/fonts.css (Inter, JetBrains Mono).
+   Sizes are "1x" = the official desktop recordings (sidebar 316px,
+   body 15px). Scale a whole window with CSS `zoom`.
+   ===================================================================== */
+
+.sk-cc {
+  /* ---------- type ---------- */
+  --cc-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --cc-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --cc-clay: #d97757;            /* claude.com --color-clay (exact) */
+  --cc-clay-dark: #c46849;
+  --cc-clay-hover: #c6613f;
+
+  /* ---------- terminal (CLI) — light theme ----------
+     values: Claude Code light theme tokens + official light videos */
+  --cct-fs: 22px;                /* terminal font size */
+  --cct-lh: 1.5;                 /* terminal line height */
+  --cct-bg: #f9f9f9;
+  --cct-fg: #141413;
+  --cct-dim: #565656;            /* theme "inactive" (summaries, hints) */
+  --cct-subtle: #a8a8a8;         /* theme "subtle"   ((shift+tab to cycle)) */
+  --cct-rule: #868686;           /* promptBorder */
+  --cct-dash: #c4c4c4;           /* dashed rules in dialogs */
+  --cct-band: #f0f0f0;           /* userMessageBackground */
+  --cct-band-chev: #a7a7a7;
+  --cct-prompt-chev: #545454;
+  --cct-cursor: #3d3d3d;
+  --cct-claude: #d77757;
+  --cct-shimmer: #f5a588;        /* claudeShimmer */
+  --cct-success: #2c7a39;
+  --cct-error: #ab2b3f;
+  --cct-warning: #8a6420;        /* auto mode */
+  --cct-permission: #5769f7;     /* dialogs, pickers (docs exact) */
+  --cct-pick-rule: #4b56b4;
+  --cct-auto: #8700ff;           /* autoAccept = accept edits */
+  --cct-plan: #006666;
+  --cct-ident: #4f5fe0;          /* inline identifiers */
+  --cct-add-bg: #69db7c;         /* diffAdded (light theme token, from memory of the CLI theme; no official frame) */
+  --cct-rem-bg: #ffa8b4;         /* diffRemoved */
+  --cct-add-word: #2f9d44;       /* diffAddedWord */
+  --cct-rem-word: #d1454b;       /* diffRemovedWord */
+  --cct-sel: #e6e6e6;            /* agent-view selected row */
+  --cct-win-border: rgba(0,0,0,.12);
+  --cct-bar-fg: #6b6b6b;
+  --cct-bar-line: rgba(0,0,0,.06);
+  --cct-bash: #ff0087;           /* bashBorder (! mode) */
+  --cct-needs: #966c1e;          /* agent view: needs input */
+
+  /* ---------- desktop app — light ---------- */
+  --ccd-fs: 15px;
+  /* Type. Anthropic Sans (the app font) sets ~4% narrower and darker than Inter at the same
+     x-height (measured on desktop-light-projects-threads.png and desktop-light-code-session.png),
+     so Inter runs tracked in and a touch heavier: regular 450, medium 520, semibold 630. */
+  --ccd-track: -0.017em;
+  --ccd-w: 450;
+  --ccd-w-med: 520;
+  --ccd-w-semi: 630;
+  --ccd-bg: #fcfcf9;
+  --ccd-side: #fafaf8;
+  --ccd-sel: #ececea;
+  --ccd-hover: #f0f0ed;
+  --ccd-text: #141413;
+  --ccd-text2: #5e5d59;
+  --ccd-text3: #8c8b86;
+  --ccd-ink2: #3a3a37;           /* sidebar rows, nav, section-bar labels: softer than body ink */
+  --ccd-ph: #6a6a66;             /* placeholder */
+  --ccd-under: #2b2b29;          /* composer under-row */
+  --ccd-line: #ebebe8;
+  --ccd-card-line: #e0e0dd;
+  --ccd-row-line: #ececea;
+  --ccd-bubble: #f0f0ed;
+  --ccd-chip: #e9e9e6;
+  --ccd-chip-text: #3d3d3a;
+  --ccd-env-chip: #f0f0ed;
+  --ccd-composer: #ffffff;
+  --ccd-composer-line: #cdcdca;
+  --ccd-composer-shadow: 0 6px 18px -6px rgba(0,0,0,.10);
+  --ccd-panel: #ffffff;
+  --ccd-panel-line: #e6e6e3;
+  --ccd-secbar: #f3f3f3;
+  --ccd-toggle-bg: #eaeae8;
+  --ccd-toggle-sel: #ffffff;
+  --ccd-pr: #13742c;
+  --ccd-merged: #5b4c8a;
+  --ccd-add: #1f8a3b;
+  --ccd-rem: #c9314f;
+  --ccd-code-bg: #f1f0ec;
+  --ccd-code-fg: #b3485c;
+  --ccd-blue: #2f6fd1;
+  --ccd-card: #f5f5f2;
+  --ccd-tile: #ececea;
+  --ccd-heat0: #e6e6e3; --ccd-heat1: #b8c7f1; --ccd-heat2: #94abe8; --ccd-heat3: #6c8bdf; --ccd-heat4: #3d62d0;
+  --ccd-diff-add: #e3f3e5; --ccd-diff-rem: #fbe8eb;
+  --ccd-diff-add-num: #1f8a3b; --ccd-diff-rem-num: #c9314f;
+  --ccd-json-key: #2f5fb3; --ccd-json-str: #2f5fb3;
+  --ccd-win-line: rgba(0,0,0,.14);
+  --ccd-pop: #ffffff;
+  --ccd-pop-line: rgba(0,0,0,.10);
+  --ccd-pop-shadow: 0 12px 32px -8px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.06);
+  --ccd-black-btn: #141413; --ccd-black-btn-fg: #ffffff;
+  --ccd-proj-ic-bg: #eeedf6; --ccd-proj-ic: #5b4fb8;
+  --ccd-ring-track: #dcdcd9; --ccd-ring-fill: #2f6fd1;
+  --ccd-avatar: #e2e2df;
+  --ccd-stop: #1c1c1a;            /* cloud stop (ring + dot) */
+  --ccd-stop-sq: #c2c2be;         /* local stop (dim outlined square) */
+  --ccd-fade: rgba(252,252,249,0);
+  --cc-clawd-eye: #fcfcf9;
+
+  font-family: var(--cc-sans);
+  color: var(--ccd-text);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11" 0;
+}
+
+.sk-cc[data-theme="dark"],
+[data-theme="dark"] .sk-cc {
+  /* ---------- terminal — dark (docs renders, exact where lossless) ---------- */
+  --cct-bg: #1a1a19;
+  --cct-fg: #dedcd1;
+  --cct-dim: #999999;
+  --cct-subtle: #8a8a8a;
+  --cct-rule: #888888;
+  --cct-dash: #505050;
+  --cct-band: #373737;
+  --cct-band-chev: #8f8f8f;
+  --cct-prompt-chev: #dedcd1;
+  --cct-cursor: #dedcd1;
+  --cct-claude: #d77757;
+  --cct-shimmer: #f0a487;
+  --cct-success: #4eba65;
+  --cct-error: #ff6b80;
+  --cct-warning: #ffc107;
+  --cct-permission: #b1b9f9;
+  --cct-pick-rule: #b1b9f9;
+  --cct-auto: #af87ff;
+  --cct-plan: #48968c;
+  --cct-ident: #b1b9f9;
+  --cct-add-bg: #225c2b;
+  --cct-rem-bg: #7a2936;
+  --cct-add-word: #38a660;
+  --cct-rem-word: #b3596b;
+  --cct-sel: #373737;
+  --cct-win-border: #3d3d3a;
+  --cct-bar-fg: #8a878a;
+  --cct-bar-line: rgba(255,255,255,.05);
+  --cct-bash: #fd5db1;
+  --cct-needs: #ffc107;
+
+  /* ---------- desktop — dark ---------- */
+  --ccd-bg: #141414;
+  --ccd-side: #171716;
+  --ccd-sel: #262626;
+  --ccd-hover: #1e1e1e;
+  --ccd-text: #e6e6e3;
+  --ccd-text2: #a3a3a0;
+  --ccd-text3: #7c7c79;
+  --ccd-ink2: #cfcfcc;
+  --ccd-ph: #8c8b88;
+  --ccd-under: #c4c4c1;
+  --ccd-line: #262626;
+  --ccd-card-line: #2b2b2b;
+  --ccd-row-line: #222222;
+  --ccd-bubble: #292929;           /* dtools sample */
+  --ccd-chip: #2a2a2a;
+  --ccd-chip-text: #cfcdcb;
+  --ccd-env-chip: #252523;
+  --ccd-composer: #1e1e1a;
+  --ccd-composer-line: #3b3b37;
+  --ccd-composer-shadow: none;
+  --ccd-panel: #1a1a1a;
+  --ccd-panel-line: #2a2a2a;
+  --ccd-secbar: #232323;
+  --ccd-toggle-bg: #232323;
+  --ccd-toggle-sel: #3a3a3a;
+  --ccd-pr: #4dad66;
+  --ccd-merged: #a08ae6;
+  --ccd-add: #57bd66;
+  --ccd-rem: #e5395f;
+  --ccd-code-bg: #282626;
+  --ccd-code-fg: #d1888e;           /* dtools sample #cb898a */
+  --ccd-blue: #3d7ddb;
+  --ccd-card: #1e1e1e;
+  --ccd-tile: #2c2c2c;
+  --ccd-heat0: #2f2f2f; --ccd-heat1: #b2c2f0; --ccd-heat2: #94abe8; --ccd-heat3: #6c8bdf; --ccd-heat4: #3d62d0;
+  --ccd-diff-add: #142c1b; --ccd-diff-rem: #31171b;
+  --ccd-diff-add-num: #6abc77; --ccd-diff-rem-num: #f06280;
+  --ccd-json-key: #7da4e1; --ccd-json-str: #7da4e1;
+  --ccd-win-line: rgba(255,255,255,.10);
+  --ccd-pop: #1f1f1f;
+  --ccd-pop-line: rgba(255,255,255,.09);
+  --ccd-pop-shadow: 0 16px 40px -10px rgba(0,0,0,.7);
+  --ccd-black-btn: #f2f2ef; --ccd-black-btn-fg: #141413;
+  --ccd-proj-ic-bg: #2a2838; --ccd-proj-ic: #a99cf0;
+  --ccd-ring-track: #3a3a3a; --ccd-ring-fill: #4f77b7;
+  --ccd-avatar: #333331;
+  --ccd-stop: #b9b9b5;
+  --ccd-stop-sq: #4b4b48;           /* dtools sample: faint outline on the #1e1e1a composer */
+  --ccd-fade: rgba(20,20,20,0);
+  --cc-clawd-eye: #141414;
+}
+
+.sk-cc *, .sk-cc *::before, .sk-cc *::after { box-sizing: border-box; }
+
+/* ---------- icons & glyphs ---------- */
+.sk-cc .cc-i { display: inline-block; width: 18px; height: 18px; flex: none; vertical-align: middle; color: inherit; }
+.sk-cc .cc-i > svg { display: block; width: 100%; height: 100%; }
+.sk-cc .cc-g { display: inline-block; width: 1ch; height: 1em; vertical-align: -0.15em; flex: none; font-style: normal; }
+.sk-cc .cc-g.cc-g-2 { width: 2ch; }
+.sk-cc .cc-g > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* macOS traffic lights (shared) */
+.sk-cc .cc-lights { display: inline-flex; gap: 12.5px; align-items: center; flex: none; }
+.sk-cc .cc-lights i { width: 13px; height: 13px; border-radius: 50%; display: block; box-shadow: inset 0 0 0 .5px rgba(0,0,0,.12); }
+.sk-cc .cc-lights i:nth-child(1) { background: #ff5f57; }
+.sk-cc .cc-lights i:nth-child(2) { background: #febc2e; }
+.sk-cc .cc-lights i:nth-child(3) { background: #28c840; }
+
+/* =====================================================================
+   TERMINAL  (Claude Code CLI inside any macOS terminal)
+   Grid unit = one monospace cell (1ch) and one row (--cct-lh × 1em).
+   Gutter glyphs sit in .cc-gut cells so they share the text's baseline.
+   ===================================================================== */
+.sk-cc .cc-term {
+  position: relative; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--cct-bg); color: var(--cct-fg);
+  border-radius: 14px; box-shadow: 0 0 0 1px var(--cct-win-border);
+  font-family: var(--cc-mono); font-size: var(--cct-fs); line-height: var(--cct-lh);
+  font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0;
+}
+/* title bar (macOS terminal; Claude Code sets the title to "✳ <task>") */
+.sk-cc .cc-term-bar {
+  position: relative; flex: none; height: 40px; display: flex; align-items: center; padding: 0 15px;
+  font-family: var(--cc-sans); font-size: 13.5px; font-weight: 600; color: var(--cct-bar-fg); line-height: 1;
+  border-bottom: 1px solid var(--cct-bar-line);
+}
+.sk-cc .cc-term-bar .cc-term-title { position: absolute; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 6px; pointer-events: none; }
+.sk-cc .cc-term-bar .cc-term-title .cc-g { width: 10px; height: 16px; color: var(--cct-bar-fg); vertical-align: 0; }
+.sk-cc .cc-cli { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: .45em 1.6ch .6em; }
+
+/* transcript: top-anchored; once it overflows, the oldest rows scroll off the top (fullscreen renderer) */
+.sk-cc .cc-tx { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+.sk-cc .cc-tx > * { flex: none; }
+.sk-cc .cc-tx > .cc-tx-fill { flex: 1 0 0; min-height: 0; }
+
+/* rows */
+.sk-cc .cc-l { white-space: pre-wrap; word-break: break-word; min-height: calc(var(--cct-lh) * 1em); }
+.sk-cc .cc-b { margin-top: calc(var(--cct-lh) * 1em); }      /* block preceded by one blank row */
+.sk-cc .cc-b0 { margin-top: 0; }
+.sk-cc .cc-dim { color: var(--cct-dim); }
+.sk-cc .cc-subtle { color: var(--cct-subtle); }
+.sk-cc .cc-bold { font-weight: 700; }
+.sk-cc .cc-it { font-style: italic; }
+.sk-cc .cc-claude { color: var(--cct-claude); }
+.sk-cc .cc-ok { color: var(--cct-success); }
+.sk-cc .cc-err { color: var(--cct-error); }
+.sk-cc .cc-warn { color: var(--cct-warning); }
+.sk-cc .cc-perm-c { color: var(--cct-permission); }
+.sk-cc .cc-id { color: var(--cct-ident); }                     /* inline code / identifiers in replies */
+
+/* glyph cells (drawn SVG, see icons.js) */
+.sk-cc .cc-gut { display: block; white-space: pre; }
+.sk-cc .cc-gut > .cc-g { vertical-align: -0.15em; }
+
+/* header line: "✻ Claude Code · ~/code/my-app" (fullscreen renderer) */
+.sk-cc .cc-hdr { color: var(--cct-dim); white-space: pre; }
+.sk-cc .cc-hdr > .cc-g { color: var(--cct-dim); }
+
+/* hanging-gutter rows: 2-col gutter + wrapped body */
+.sk-cc .cc-u, .sk-cc .cc-a, .sk-cc .cc-t, .sk-cc .cc-spin, .sk-cc .cc-pline, .sk-cc .cc-done {
+  display: grid; grid-template-columns: 2ch minmax(0, 1fr); white-space: pre-wrap; word-break: break-word;
+}
+/* user turn: full-width grey band, dim ❯ */
+.sk-cc .cc-u { background: var(--cct-band); }
+.sk-cc .cc-u > .cc-gut { color: var(--cct-band-chev); }
+/* assistant prose: ● in text colour */
+.sk-cc .cc-a > .cc-gut { color: var(--cct-fg); }
+/* tool call: ● Name(args); dot colour = state */
+.sk-cc .cc-t > .cc-gut { color: var(--cct-success); }
+.sk-cc .cc-t.is-run > .cc-gut { color: var(--cct-dim); }
+.sk-cc .cc-t.is-err > .cc-gut { color: var(--cct-error); }
+.sk-cc .cc-t .cc-tn { font-weight: 400; }                     /* tool name: regular weight, as in the official light videos */
+/* ⎿ result rows: 2 spaces, elbow, 2 spaces, body */
+.sk-cc .cc-r { display: grid; grid-template-columns: 2ch 3ch minmax(0, 1fr); white-space: pre-wrap; word-break: break-word; }
+.sk-cc .cc-r > .cc-gut { grid-column: 2; color: var(--cct-dim); }
+.sk-cc .cc-r > .cc-rb { grid-column: 3; min-width: 0; }
+.sk-cc .cc-r.is-cont > .cc-rb { grid-column: 3; }
+/* collapsed work summary ("Thought for 4s, searched for 1 pattern, read 2 files") */
+.sk-cc .cc-sum { padding-left: 2ch; color: var(--cct-dim); white-space: pre-wrap; }
+.sk-cc .cc-expand { color: var(--cct-dim); }
+/* post-turn line "✻ Worked for 38s" */
+.sk-cc .cc-done { color: var(--cct-dim); }
+
+/* spinner: "✻ Cogitating… (12s · ↓ 1.2k tokens)" + ⎿ tip */
+.sk-cc .cc-spin > .cc-gut { color: var(--cct-claude); }
+.sk-cc .cc-verb {
+  color: var(--cct-claude);
+  background: linear-gradient(90deg, var(--cct-claude) 0 38%, var(--cct-shimmer) 50%, var(--cct-claude) 62% 100%);
+  background-size: 300% 100%; background-position: var(--cc-shim, 100%) 0;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* input: ❯ + block cursor between two full-width rules (no box) */
+.sk-cc .cc-input { flex: none; }
+.sk-cc .cc-rule { height: calc(var(--cct-lh) * 1em); position: relative; }
+.sk-cc .cc-rule::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px; margin-top: -.75px; background: var(--cct-rule); }
+.sk-cc .cc-pline > .cc-gut { color: var(--cct-prompt-chev); }
+.sk-cc .cc-cursor { display: inline-block; width: 1ch; height: 1.42em; vertical-align: -0.36em; background: var(--cct-cursor); }
+.sk-cc .cc-ph { color: var(--cct-dim); }                      /* placeholder, e.g. Try "fix lint errors" */
+.sk-cc .cc-bash-mode .cc-rule::before { background: var(--cct-bash); }
+
+/* footer under the bottom rule — only the mode label is coloured */
+.sk-cc .cc-foot { padding-left: 2ch; white-space: pre; color: var(--cct-dim); }
+.sk-cc .cc-foot .cc-hint { color: var(--cct-subtle); }
+.sk-cc .cc-mode-auto   { color: var(--cct-warning); }
+.sk-cc .cc-mode-accept { color: var(--cct-auto); }
+.sk-cc .cc-mode-plan   { color: var(--cct-plan); }
+.sk-cc .cc-mode-manual { color: var(--cct-dim); }
+.sk-cc .cc-pr { text-decoration: underline; text-underline-offset: .2em; text-decoration-thickness: 1.5px; }
+.sk-cc .cc-pr.is-approved { text-decoration-color: var(--cct-success); }
+.sk-cc .cc-pr.is-pending  { text-decoration-color: var(--cct-warning); }
+.sk-cc .cc-pr.is-changes  { text-decoration-color: var(--cct-error); }
+/* custom status line (docs example) */
+.sk-cc .cc-status { padding-left: 2ch; white-space: pre; }
+.sk-cc .cc-meter { display: inline-block; width: 9ch; height: 1.15em; vertical-align: -0.25em; background: #384634; position: relative; }
+.sk-cc .cc-meter > i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--v, 40%); background: #8fc985; }
+
+/* diff under an Update/Write result: line no · sign · code, full-row tint, changed words darker */
+.sk-cc .cc-diff { display: flex; flex-direction: column; }
+.sk-cc .cc-dl { display: grid; grid-template-columns: 4ch 2ch minmax(0, 1fr); white-space: pre; }
+.sk-cc .cc-dl > .cc-ln { color: var(--cct-dim); text-align: right; padding-right: 1ch; }
+.sk-cc .cc-dl.is-add { background: var(--cct-add-bg); }
+.sk-cc .cc-dl.is-rem { background: var(--cct-rem-bg); }
+.sk-cc .cc-dl.is-add > .cc-ln, .sk-cc .cc-dl.is-rem > .cc-ln { color: var(--cct-fg); }
+.sk-cc .cc-dl .cc-w-add { background: var(--cct-add-word); }
+.sk-cc .cc-dl .cc-w-rem { background: var(--cct-rem-word); }
+
+/* todo list (ctrl+t / TodoWrite) */
+.sk-cc .cc-todo { display: grid; grid-template-columns: 2ch minmax(0, 1fr); }
+.sk-cc .cc-todo.is-done { color: var(--cct-dim); text-decoration: line-through; }
+.sk-cc .cc-todo.is-doing { font-weight: 700; }
+
+/* permission prompt (no box) */
+.sk-cc .cc-perm { white-space: pre-wrap; }
+.sk-cc .cc-perm-title { color: var(--cct-permission); font-weight: 700; }
+.sk-cc .cc-dash { height: calc(var(--cct-lh) * 1em); position: relative; margin: 0 -1ch; }
+.sk-cc .cc-dash::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px;
+  background: repeating-linear-gradient(90deg, var(--cct-dash) 0 .45ch, transparent .45ch 1ch); }
+.sk-cc .cc-opt { display: grid; grid-template-columns: 2ch 3ch minmax(0, 1fr); white-space: pre-wrap; }
+.sk-cc .cc-opt > .cc-n { color: var(--cct-dim); }
+.sk-cc .cc-opt > .cc-gut { color: var(--cct-permission); visibility: hidden; }
+.sk-cc .cc-opt.is-sel > .cc-gut { visibility: visible; }
+.sk-cc .cc-opt.is-sel > .cc-ol { color: var(--cct-permission); }
+
+/* pickers: /model, /effort — coloured top rule, numbered rows, ❯ on the selection, ✔ on the current value */
+.sk-cc .cc-pick { border-top: 1.5px solid var(--cct-pick-rule); padding: calc(var(--cct-lh) * .5em) 1.6ch 0; }
+.sk-cc .cc-pick-title { color: var(--cct-permission); }
+.sk-cc .cc-pick-title.is-plain { color: var(--cct-fg); font-weight: 700; }
+.sk-cc .cc-mrow { display: grid; grid-template-columns: 2ch 3ch 23ch minmax(0, 1fr); white-space: pre; }
+.sk-cc .cc-mrow > .cc-n { color: var(--cct-dim); }
+.sk-cc .cc-mrow > .cc-gut { color: var(--cct-permission); visibility: hidden; }
+.sk-cc .cc-mrow > .cc-md { color: var(--cct-dim); overflow: hidden; text-overflow: clip; }
+.sk-cc .cc-mrow.is-sel > .cc-gut { visibility: visible; }
+.sk-cc .cc-mrow.is-sel > .cc-ml, .sk-cc .cc-mrow.is-sel > .cc-md { color: var(--cct-permission); }
+.sk-cc .cc-mrow.is-cur > .cc-ml, .sk-cc .cc-mrow.is-cur > .cc-md { color: var(--cct-success); }
+.sk-cc .cc-mrow.is-cur > .cc-md .cc-mm { color: var(--cct-claude); }
+.sk-cc .cc-effort { display: grid; grid-template-columns: 2ch minmax(0,1fr); white-space: pre; color: var(--cct-dim); }
+.sk-cc .cc-effort > .cc-gut { color: var(--cct-claude); }
+.sk-cc .cc-slider { width: 37ch; }
+.sk-cc .cc-slider-ends { display: flex; justify-content: space-between; color: var(--cct-dim); }
+.sk-cc .cc-slider-track { height: calc(var(--cct-lh) * 1em); position: relative; }
+.sk-cc .cc-slider-track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px; background: var(--cct-fg); opacity: .8; }
+.sk-cc .cc-slider-track > .cc-g { position: absolute; top: 50%; margin-top: -.72em; left: var(--at, 50%); transform: translateX(-50%); color: var(--cct-fg); }
+.sk-cc .cc-slider-stops { display: flex; justify-content: space-between; color: var(--cct-dim); }
+.sk-cc .cc-slider-stops > .is-sel { color: var(--cct-permission); }
+
+/* agent view (← for agents) */
+.sk-cc .cc-agent-row { display: grid; grid-template-columns: 2ch 3ch 18ch minmax(0,1fr) 8ch; white-space: pre; }
+.sk-cc .cc-agent-row > .cc-age { text-align: right; color: var(--cct-dim); }
+.sk-cc .cc-agent-row.is-sel { background: var(--cct-sel); }
+.sk-cc .cc-st-needs { color: var(--cct-needs); }
+.sk-cc .cc-st-work  { color: var(--cct-dim); }
+.sk-cc .cc-st-done  { color: var(--cct-success); }
+
+/* =====================================================================
+   DESKTOP APP  (Claude desktop → Code; same UI at claude.ai/code)
+   ===================================================================== */
+.sk-cc .cc-win {
+  position: relative; display: grid; grid-template-columns: var(--ccd-side-w, 316px) minmax(0, 1fr);
+  background: var(--ccd-bg); color: var(--ccd-text);
+  border-radius: 22px; overflow: hidden; box-shadow: 0 0 0 1px var(--ccd-win-line);
+  font-family: var(--cc-sans); font-size: var(--ccd-fs); line-height: 1.45;
+  font-weight: var(--ccd-w); letter-spacing: var(--ccd-track);
+}
+.sk-cc .cc-win .cc-code, .sk-cc .cc-win .cc-code-view { letter-spacing: 0; }
+.sk-cc .cc-win.has-panel { grid-template-columns: var(--ccd-side-w, 316px) minmax(0, 1fr) var(--ccd-panel-w, 494px); }
+.sk-cc .cc-win.no-side { grid-template-columns: minmax(0, 1fr); }
+.sk-cc .cc-win.no-side.has-panel { grid-template-columns: minmax(0, 1fr) var(--ccd-panel-w, 494px); }
+
+/* ---------- sidebar ---------- */
+.sk-cc .cc-side { position: relative; display: flex; flex-direction: column; min-height: 0; background: var(--ccd-side); border-right: 1px solid var(--ccd-line); padding: 0 10px; }
+.sk-cc .cc-side-top { height: 54px; flex: none; display: flex; align-items: center; padding-left: 10px; gap: 0; }
+.sk-cc .cc-side-top .cc-tb-i { color: var(--ccd-text2); margin-left: 9px; width: 18px; height: 18px; }
+.sk-cc .cc-side-top .cc-lights + .cc-tb-i { margin-left: 16px; }
+.sk-cc .cc-side-top .cc-tb-i.is-off { opacity: .45; }
+.sk-cc .cc-badge-dot { position: relative; }
+.sk-cc .cc-badge-dot::after { content: ""; position: absolute; top: -2px; right: -2px; width: 6px; height: 6px; border-radius: 50%; background: #2f7bf5; box-shadow: 0 0 0 1.5px var(--ccd-side); }
+.sk-cc .cc-badge-dot.is-grey::after { background: var(--ccd-text3); top: -1px; right: auto; left: -1px; width: 5px; height: 5px; box-shadow: 0 0 0 1.5px var(--ccd-sel); }
+/* Chat | Code segmented toggle */
+.sk-cc .cc-toggle { margin-left: auto; display: inline-flex; padding: 2px; border-radius: 9px; background: var(--ccd-toggle-bg); gap: 2px; }
+.sk-cc .cc-toggle > span { width: 36px; height: 28px; border-radius: 7px; display: grid; place-items: center; color: var(--ccd-text2); }
+.sk-cc .cc-toggle > span.is-on { background: var(--ccd-toggle-sel); color: var(--ccd-text); box-shadow: 0 0 0 .5px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.08); }
+.sk-cc .cc-toggle .cc-i { width: 17px; height: 17px; }
+
+.sk-cc .cc-nav { display: flex; flex-direction: column; padding-top: 6px; }
+.sk-cc .cc-nav-row, .sk-cc .cc-srow {
+  height: 30px; display: flex; align-items: center; gap: 11px; padding: 0 8px; border-radius: 8px;
+  font-size: 15px; color: var(--ccd-ink2); white-space: nowrap; overflow: hidden;
+}
+.sk-cc .cc-nav-row .cc-i { width: 17px; height: 17px; color: var(--ccd-ink2); }
+.sk-cc .cc-nav-row.is-new .cc-i { width: 22px; height: 22px; margin: 0 -2.5px; border-radius: 50%; background: var(--ccd-sel); padding: 3px; }
+.sk-cc .cc-nav-row.is-more { color: var(--ccd-text2); }
+.sk-cc .cc-nav-row.is-more .cc-i { color: var(--ccd-text2); }
+.sk-cc .cc-beta { font-size: 11.5px; font-weight: var(--ccd-w-med); line-height: 1; padding: 4px 5px; border-radius: 4px; background: var(--ccd-hover); color: var(--ccd-chip-text); margin-left: -2px; }
+.sk-cc .cc-side-label { font-size: 13.5px; color: var(--ccd-text2); padding: 0 8px; height: 28px; display: flex; align-items: center; margin-top: 20px; }
+.sk-cc .cc-grp { display: flex; flex-direction: column; }
+.sk-cc .cc-grp + .cc-grp { margin-top: 8px; }
+.sk-cc .cc-grp-h { height: 30px; display: flex; align-items: center; padding: 0 8px; font-size: 13.5px; color: var(--ccd-text2); gap: 12px; }
+.sk-cc .cc-grp-h > span:first-child { flex: 1; }
+.sk-cc .cc-grp-h .cc-i { width: 16px; height: 16px; color: var(--ccd-text2); }
+.sk-cc .cc-srow { height: 31px; }
+.sk-cc .cc-srow .cc-i { width: 16px; height: 16px; flex: none; }
+.sk-cc .cc-srow .cc-i.st-idle { color: var(--ccd-text3); }
+.sk-cc .cc-srow .cc-i.st-active { color: #8a8a87; }
+.sk-cc .cc-srow .cc-i.st-pr { color: var(--ccd-pr); }
+.sk-cc .cc-srow .cc-i.st-merged { color: var(--ccd-merged); }
+.sk-cc .cc-srow .cc-i.st-proj { color: var(--ccd-proj-ic); }
+.sk-cc .cc-srow.is-sel, .sk-cc .cc-nav-row.is-sel { background: var(--ccd-sel); color: var(--ccd-text); font-weight: var(--ccd-w-med); }
+.sk-cc .cc-srow > span { overflow: hidden; text-overflow: ellipsis; }
+.sk-cc .cc-side-foot { margin-top: auto; height: 52px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 8px; border-top: 1px solid var(--ccd-line); margin-left: -10px; margin-right: -10px; padding-left: 18px; padding-right: 18px; }
+.sk-cc .cc-avatar { width: 22px; height: 22px; border-radius: 50%; background: var(--ccd-avatar); display: grid; place-items: center; font-size: 11px; font-weight: var(--ccd-w-semi); color: var(--ccd-text); flex: none; }
+.sk-cc .cc-side-foot .cc-who { font-size: 15px; display: flex; align-items: baseline; gap: 5px; }
+.sk-cc .cc-side-foot .cc-plan { font-size: 13.5px; color: var(--ccd-text2); }
+.sk-cc .cc-side-foot .cc-i { width: 15px; height: 15px; color: var(--ccd-text2); }
+.sk-cc .cc-side-foot .cc-i:last-child { margin-left: auto; width: 17px; height: 17px; }
+
+/* ---------- main column ---------- */
+/* header when the sidebar is collapsed: traffic lights + sidebar / back icons live in the header */
+.sk-cc .cc-head.has-lights { padding-left: 18px; }
+.sk-cc .cc-head.has-lights .cc-lights { margin-right: 12px; }
+.sk-cc .cc-head.has-lights .cc-tb-i { width: 18px; height: 18px; color: var(--ccd-text2); margin-right: 8px; }
+.sk-cc .cc-head.has-lights .cc-tb-i.is-off { opacity: .45; }
+.sk-cc .cc-head.has-lights .cc-head-gap { width: 28px; flex: none; }
+
+.sk-cc .cc-main { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--ccd-bg); }
+.sk-cc .cc-head { height: 54px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 14px 0 26px; white-space: nowrap; }
+.sk-cc .cc-head .cc-env { width: 18px; height: 18px; color: var(--ccd-text); }
+.sk-cc .cc-head .cc-title { font-size: 15px; font-weight: var(--ccd-w-med); }
+.sk-cc .cc-head .cc-title-chev { width: 15px; height: 15px; color: var(--ccd-text); margin-left: -2px; }
+.sk-cc .cc-chip { font-size: 13.5px; line-height: 1; padding: 5px 6px; border-radius: 6px; background: var(--ccd-chip); color: var(--ccd-chip-text); }
+.sk-cc .cc-head-r { margin-left: auto; display: flex; align-items: center; gap: 15px; }
+.sk-cc .cc-head-r .cc-i { width: 18px; height: 18px; color: var(--ccd-text2); }
+.sk-cc .cc-head-r .cc-i.is-on { color: #fff; background: #2a5cc7; border-radius: 6px; padding: 3px; width: 26px; height: 26px; margin: -4px; }
+.sk-cc .cc-proj-ic { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--ccd-proj-ic-bg); color: var(--ccd-proj-ic); margin-left: -10px; }
+.sk-cc .cc-proj-ic .cc-i { width: 15px; height: 15px; }
+.sk-cc .cc-btn-soft { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 9px; border-radius: 7px; background: var(--ccd-chip); color: var(--ccd-text); font-size: 15px; }
+.sk-cc .cc-btn-soft .cc-i { width: 16px; height: 16px; color: var(--ccd-text); }
+
+.sk-cc .cc-chat { position: relative; flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.sk-cc .cc-chat.is-bottom { justify-content: flex-end; }
+.sk-cc .cc-chat.is-bottom {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgba(0,0,0,.25) 12px, rgba(0,0,0,.72) 28px, #000 42px);
+          mask-image: linear-gradient(to bottom, transparent 0, rgba(0,0,0,.25) 12px, rgba(0,0,0,.72) 28px, #000 42px);
+}
+.sk-cc .cc-col { width: calc(100% - 92px); max-width: 880px; margin: 0 auto; }
+.sk-cc .cc-chat > .cc-col { display: flex; flex-direction: column; padding: 34px 0 18px; }
+
+/* user bubble (right, rounded 10) */
+.sk-cc .cc-umsg { align-self: flex-end; max-width: 75%; background: var(--ccd-bubble); color: var(--ccd-text); border-radius: 10px; padding: 11px 14px; font-size: 15.5px; line-height: 1.47; }
+/* assistant prose (plain, left) */
+.sk-cc .cc-amsg { font-size: 15.5px; line-height: 1.5; color: var(--ccd-text); max-width: 100%; }
+.sk-cc .cc-amsg.is-compact { line-height: 1.4; }      /* Projects coordinator chat: 22px pitch at 1x */
+.sk-cc .cc-amsg p { margin: 0; }
+.sk-cc .cc-amsg p + p { margin-top: .75em; }
+.sk-cc .cc-amsg ol, .sk-cc .cc-amsg ul { margin: .45em 0 0; padding-left: 1.5em; }
+.sk-cc .cc-amsg li + li { margin-top: .2em; }
+.sk-cc .cc-amsg li::marker { color: var(--ccd-text2); }
+.sk-cc .cc-code { font-family: var(--cc-mono); font-size: .86em; padding: .12em .4em; border-radius: 4px; background: var(--ccd-code-bg); color: var(--ccd-code-fg); white-space: nowrap; }
+.sk-cc .cc-m-gap { height: 22px; flex: none; }
+.sk-cc .cc-m-gap.is-s { height: 12px; }
+.sk-cc .cc-m-gap.is-l { height: 30px; }
+.sk-cc .cc-m-gap.is-xl { height: 56px; }   /* around user bubbles in the Projects coordinator chat */
+
+/* counts  +6 -6 */
+.sk-cc .cc-add { color: var(--ccd-add); }
+.sk-cc .cc-rem { color: var(--ccd-rem); }
+.sk-cc .cc-counts { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sk-cc .cc-counts .cc-rem { margin-left: 3px; }
+
+/* status rows: "··· Setting up a cloud container ›", "Searching foo ›" */
+.sk-cc .cc-stat { display: flex; align-items: center; gap: 8px; font-size: 15.5px; color: var(--ccd-text); white-space: nowrap; }
+.sk-cc .cc-stat .cc-i { width: 15px; height: 15px; color: var(--ccd-text3); }
+.sk-cc .cc-stat .cc-q { color: var(--ccd-text2); }
+.sk-cc .cc-stat.is-muted { color: var(--ccd-text2); }
+.sk-cc .cc-stat.is-muted .cc-q { color: var(--ccd-text3); }
+.sk-cc .cc-dots { display: inline-flex; gap: 3.5px; align-items: center; width: 26px; flex: none; }
+.sk-cc .cc-dots > i { width: 4px; height: 4px; border-radius: 50%; background: var(--cc-clay); display: block; }
+.sk-cc .cc-shim {
+  background: linear-gradient(90deg, var(--ccd-text) 0 38%, var(--ccd-text3) 50%, var(--ccd-text) 62% 100%);
+  background-size: 300% 100%; background-position: var(--cc-shim, 100%) 0;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sk-cc .cc-shim.is-2 { background-image: linear-gradient(90deg, var(--ccd-text3) 0 35%, var(--ccd-card-line) 50%, var(--ccd-text3) 65% 100%); }
+.sk-cc .cc-timer { color: var(--ccd-text2); font-variant-numeric: tabular-nums; }
+/* working indicator under the last message */
+.sk-cc .cc-work { width: 20px; height: 20px; color: var(--cc-clay); display: block; }
+.sk-cc .cc-work > svg { width: 100%; height: 100%; display: block; }
+
+/* tool-group summary + expanded card */
+.sk-cc .cc-tsum { display: flex; align-items: center; gap: 6px; font-size: 15.5px; color: var(--ccd-text2); white-space: nowrap; }
+.sk-cc .cc-tsum .cc-i { width: 14px; height: 14px; color: var(--ccd-text2); }
+.sk-cc .cc-card { border: 1px solid var(--ccd-card-line); border-radius: 9px; overflow: hidden; background: transparent; }
+.sk-cc .cc-trow { height: 41px; display: flex; align-items: center; gap: 6px; padding: 0 12px; font-size: 15.5px; color: var(--ccd-text2); white-space: nowrap; overflow: hidden; }
+.sk-cc .cc-trow + .cc-trow { border-top: 1px solid var(--ccd-row-line); }
+.sk-cc .cc-trow b { font-weight: var(--ccd-w); color: var(--ccd-text); }
+.sk-cc .cc-trow .cc-i { width: 14px; height: 14px; color: var(--ccd-text3); margin-left: auto; }
+.sk-cc .cc-trow .cc-counts { margin-left: 4px; }
+
+/* "Edited a file" card */
+.sk-cc .cc-edit-h { height: 38px; display: flex; align-items: center; padding: 0 6px 0 12px; font-size: 15.5px; font-weight: var(--ccd-w-med); color: var(--ccd-text); gap: 8px; border-bottom: 1px solid var(--ccd-row-line); }
+.sk-cc .cc-edit-h .cc-undo { margin-left: auto; font-size: 14px; font-weight: var(--ccd-w); color: var(--ccd-text3); padding: 0 6px; }
+.sk-cc .cc-edit-h .cc-view { font-size: 14px; font-weight: var(--ccd-w); color: var(--ccd-text2); background: var(--ccd-hover); padding: 4px 8px; border-radius: 6px; line-height: 1.2; }
+[data-theme="dark"] .sk-cc .cc-edit-h .cc-view, .sk-cc[data-theme="dark"] .cc-edit-h .cc-view { background: #282828; }
+.sk-cc .cc-frow { height: 45px; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 15.5px; color: var(--ccd-text); }
+.sk-cc .cc-frow > .cc-i:first-child { width: 13px; height: 13px; color: var(--ccd-text3); }
+.sk-cc .cc-frow .cc-counts { margin-left: auto; }
+.sk-cc .cc-frow > .cc-i:last-child { width: 14px; height: 14px; color: var(--ccd-text3); }
+
+/* mobile-style pills that also appear on desktop summaries:  Diff +9 -2 · Create PR */
+.sk-cc .cc-pill { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 17px; border: 1px solid var(--ccd-card-line); font-size: 15px; font-weight: var(--ccd-w-med); color: var(--ccd-text); background: var(--ccd-bg); }
+
+/* ---------- composer ---------- */
+.sk-cc .cc-dock { position: relative; flex: none; padding: 0 0 16px; }
+.sk-cc .cc-dock::before { content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 26px; background: linear-gradient(var(--ccd-fade), var(--ccd-bg)); pointer-events: none; }
+.sk-cc .cc-composer {
+  position: relative; display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 14px 0 14px;
+  background: var(--ccd-composer); border: 1px solid var(--ccd-composer-line); border-radius: 10px; box-shadow: var(--ccd-composer-shadow);
+  font-size: 15.5px; color: var(--ccd-text);
+}
+.sk-cc .cc-composer.is-tall { min-height: 54px; }
+.sk-cc .cc-composer .cc-field { flex: 1; min-width: 0; white-space: pre-wrap; line-height: 1.45; padding: 11px 0; }
+.sk-cc .cc-composer .cc-field:empty::before, .sk-cc .cc-composer .cc-field.is-ph::before { content: attr(data-ph); color: var(--ccd-ph); }
+.sk-cc .cc-composer .cc-caret { display: inline-block; width: 1.5px; height: 1.15em; vertical-align: -0.2em; background: var(--ccd-text); margin-left: 1px; }
+.sk-cc .cc-composer .cc-send { width: 17px; height: 17px; color: var(--ccd-text); flex: none; }
+.sk-cc .cc-composer .cc-send.is-stop { color: var(--ccd-stop); width: 17px; height: 17px; }          /* cloud session / project: stop-target */
+.sk-cc .cc-composer .cc-send.is-stop-sq { color: var(--ccd-stop-sq); width: 17px; height: 17px; }  /* local session: stop-square */
+.sk-cc .cc-composer .cc-send.is-return { color: var(--ccd-text3); opacity: .7; }
+.sk-cc .cc-composer .cc-send.is-go { width: 26px; height: 26px; border-radius: 7px; background: var(--cc-clay); color: #fff; padding: 5px; }
+.sk-cc .cc-clawd { position: absolute; right: 6px; bottom: 100%; width: 40px; height: 29px; margin-bottom: -1px; }
+.sk-cc .cc-clawd > svg { width: 100%; height: 100%; display: block; }
+.sk-cc .cc-under { display: flex; align-items: center; gap: 12px; height: 24px; margin-top: 9px; padding: 0 14px 0 16px; font-size: 14.5px; color: var(--ccd-under); white-space: nowrap; }
+.sk-cc .cc-under .cc-i { width: 17px; height: 17px; color: var(--ccd-under); }
+.sk-cc .cc-under .cc-i.is-sm { width: 13px; height: 13px; margin-left: -6px; color: var(--ccd-text2); }
+.sk-cc .cc-under .cc-sp { flex: 1; }
+.sk-cc .cc-under .cc-r-gap { margin-left: 12px; }
+.sk-cc .cc-ring { width: 15px; height: 15px; display: block; }
+.sk-cc .cc-ring-track { stroke: var(--ccd-ring-track); }
+.sk-cc .cc-ring-fill { stroke: var(--ccd-ring-fill); }
+/* environment chips above a new-session composer */
+.sk-cc .cc-envs { display: flex; gap: 12px; margin-bottom: 12px; }
+.sk-cc .cc-env-chip { display: inline-flex; align-items: center; gap: 9px; height: 38px; padding: 0 13px; border-radius: 8px; background: var(--ccd-env-chip); font-size: 15.5px; color: var(--ccd-text); white-space: nowrap; }
+.sk-cc .cc-env-chip .cc-i { width: 17px; height: 17px; color: var(--ccd-text2); }
+.sk-cc .cc-env-chip .cc-i.is-check { color: #2f6fd1; width: 18px; height: 18px; }
+.sk-cc .cc-env-chip .cc-vsep { width: 1px; height: 16px; background: var(--ccd-text3); opacity: .6; }
+.sk-cc .cc-env-chip.is-icon { width: 40px; padding: 0; justify-content: center; }
+
+/* ---------- popovers (model menu, effort, context) ---------- */
+.sk-cc .cc-pop { position: absolute; z-index: 5; min-width: 230px; padding: 6px; border-radius: 12px; background: var(--ccd-pop); box-shadow: 0 0 0 1px var(--ccd-pop-line), var(--ccd-pop-shadow); font-size: 14.5px; color: var(--ccd-text); }
+.sk-cc .cc-pop-h { font-size: 13px; color: var(--ccd-text2); padding: 6px 10px 4px; }
+.sk-cc .cc-pop-row { height: 34px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border-radius: 7px; white-space: nowrap; }
+.sk-cc .cc-pop-row.is-hi { background: var(--ccd-hover); }
+.sk-cc .cc-pop-row .cc-sub { color: var(--ccd-text2); font-size: 13.5px; }
+.sk-cc .cc-pop-row .cc-i { width: 16px; height: 16px; margin-left: auto; color: var(--ccd-text2); }
+.sk-cc .cc-pop-row .cc-i.is-check { color: var(--ccd-blue); }
+.sk-cc .cc-pop-sep { height: 1px; background: var(--ccd-pop-line); margin: 5px 4px; }
+.sk-cc .cc-pop-pad { padding: 10px 12px; }
+.sk-cc .cc-eff-ends { display: flex; justify-content: space-between; font-size: 13px; color: var(--ccd-text2); margin-top: 10px; }
+.sk-cc .cc-eff-track { position: relative; height: 18px; margin-top: 6px; }
+.sk-cc .cc-eff-track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px; border-radius: 2px; background: var(--ccd-tile); }
+.sk-cc .cc-eff-track > b { position: absolute; left: 0; top: 50%; height: 4px; margin-top: -2px; border-radius: 2px; background: var(--ccd-text); width: var(--at, 50%); }
+.sk-cc .cc-eff-track > i { position: absolute; top: 50%; left: var(--at, 50%); width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.2); }
+.sk-cc .cc-bar { height: 6px; border-radius: 3px; background: var(--ccd-tile); overflow: hidden; margin-top: 6px; }
+.sk-cc .cc-bar > i { display: block; height: 100%; width: var(--v, 30%); background: var(--ccd-blue); border-radius: 3px; }
+.sk-cc .cc-pop-kv { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--ccd-text2); margin-top: 12px; }
+.sk-cc .cc-pop-kv b { font-weight: var(--ccd-w-med); color: var(--ccd-text); }
+.sk-cc .cc-link { color: var(--ccd-text2); text-decoration: underline; text-underline-offset: 2px; font-size: 13.5px; }
+
+/* ---------- new-session home ---------- */
+.sk-cc .cc-home { display: flex; flex-direction: column; }
+.sk-cc .cc-greet { display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: var(--ccd-w); letter-spacing: -0.022em; color: var(--ccd-text); }
+.sk-cc .cc-greet .cc-i { width: 30px; height: 30px; }
+.sk-cc .cc-usage { background: var(--ccd-card); border-radius: 14px; padding: 14px 16px 16px; width: 740px; }
+.sk-cc .cc-seg { display: inline-flex; gap: 2px; font-size: 15px; color: var(--ccd-text2); }
+.sk-cc .cc-seg > span { padding: 4px 10px; border-radius: 7px; }
+.sk-cc .cc-seg > span.is-on { background: var(--ccd-tile); color: var(--ccd-text); }
+.sk-cc .cc-usage-h { display: flex; justify-content: space-between; align-items: center; }
+.sk-cc .cc-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin: 22px 9px 26px; }
+.sk-cc .cc-tile { background: var(--ccd-tile); border-radius: 8px; padding: 9px 12px; }
+.sk-cc .cc-tile span { display: block; font-size: 14px; color: var(--ccd-text2); }
+.sk-cc .cc-tile b { display: block; font-size: 16px; font-weight: var(--ccd-w-semi); color: var(--ccd-text); margin-top: 1px; }
+.sk-cc .cc-heat { display: grid; grid-template-columns: repeat(26, 1fr); gap: 4px; }
+.sk-cc .cc-heat > i { aspect-ratio: 1; border-radius: 2px; background: var(--ccd-heat0); display: block; }
+.sk-cc .cc-heat > i.h1 { background: var(--ccd-heat1); }
+.sk-cc .cc-heat > i.h2 { background: var(--ccd-heat2); }
+.sk-cc .cc-heat > i.h3 { background: var(--ccd-heat3); }
+.sk-cc .cc-heat > i.h4 { background: var(--ccd-heat4); }
+.sk-cc .cc-moby { font-size: 14px; color: var(--ccd-text3); margin-top: 14px; }
+
+/* ---------- Projects (beta) ---------- */
+.sk-cc .cc-tcard { display: inline-flex; align-self: flex-start; align-items: center; gap: 0; height: 40px; padding: 0 16px 0 18px; border: 1px solid var(--ccd-card-line); border-radius: 10px; font-size: 15.5px; white-space: nowrap; background: var(--ccd-bg); }
+.sk-cc .cc-tcard + .cc-tcard { margin-top: 14px; }
+.sk-cc .cc-tcard > i.cc-tdot { width: 6px; height: 6px; border-radius: 50%; background: #8d8d8a; margin-right: 15px; flex: none; }
+.sk-cc .cc-tcard > i.cc-tdot.is-done { background: var(--ccd-pr); }
+.sk-cc .cc-tcard > i.cc-tdot.is-wait { background: #e0a43a; }
+.sk-cc .cc-tcard .cc-tt { color: var(--ccd-text); font-weight: var(--ccd-w-med); }
+.sk-cc .cc-tcard .cc-ts { color: var(--ccd-text3); font-size: 14px; margin-left: 9px; }
+.sk-cc .cc-prchip { display: inline-flex; align-items: center; gap: 4px; color: var(--ccd-pr); font-size: 14px; margin-left: 10px; }
+.sk-cc .cc-prchip .cc-i { width: 14px; height: 14px; }
+.sk-cc .cc-btn { display: inline-flex; align-items: center; height: 28px; padding: 0 11px; border-radius: 7px; border: 1px solid var(--ccd-card-line); font-size: 14px; color: var(--ccd-text); background: var(--ccd-bg); }
+.sk-cc .cc-btn.is-black { background: var(--ccd-black-btn); color: var(--ccd-black-btn-fg); border-color: transparent; }
+
+.sk-cc .cc-panel { position: relative; margin: 10px 10px 10px 0; background: var(--ccd-panel); border: 1px solid var(--ccd-panel-line); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.sk-cc .cc-panel-tabs { height: 34px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 8px; }
+.sk-cc .cc-ptab { height: 30px; min-width: 32px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 8px; border-radius: 8px; font-size: 15px; color: var(--ccd-text2); }
+.sk-cc .cc-ptab.is-on { background: var(--ccd-hover); color: var(--ccd-text); font-weight: var(--ccd-w-med); }
+.sk-cc .cc-ptab .cc-i { width: 17px; height: 17px; }
+.sk-cc .cc-panel-tabs .cc-ptab-r { margin-left: auto; display: flex; gap: 12px; padding-right: 6px; }
+.sk-cc .cc-panel-tabs .cc-ptab-r .cc-i { width: 17px; height: 17px; color: var(--ccd-text); }
+.sk-cc .cc-welcome { padding: 27px 18px 0; }
+.sk-cc .cc-welcome h3 { margin: 0; font-size: 22px; font-weight: var(--ccd-w-semi); letter-spacing: -0.026em; color: var(--ccd-text); line-height: 1.25; }
+.sk-cc .cc-welcome p { margin: 4px 0 0; font-size: 13.5px; color: var(--ccd-text2); }
+.sk-cc .cc-secs { padding: 26px 9px 0; display: flex; flex-direction: column; }
+.sk-cc .cc-secbar { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 7px; background: var(--ccd-secbar); font-size: 13.5px; font-weight: var(--ccd-w-med); color: var(--ccd-ink2); }
+.sk-cc .cc-secbar .cc-i { width: 14px; height: 14px; color: var(--ccd-text2); }
+.sk-cc .cc-secbar .cc-i.is-blank { visibility: hidden; }
+.sk-cc .cc-secbar .cc-cnt { color: var(--ccd-text2); font-weight: var(--ccd-w); margin-left: -3px; }
+.sk-cc .cc-secdesc { font-size: 13.5px; color: var(--ccd-text2); padding: 13px 34px 15px; }
+.sk-cc .cc-secbar + .cc-thr { margin-top: 6px; }
+.sk-cc .cc-thr { display: flex; align-items: center; padding: 9px 26px 9px 34px; }
+.sk-cc .cc-thr > div { flex: 1; min-width: 0; }
+.sk-cc .cc-thr b { display: block; font-weight: var(--ccd-w-med); font-size: 13.5px; color: var(--ccd-text); line-height: 1.35; }
+.sk-cc .cc-thr span { display: block; font-size: 13.5px; color: var(--ccd-text2); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sk-cc .cc-thr em { font-style: normal; font-size: 13px; color: var(--ccd-text2); margin-left: 12px; }
+.sk-cc .cc-showmore { text-align: center; font-size: 13.5px; color: var(--ccd-ink2); padding: 9px 0 6px; }
+.sk-cc .cc-secs .cc-secbar + .cc-secbar, .sk-cc .cc-showmore + .cc-secbar, .sk-cc .cc-secdesc + .cc-secbar { margin-top: 0; }
+/* PR bar in a thread pane */
+.sk-cc .cc-prbar { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-bottom: 1px solid var(--ccd-row-line); font-size: 14px; white-space: nowrap; }
+.sk-cc .cc-prbar .cc-ci { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; color: var(--ccd-text2); }
+.sk-cc .cc-prbar .cc-ci::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ccd-add); }
+
+/* ---------- diff pane ---------- */
+.sk-cc .cc-diffpane { display: flex; flex-direction: column; background: var(--ccd-bg); border: 1px solid var(--ccd-panel-line); border-radius: 12px; overflow: hidden; min-height: 0; }
+.sk-cc .cc-dp-h { height: 50px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 12px 0 10px; border-bottom: 1px solid var(--ccd-row-line); font-size: 15.5px; white-space: nowrap; }
+.sk-cc .cc-dp-h .cc-dp-ic { width: 30px; height: 30px; border-radius: 7px; background: #2561c2; color: #fff; display: grid; place-items: center; }
+.sk-cc .cc-dp-h .cc-dp-ic .cc-i { width: 18px; height: 18px; color: #fff; }
+.sk-cc .cc-dp-h .cc-br { color: var(--ccd-text2); }
+.sk-cc .cc-dp-h .cc-i { width: 16px; height: 16px; color: var(--ccd-text2); }
+.sk-cc .cc-dp-h .cc-dp-r { margin-left: auto; display: flex; gap: 18px; }
+.sk-cc .cc-dp-h .cc-dp-r .cc-i { width: 18px; height: 18px; color: var(--ccd-text2); }
+.sk-cc .cc-dp-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 34% 1fr; }
+.sk-cc .cc-tree { border-right: 1px solid var(--ccd-row-line); padding: 10px 8px; font-size: 15px; }
+.sk-cc .cc-tree-row { height: 32px; display: flex; align-items: center; gap: 7px; padding: 0 10px; border-radius: 8px; white-space: nowrap; color: var(--ccd-text2); }
+.sk-cc .cc-tree-row .cc-i { width: 14px; height: 14px; color: var(--ccd-text3); flex: none; }
+.sk-cc .cc-tree-row.is-file { color: var(--ccd-text); }
+.sk-cc .cc-tree-row.is-sel { box-shadow: inset 0 0 0 1.5px #4371ad; }
+.sk-cc .cc-tree-row .cc-counts { margin-left: auto; font-size: 14px; }
+.sk-cc .cc-code-view { font-family: var(--cc-mono); font-size: 13.5px; line-height: 1.75; min-width: 0; overflow: hidden; }
+.sk-cc .cc-cv-file { font-family: var(--cc-sans); display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border-bottom: 1px solid var(--ccd-row-line); font-size: 15px; white-space: nowrap; }
+.sk-cc .cc-cv-file .cc-i { width: 14px; height: 14px; color: var(--ccd-text3); }
+.sk-cc .cc-cv-file .cc-dirn { color: var(--ccd-text2); }
+.sk-cc .cc-cl { display: grid; grid-template-columns: 52px 22px 1fr; white-space: pre; color: var(--ccd-text); }
+.sk-cc .cc-cl > .cc-ln { text-align: right; padding-right: 12px; color: var(--ccd-text3); }
+.sk-cc .cc-cl > .cc-sg { color: var(--ccd-text3); }
+.sk-cc .cc-cl.is-add { background: var(--ccd-diff-add); }
+.sk-cc .cc-cl.is-rem { background: var(--ccd-diff-rem); }
+.sk-cc .cc-cl.is-add > .cc-ln, .sk-cc .cc-cl.is-add > .cc-sg { color: var(--ccd-diff-add-num); }
+.sk-cc .cc-cl.is-rem > .cc-ln, .sk-cc .cc-cl.is-rem > .cc-sg { color: var(--ccd-diff-rem-num); }
+.sk-cc .cc-k { color: var(--ccd-json-key); }
+.sk-cc .cc-s { color: var(--ccd-json-str); }

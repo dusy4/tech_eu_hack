@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"variant","type":"enum","label":"Variant","default":"0","options":[{"value":"0","label":"dots approval"},{"value":"1","label":"Claude Code permission"},{"value":"2","label":"Codex sandbox"}]},
+  {"id":"theme","type":"enum","label":"Theme","default":"light","options":[{"value":"light","label":"Light"},{"value":"dark","label":"Dark"}]}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>Approval gate</title>
+    <link rel="stylesheet" href="assets/fonts/fonts.css" />
+    <link rel="stylesheet" href="assets/skins/device/skin.css" />
+    <link rel="stylesheet" href="assets/skins/chatgpt/skin.css" />
+    <link rel="stylesheet" href="assets/skins/claude-code/skin.css" />
+    <link rel="stylesheet" href="assets/skins/codex/skin.css" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/kit/motion/motion.js"></script>
+    <script src="assets/skins/device/icons.js"></script>
+    <script src="assets/skins/chatgpt/icons.js"></script>
+    <script src="assets/skins/claude-code/icons.js"></script>
+    <script src="assets/skins/codex/icons.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #f5f5f4; }
+      body.is-dark { background: #0e0e0f; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; font-family: "Inter", sans-serif; }
+      /* the stage is flat (DESIGN.md stage tokens) */
+      #stage { position: absolute; inset: 0; background: #f5f5f4; }
+      #stage.is-dark { background: #0e0e0f; }
+      #place { position: absolute; left: 0; top: 0; opacity: 0; }
+      #win { position: relative; }
+
+      /* DESIGN.md floating-window shadow (contact + diffuse, light from above) */
+      .sh-light { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06), 0 24px 60px -20px rgba(0, 0, 0, 0.25) !important; }
+      .sh-dark { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 24px 60px -20px rgba(0, 0, 0, 0.8) !important; }
+
+      /* ------------------------------------------------------------------
+         0 · dots (ChatGPT iOS app on iPhone 17 Pro, keyboard up)
+         ------------------------------------------------------------------ */
+      .sk-chatgpt.dt-app {
+        position: absolute; inset: 0; font-family: "Inter", sans-serif; -webkit-font-smoothing: antialiased;
+        --dt-bg: #ffffff; --dt-ink: #0d0d0d; --dt-ink-2: #6b6b6b; --dt-card: #ffffff; --dt-card-edge: rgba(0, 0, 0, 0.08);
+        --dt-tile: #f2f2f2; --dt-rule: rgba(0, 0, 0, 0.07);
+        --dt-act: #e8f0fc; --dt-act-ink: #2d63b3;            /* the dot action pill, light mapping (skin .cg-dot-action) */
+        --dt-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 14px 30px -16px rgba(0, 0, 0, 0.2);
+        --dt-kb: #e3e4e9;
+        --dt-touch: rgba(60, 60, 67, 0.3); --dt-touch-ring: rgba(255, 255, 255, 0.85);
+        --cg-composer: #fdfdfd; --cg-ios-circ: #f2f2f2; --cg-placeholder: #737373;   /* 4.6:1 on the #fdfdfd pill */
+        background: var(--dt-bg); color: var(--dt-ink);
+      }
+      .sk-chatgpt.dt-app[data-theme="dark"] {
+        --dt-bg: #000000; --dt-ink: #f2f2f2; --dt-ink-2: #9a9a9a; --dt-card: #141414; --dt-card-edge: rgba(255, 255, 255, 0.13);
+        --dt-tile: #262626; --dt-rule: rgba(255, 255, 255, 0.1);
+        --dt-act: #18202e; --dt-act-ink: #a9c9f5;            /* sampled from the official dot chat */
+        --dt-card-shadow: 0 18px 36px -18px rgba(0, 0, 0, 0.9);
+        --dt-kb: #252527;
+        --dt-touch: rgba(150, 150, 160, 0.5); --dt-touch-ring: rgba(255, 255, 255, 0.8);
+        --cg-composer: #1e1e1e; --cg-ios-circ: #2a2a2a; --cg-composer-edge: rgba(255, 255, 255, 0.08);
+      }
+      .dt-head { position: absolute; left: 0; right: 0; top: 54px; height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 2; }
+      .dt-head .cg-ios-round { width: 42px; padding: 0; }
+      .dt-head .dt-ic { width: 21px; height: 21px; display: block; }
+      .dt-who { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+      .dt-ava { width: 30px; height: 30px; display: block; }
+      .dt-ava .cg-i, .dt-ava svg { width: 30px; height: 30px; display: block; }
+      /* the thread sits between the header and the composer; content scrolls under the header's soft edge */
+      .dt-body { position: absolute; left: 0; right: 0; top: 108px; height: 380px; overflow: hidden;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px); mask-image: linear-gradient(to bottom, transparent 0, #000 12px); }
+      .sk-chatgpt .cg-dots.dt-col { background: transparent; padding: 10px 16px; gap: 8px; letter-spacing: -0.005em; }
+      .dt-slot { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
+      .dt-slot > .cg-dot-typing { position: absolute; left: 0; top: 0; }
+      /* composer pinned above the keyboard (keyboard up: the person just typed) */
+      .sk-chatgpt.dt-app .cg-composer--ios { top: 494px; bottom: auto; z-index: 3; }
+      .sk-chatgpt.dt-app .cg-composer--ios .cg-c-input { margin-left: 4px; }
+      .sk-chatgpt.dt-app .cg-composer--ios .cg-c-ph { left: 2px; }
+      .sk-chatgpt.dt-app .cg-caret { width: 2px; height: 22px; vertical-align: -5px; margin-left: 0; border-radius: 1px; }
+      .dt-kb { position: absolute; left: 0; right: 0; top: 557px; height: 317px; border-radius: 27px 27px 0 0; background: var(--dt-kb); z-index: 2; }
+      /* the approval card: flight + decision row */
+      .dt-card {
+        position: relative; width: 318px; margin: 4px 0 6px; padding: 14px 14px 10px; border-radius: 22px;
+        background: var(--dt-card); box-shadow: 0 0 0 1px var(--dt-card-edge), var(--dt-card-shadow);
+      }
+      .dt-top { display: flex; gap: 12px; align-items: flex-start; }
+      .dt-tile { width: 42px; height: 42px; border-radius: 12px; background: var(--dt-tile); display: flex; align-items: center; justify-content: center; flex: none; color: var(--dt-ink); }
+      .dt-tile svg { width: 22px; height: 22px; display: block; }
+      .dt-meta { flex: 1; min-width: 0; }
+      .dt-row1 { display: flex; align-items: baseline; justify-content: space-between; font-size: 17px; line-height: 22px; font-weight: 600; letter-spacing: -0.01em; }
+      .dt-price { font-variant-numeric: tabular-nums; }
+      .dt-sub { font-size: 14px; line-height: 19px; color: var(--dt-ink-2); margin-top: 2px; display: flex; align-items: center; gap: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+      .dt-sub svg { width: 13px; height: 13px; display: block; flex: none; }
+      .dt-rule { height: 1px; background: var(--dt-rule); margin: 12px -14px 0; }
+      .dt-foot { position: relative; height: 44px; margin-top: 10px; }
+      .dt-decline { position: absolute; left: 0; top: 0; height: 44px; padding: 0 6px; display: flex; align-items: center; font-size: 17px; font-weight: 500; letter-spacing: -0.01em; color: var(--dt-ink-2); }
+      .dt-pill { position: absolute; right: 0; top: 0; height: 44px; border-radius: 22px; background: var(--dt-act); color: var(--dt-act-ink); overflow: hidden; }
+      .dt-pl { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+      .dt-pl-in { display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+      .dt-pl-in svg { width: 20px; height: 20px; display: block; flex: none; }
+      .dt-pl.is-spin, .dt-pl.is-b { opacity: 0; }
+      .dt-spin { width: 18px; height: 18px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; display: block; }
+      .dt-touch { position: absolute; left: 0; top: 0; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; background: var(--dt-touch); box-shadow: inset 0 0 0 2px var(--dt-touch-ring), 0 2px 10px rgba(0, 0, 0, 0.16); opacity: 0; z-index: 40; pointer-events: none; }
+
+      /* ------------------------------------------------------------------
+         1 · Claude Code CLI
+         ------------------------------------------------------------------ */
+      #root .stk { position: relative; display: inline-block; }
+      #root .stk > .fr { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; opacity: 0; }
+      #root .stk > .fr > svg { width: 100%; height: 100%; display: block; overflow: visible; }
+      /* the viewport holds a whole number of rows; the stack follows the output (scrolls once it overflows) */
+      .sk-cc .ag-view { position: relative; flex: 1; min-height: 0; overflow: hidden; margin: 0 -1.6ch; }
+      .sk-cc .ag-stack { position: absolute; left: 1.6ch; right: 1.6ch; top: 0; display: flex; flex-direction: column; }
+      .sk-cc .ag-stack > * { flex: none; }
+
+      /* ------------------------------------------------------------------
+         2 · Codex (ChatGPT desktop app, Codex thread)
+         ------------------------------------------------------------------ */
+      .ptr { position: absolute; left: 0; top: 0; width: 22px; height: 30px; margin: -2.4px 0 0 -3px; transform-origin: 3px 2.4px; z-index: 30; pointer-events: none; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.28)); opacity: 0; }
+      .ptr > svg { width: 100%; height: 100%; display: block; }
+      .cx-thread.ag-thread { padding: 16px 28px 8px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px); mask-image: linear-gradient(to bottom, transparent 0, #000 16px); }
+      .sk-codex .ag-thread .cx-user { margin-bottom: 20px; }
+      /* live work rows under the status line (sub-status style, one per step) */
+      .sk-codex .ag-rows { position: absolute; left: 0; right: 0; top: 0; }
+      .sk-codex .ag-row { font-size: 13.5px; line-height: 20px; height: 22px; color: var(--cx-ink-3); white-space: nowrap; opacity: 0; }
+      .sk-codex .ag-row.is-wait { color: var(--cx-ink-2); }
+      .sk-codex .ag-row .cx-plus, .sk-codex .ag-row .cx-minus { margin-left: 2px; }
+      .ag-reply .w { opacity: 0; }
+      #cx-files { opacity: 0; }
+      /* the dock resizes between the composer and the approval request; the two cross-fade in place */
+      .sk-codex .ag-box { position: relative; width: 100%; max-width: var(--cx-composer-max, 830px); }
+      .sk-codex .ag-box > .ag-layer { position: absolute; left: 0; right: 0; bottom: 0; }
+      .sk-codex .ag-card { --ag-sel: #ecf4fe; --ag-sel-k: #3a81f8; --ag-code: #f1f1f1; padding: 15px 14px 12px 16px; border-radius: 20px; }
+      .sk-codex[data-theme="dark"] .ag-card { --ag-sel: #4a4a4a; --ag-sel-k: #8db8fa; --ag-code: rgba(255, 255, 255, 0.08); }
+      .sk-codex .ag-q { font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: -0.01em; }
+      .sk-codex .ag-why { display: flex; align-items: center; gap: 6px; font-size: 14px; line-height: 19px; color: var(--cx-ink-2); margin: 4px 0 11px; }
+      .sk-codex .ag-why .cx-i { width: 15px; height: 15px; color: var(--cx-ink-2); }
+      .sk-codex .ag-cmd { font-family: var(--cx-mono); font-size: 12.5px; line-height: 17px; padding: 8px 11px; border-radius: 10px; box-shadow: inset 0 0 0 1px var(--cx-line-strong); margin-bottom: 8px; color: var(--cx-ink); font-variant-ligatures: none; }
+      .sk-codex .ag-opts { display: flex; flex-direction: column; gap: 2px; }
+      .sk-codex .ag-opt { display: flex; align-items: center; gap: 10px; height: 33px; padding: 0 10px; border-radius: 10px; font-size: 14px; color: var(--cx-ink); white-space: nowrap; }
+      .sk-codex .ag-opt .k { width: 12px; color: var(--cx-ink-3); font-variant-numeric: tabular-nums; }
+      .sk-codex .ag-opt.is-sel { background: var(--ag-sel); }
+      .sk-codex .ag-opt.is-sel .k { color: var(--ag-sel-k); font-weight: 600; }
+      .sk-codex .ag-opt code { font-family: var(--cx-mono); font-size: 12.5px; background: var(--ag-code); border-radius: 5px; padding: 1px 5px; margin-left: 4px; font-variant-ligatures: none; }
+      .sk-codex .ag-foot { display: flex; justify-content: flex-end; margin-top: 8px; }
+      .sk-codex .ag-foot .cx-btn.is-blue { font-weight: 500; gap: 8px; padding: 0 8px 0 13px; }
+      .sk-codex .ag-key { width: 18px; height: 18px; border-radius: 5px; background: rgba(255, 255, 255, 0.2); display: inline-flex; align-items: center; justify-content: center; }
+      .sk-codex .ag-key svg { width: 12px; height: 12px; display: block; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="14.4" data-width="1920" data-height="1080">
+      <div id="stage" class="clip" data-start="0" data-duration="14.4" data-track-index="0">
+        <div id="place" data-layout-allow-overflow><div id="zoomer"><div id="win"></div></div></div>
+      </div>
+    </div>
+    <script>
+      /* ======================================================================
+         Approval gate: the agent is working, stops at a permission prompt,
+         the person approves, and the agent carries on.
+         One beat sheet, three products:
+           0 dots (ChatGPT iOS on an iPhone 17 Pro)  ·  1 Claude Code CLI  ·  2 Codex desktop thread
+         Truth: research/ui-references/{chatgpt,claude-code,openai-codex}/ and the shared skins.
+         ====================================================================== */
+      const CONFIG = {
+        duration: 14.4,
+        stage: { light: "#F5F5F4", dark: "#0E0E0F" },
+        /* the shared beat sheet (seconds) */
+        beat: {
+          enter: 0.1,    // the window rises in on the previous turn (the handoff it pulled)
+          type: 6.0,     // Spelunk demo: the person types the go-ahead
+          gate: 8.9,     // the agent stops at the permission prompt
+          approve: 10.4, // the person approves
+          done: 11.2,    // the agent's result lands
+          exit: 14.0     // clears by 14.35 s
+        },
+        variants: {
+          /* dots: the person's dot ("Blossie", OpenAI's own example name) asks before it spends money */
+          "0": {
+            product: "dots",
+            zoom: 1.75, top: 40,
+            clock: "9:41",
+            dot: "Blossie",
+            placeholder: "Ask anything",
+            user: "Get me to Portland on Friday",
+            ask: "Found a window seat on the 6:40\u00a0PM. Want me to book it?",
+            card: {
+              title: "Alaska 1142", price: "$189.40",
+              from: "SFO", to: "PDX", when: "Fri 6:40 PM",
+              detail: "Seat 14A · Visa ···1847",
+              decline: "Decline", approve: "Approve", booked: "Booked", code: "KX7PQ2"
+            },
+            follow: "Added to Calendar"
+          },
+          /* Claude Code: accept-edits mode, so the edit lands on its own and the shell command asks */
+          "1": {
+            product: "claude-code",
+            cols: 78, rows: 20, fontSize: 26, lineHeight: 1.45,
+            title: "Work the Spelunk handoff",
+            /* the previous turn: the spelunk-handoff skill pulled the handoff (list_handoffs, get_handoff) */
+            prior: {
+              prompt: "What did the team decide in Spelunk?",
+              answer: [{ t: "One open handoff (" }, { id: "get_handoff" }, { t: "): add a reason the approver sees to " }, { id: "ApprovalRequiredTool" }, { t: ". Said by Tom, accepted by the team. Code: " }, { id: "crates/core/src/tool.rs:170" }, { t: "." }],
+              worked: "Worked for 4s"
+            },
+            prompt: "Work the handoff",
+            summary: "Called repo-analysis 3 times, read 2 files",
+            edit: { name: "Update", args: "(crates/core/src/tool.rs)", result: "Updated <b>crates/core/src/tool.rs</b> with <b>14</b> additions" },
+            perm: {
+              title: "Bash command",
+              tip: "Tip: auto mode handles these prompts for you — choose \"switch to auto mode\" below",
+              desc: "Run the rust-agent-core tests",
+              cmd: "cargo test -p rust-agent-core",
+              note: "This command requires approval",
+              ask: "Do you want to proceed?",
+              options: [
+                ["Yes"],
+                ["Yes, and don’t ask again for: cargo test *"],
+                ["Yes, and switch to auto mode", "· auto mode handles these prompts for you"],
+                ["No"]
+              ],
+              pick: 0,
+              hint: "Esc to cancel · Tab to amend"
+            },
+            bash: { name: "Bash", args: "(cargo test -p rust-agent-core)", running: "Running…", result: "test result: ok" },
+            answer: [
+              { t: "Done. " }, { id: "ApprovalRequiredTool" }, { t: " now carries an optional " }, { id: "reason" },
+              { t: " that the approval request shows. Marked the handoff " }, { id: "done" }, { t: " with " }, { id: "update_handoff_status" }, { t: "." }
+            ],
+            verb: "Cogitating…",
+            mode: "accept edits on"
+          },
+          /* Codex: the sandbox blocks the network, so installing a package needs a yes */
+          "2": {
+            product: "codex",
+            w: 680, h: 520, zoom: 1.75,
+            tab: "Add upload retries",
+            model: { name: "GPT-6.1 Sol", effort: "Medium" },
+            placeholder: "Do anything",
+            user: "Uploads fail on flaky Wi-Fi. Add retries and run the tests.",
+            secondsAtStart: 19,
+            rows: [
+              { at: 0.6, html: "Read src/upload/client.ts" },
+              { at: 1.15, html: "Edited src/upload/client.ts <span class=\"cx-plus\">+31</span> <span class=\"cx-minus\">-6</span>" },
+              { at: "gate", html: "Waiting for approval", wait: true, after: "Installed p-retry" },
+              { at: 4.45, html: "Running pnpm test upload" }
+            ],
+            approval: {
+              q: "Would you like to run the following command?",
+              why: "Reason: needs network access to install p-retry",
+              cmd: "pnpm add p-retry",
+              options: ["Yes, proceed", "Yes, and don’t ask again for commands that start with `pnpm add`", "No, and tell Codex what to do differently"],
+              submit: "Submit"
+            },
+            reply: "Installed `p-retry` and wrapped chunk uploads in it: 3 retries with backoff, only on network errors and 5xx. All 12 upload tests pass.",
+            files: {
+              title: "Edited 2 files", plus: 55, minus: 6,
+              rows: [
+                { dir: "src/upload/", name: "client.ts", plus: 31, minus: 6 },
+                { dir: "src/upload/", name: "client.test.ts", plus: 24, minus: 0 }
+              ]
+            }
+          }
+        }
+      };
+
+      /* ---------------- variables ---------------- */
+      const VARS = (window.__hyperframes && window.__hyperframes.getVariables) ? window.__hyperframes.getVariables() : {};
+      const VARIANT = ["0", "1", "2"].includes(String(VARS.variant)) ? String(VARS.variant) : "0";
+      const THEME = VARS.theme === "dark" ? "dark" : "light";
+      const C = CONFIG.variants[VARIANT];
+      const B = CONFIG.beat;
+      const DUR = CONFIG.duration;
+      const K = window.KitMotion;
+
+      if (THEME === "dark") { document.body.classList.add("is-dark"); document.getElementById("stage").classList.add("is-dark"); }
+      const place = document.getElementById("place"), zoomer = document.getElementById("zoomer"), win = document.getElementById("win");
+      const SHADOW = THEME === "dark" ? "sh-dark" : "sh-light";
+
+      /* ---------------- shared helpers ---------------- */
+      const $ = (sel, r) => (r || win).querySelector(sel);
+      const $$ = (sel, r) => Array.from((r || win).querySelectorAll(sel));
+      const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+      const seg = (t, t0, d) => clamp01((t - t0) / d);
+      const easeOut = K.ease("out"), easeInOut = K.ease("inOut");
+      /* per-frame state that is a pure function of time (seek-safe), driven once over the whole timeline */
+      const TICK = [];
+      const onTick = (fn) => TICK.push(fn);
+      function fade(tl, el, from, to, at, dur, ease) {
+        tl.fromTo(el, { opacity: from }, { opacity: to, duration: dur || 0.25, ease: ease || "power1.inOut", immediateRender: false }, at);
+      }
+      /* box of an element in a reference element's own CSS px (independent of any zoom) */
+      function boxIn(el, ref, refW) {
+        const R = ref.getBoundingClientRect(), k = R.width / refW, b = el.getBoundingClientRect();
+        return { x: (b.left - R.left) / k, y: (b.top - R.top) / k, w: b.width / k, h: b.height / k };
+      }
+      /* human typing: seeded, uneven gaps (longer on spaces), at an average cps. Returns the time each char lands. */
+      function typeTimes(text, t0, cps) {
+        let h = 2166136261;
+        for (const ch of text) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+        const rnd = () => { h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return (h % 10007) / 10007; };
+        const iv = [], n = text.length; let sum = 0;
+        for (let i = 0; i < n; i++) { let k = 0.6 + rnd() * 0.8; if (text[i] === " ") k *= 1.3; if (i && /[.,!?]/.test(text[i - 1])) k *= 2; iv.push(k); if (i) sum += k; }
+        const span = (n - 1) / cps, times = [t0];
+        for (let i = 1; i < n; i++) times.push(times[i - 1] + (iv[i] * span) / sum);
+        return times;
+      }
+      const typedCount = (times, t) => { let c = 0; while (c < times.length && times[c] <= t) c++; return c; };
+      /* markup is written indented for reading; drop the newline whitespace between tags
+         (the terminal rows are white-space: pre-wrap, where it would print as blank rows) */
+      const tidy = (html) => html.replace(/>\s*\n\s*</g, "><").trim();
+      const SVG = (inner, sw) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw || 1.75}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+      const IC = {
+        phone: SVG('<path d="M21 16.4v2.9a1.9 1.9 0 0 1-2.1 1.9 18.8 18.8 0 0 1-8.2-2.9 18.5 18.5 0 0 1-5.7-5.7 18.8 18.8 0 0 1-2.9-8.2A1.9 1.9 0 0 1 4 2.3h2.9a1.9 1.9 0 0 1 1.9 1.6c.1.9.4 1.8.7 2.7a1.9 1.9 0 0 1-.4 2L7.8 9.8a15.2 15.2 0 0 0 5.7 5.7l1.2-1.2a1.9 1.9 0 0 1 2-.4c.9.3 1.8.6 2.7.7a1.9 1.9 0 0 1 1.6 1.8z"/>'),
+        plane: SVG('<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>', 1.6),
+        arrow: SVG('<path d="M4.5 12h15M13.5 6l6 6-6 6"/>', 2),
+        check: SVG('<path d="M5 12.6l4.4 4.4L19 7.4"/>', 2.2),
+        card: SVG('<rect x="2.75" y="5.25" width="18.5" height="13.5" rx="2.6"/><path d="M2.75 9.75h18.5M6.5 15h3.5"/>', 1.75),
+        ret: SVG('<path d="M19 5v6.5a2 2 0 0 1-2 2H6M9.5 10 6 13.5 9.5 17"/>', 2.2)
+      };
+
+      /* ======================================================================
+         0 · dots: ChatGPT iOS, a dot's chat with an approval card
+         ====================================================================== */
+      function buildDots() {
+        const Z = C.zoom, PW = 430;
+        place.style.left = Math.round((1920 - PW * Z) / 2) + "px";
+        place.style.top = C.top + "px";
+        zoomer.style.zoom = Z;
+        const cd = C.card;
+        win.innerHTML = tidy(`
+          <div class="sk-device" data-theme="${THEME}">
+            <div class="dv-iphone">
+              <i class="dv-iphone__btn dv-iphone__btn--action"></i><i class="dv-iphone__btn dv-iphone__btn--vol-up"></i><i class="dv-iphone__btn dv-iphone__btn--vol-down"></i><i class="dv-iphone__btn dv-iphone__btn--power"></i><i class="dv-iphone__btn dv-iphone__btn--camera"></i>
+              <div class="dv-iphone__glass"><div class="dv-screen" id="dt-screen">
+                <div class="sk-chatgpt dt-app" data-theme="${THEME}">
+                  <div class="dt-head">
+                    <div class="cg-ios-round"><i class="cg-i" data-i="chevron-left"></i></div>
+                    <div class="dt-who"><span class="dt-ava"><i class="cg-i" data-i="dot-avatar"></i></span><span>${esc(C.dot)}</span></div>
+                    <div class="cg-ios-round"><span class="dt-ic">${IC.phone}</span></div>
+                  </div>
+                  <div class="dt-body" id="dt-body">
+                    <div class="cg-dots dt-col" id="dt-col">
+                      <div class="cg-dot-msg is-me" id="dt-user" style="opacity:0">${esc(C.user)}</div>
+                      <div class="dt-slot">
+                        <div class="cg-dot-msg" id="dt-ask" style="opacity:0">${esc(C.ask)}</div>
+                        <div class="cg-dot-typing" id="dt-typing1" style="opacity:0"><i></i><i></i><i></i></div>
+                      </div>
+                      <div class="dt-card" id="dt-card" style="opacity:0">
+                        <div class="dt-top">
+                          <div class="dt-tile">${IC.plane}</div>
+                          <div class="dt-meta">
+                            <div class="dt-row1"><span>${esc(cd.title)}</span><span class="dt-price">${esc(cd.price)}</span></div>
+                            <div class="dt-sub"><span>${esc(cd.from)}</span>${IC.arrow}<span>${esc(cd.to)} · ${esc(cd.when)}</span></div>
+                            <div class="dt-sub">${esc(cd.detail)}</div>
+                          </div>
+                        </div>
+                        <div class="dt-rule"></div>
+                        <div class="dt-foot">
+                          <div class="dt-decline" id="dt-decline">${esc(cd.decline)}</div>
+                          <div class="dt-pill" id="dt-pill">
+                            <span class="dt-pl is-a" id="dt-pl-a"><span class="dt-pl-in" id="dt-in-a">${IC.card}${esc(cd.approve)}</span></span>
+                            <span class="dt-pl is-spin" id="dt-pl-s"><i class="dt-spin" id="dt-spin"></i></span>
+                            <span class="dt-pl is-b" id="dt-pl-b"><span class="dt-pl-in" id="dt-in-b"><span id="dt-check" style="display:block">${IC.check}</span>${esc(cd.booked)} · ${esc(cd.code)}</span></span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="dt-slot">
+                        <div class="cg-dot-action" id="dt-follow" style="opacity:0"><i class="cg-i" data-i="calendar"></i>${esc(C.follow)}<i class="cg-i cg-chev" data-i="chevron-right"></i></div>
+                        <div class="cg-dot-typing" id="dt-typing2" style="opacity:0"><i></i><i></i><i></i></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="cg-composer cg-composer--ios" id="dt-composer">
+                    <div class="cg-ios-circ"><i class="cg-i" data-i="plus"></i></div>
+                    <div class="cg-c-input"><span class="cg-c-ph" id="dt-ph">${esc(C.placeholder)}</span><span class="cg-c-text" id="dt-typed"></span><span class="cg-caret" id="dt-caret"></span></div>
+                    <div class="cg-ios-circ"><i class="cg-i" data-i="mic"></i></div>
+                    <div class="cg-c-btn" id="dt-send" data-state="voice"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i></div>
+                  </div>
+                  <div class="dt-kb"></div>
+                  <div class="dt-touch" id="dt-touch1"></div>
+                  <div class="dt-touch" id="dt-touch2"></div>
+                </div>
+                <div class="dv-island"></div>
+                <div class="dv-statusbar">
+                  <div class="dv-statusbar__time">${esc(C.clock)}</div>
+                  <div class="dv-statusbar__icons"><span class="dv-sb-signal" data-dv-icon="ios_signal"></span><span class="dv-sb-wifi" data-dv-icon="ios_wifi"></span><span class="dv-sb-battery" data-dv-icon="ios_battery"></span></div>
+                </div>
+              </div></div>
+            </div>
+          </div>`);
+        window.SKIN_ICONS_CHATGPT.mount(win);
+        window.SKIN_DEVICE_HYDRATE(win);
+      }
+
+      function animDots(tl) {
+        const screen = $("#dt-screen");
+        const pill = $("#dt-pill");
+        const wA = Math.ceil($("#dt-in-a").offsetWidth) + 34, wB = Math.ceil($("#dt-in-b").offsetWidth) + 32;
+        pill.style.width = wA + "px";
+        const pb = boxIn(pill, screen, 402), sb = boxIn($("#dt-send"), screen, 402);
+        const touch1 = $("#dt-touch1"), touch2 = $("#dt-touch2");
+        touch1.style.left = (sb.x + sb.w * 0.55) + "px"; touch1.style.top = (sb.y + sb.h * 0.55) + "px";
+        touch2.style.left = (pb.x + pb.w - 17) + "px"; touch2.style.top = (pb.y + pb.h * 0.56) + "px";
+
+        /* the person types the request in the composer and sends it */
+        const times = typeTimes(C.user, 0.45, 34);
+        const tTyped = times[times.length - 1], tSend = tTyped + 0.16;
+        const tDots1 = tSend + 0.2, tAsk = 1.72;
+        tl.fromTo(touch1, { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 0.9, duration: 0.12, ease: "power2.out", immediateRender: false }, tSend - 0.12);
+        tl.fromTo(touch1, { opacity: 1, scale: 0.9 }, { opacity: 0, scale: 1.1, duration: 0.24, ease: "power2.out", immediateRender: false }, tSend);
+        tl.fromTo("#dt-user", { opacity: 0, y: 10, scale: 0.98, transformOrigin: "100% 100%" }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: K.easeName("out"), immediateRender: false }, tSend);
+
+        /* the dot is thinking, then asks */
+        fade(tl, "#dt-typing1", 0, 1, tDots1, 0.18, "power2.out");
+        fade(tl, "#dt-typing1", 1, 0, tAsk, 0.1, "none");
+        tl.fromTo("#dt-ask", { opacity: 0, y: 8, scale: 0.98, transformOrigin: "0% 100%" }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: K.easeName("out"), immediateRender: false }, tAsk);
+
+        /* the gate: the approval card rises in under the question */
+        tl.fromTo("#dt-card", { opacity: 0, y: 14, scale: 0.97, transformOrigin: "0% 0%" }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: K.easeName("out"), immediateRender: false }, B.gate);
+
+        /* tap Approve: the touch lands on the pill's right end (label stays readable), presses, lifts */
+        const tDown = B.approve - 0.17;
+        tl.fromTo(touch2, { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.16, ease: "power2.out", immediateRender: false }, tDown - 0.14);
+        tl.fromTo(touch2, { scale: 1 }, { scale: 0.86, duration: 0.08, ease: "power2.out", immediateRender: false }, tDown);
+        tl.fromTo(pill, { scale: 1 }, { scale: 0.96, duration: 0.08, ease: "power2.out", immediateRender: false }, tDown);
+        tl.fromTo(pill, { scale: 0.96 }, { scale: 1, duration: 0.18, ease: K.easeName("out"), immediateRender: false }, B.approve);
+        tl.fromTo(touch2, { opacity: 1, scale: 0.86 }, { opacity: 0, scale: 1.1, duration: 0.26, ease: "power2.out", immediateRender: false }, B.approve);
+
+        /* approved: Decline clears, the pill shows a spinner while it books, then settles into the
+           tinted "✓ Booked · KX7PQ2" status pill (one change at a time, the fill never changes) */
+        const tBooked = 4.55;
+        fade(tl, "#dt-decline", 1, 0, B.approve, 0.15, "power1.out");
+        fade(tl, "#dt-pl-a", 1, 0, B.approve + 0.02, 0.12, "power1.out");
+        fade(tl, "#dt-pl-s", 0, 1, B.approve + 0.1, 0.15, "power1.out");
+        fade(tl, "#dt-pl-s", 1, 0, tBooked, 0.1, "power1.out");
+        tl.fromTo(pill, { width: wA }, { width: wB, duration: 0.32, ease: K.easeName("out"), immediateRender: false }, tBooked);
+        fade(tl, "#dt-pl-b", 0, 1, tBooked + 0.08, 0.2, "power2.out");
+        K.successCheck(tl, $("#dt-check svg"), tBooked + 0.08, { y: 4, rotate: 0, blur: 1.5 });
+
+        /* it carries on: typing, then the dot's follow-up action pill */
+        const tDots2 = 5.02, tFollow = 5.45;
+        fade(tl, "#dt-typing2", 0, 1, tDots2, 0.18, "power2.out");
+        fade(tl, "#dt-typing2", 1, 0, tFollow, 0.1, "none");
+        tl.fromTo("#dt-follow", { opacity: 0, y: 8, scale: 0.98, transformOrigin: "0% 100%" }, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: K.easeName("out"), immediateRender: false }, tFollow);
+        /* if the thread outgrows the space above the composer, it scrolls with the last message */
+        const over = $("#dt-col").offsetHeight - $("#dt-body").clientHeight + 6;
+        if (over > 0) tl.fromTo("#dt-col", { y: 0 }, { y: -over, duration: 0.4, ease: K.easeName("out"), immediateRender: false }, tFollow - 0.05);
+
+        /* per-frame: composer text, caret, send/voice button, typing dots, booking spinner */
+        const typed = $("#dt-typed"), ph = $("#dt-ph"), caret = $("#dt-caret"), send = $("#dt-send"), spin = $("#dt-spin");
+        const dots = [...$$("#dt-typing1 i"), ...$$("#dt-typing2 i")];
+        onTick((t) => {
+          const n = t < tSend ? typedCount(times, t) : 0;
+          const s = C.user.slice(0, n);
+          if (typed.textContent !== s) typed.textContent = s;
+          ph.style.opacity = s.length ? "0" : "1";
+          const st = s.length ? "send" : "voice";
+          if (send.getAttribute("data-state") !== st) send.setAttribute("data-state", st);
+          const typing = t >= times[0] - 0.05 && t < tSend + 0.05;
+          caret.style.opacity = typing ? 1 : (Math.floor(t / 0.53) % 2 === 0 ? 1 : 0);
+          dots.forEach((d, i) => {
+            const p = ((t * 1.6 - (i % 3) * 0.18) % 1 + 1) % 1;
+            d.style.opacity = (0.3 + 0.6 * Math.pow(Math.sin(Math.PI * p), 2)).toFixed(3);
+          });
+          spin.style.transform = `rotate(${((t * 760) % 360).toFixed(1)}deg)`;
+        });
+      }
+
+      /* ======================================================================
+         1 · Claude Code CLI: the Bash permission prompt
+         ====================================================================== */
+      const SK = window.SKIN_CLAUDE_CODE;
+      const SPIN = ["sp0", "sp1", "sp2", "sp3", "sp4", "sp5"];
+      const SPIN_SEQ = [0, 1, 2, 3, 4, 5, 4, 3, 2, 1];
+      function buildCC() {
+        const R = C, fs = R.fontSize;
+        const W = Math.round((R.cols + 3.2) * 0.6 * fs);
+        const H = Math.round(40 + fs * (0.45 + 0.6) + R.rows * fs * R.lineHeight);
+        place.style.left = Math.round((1920 - W) / 2) + "px";
+        place.style.top = Math.round((1080 - H) / 2) + "px";
+        const g = SK.g, gut = SK.gut;
+        const stack = (names) => `<span class="stk cc-g">${names.map((n) => `<span class="fr">${SK.glyphs[n]}</span>`).join("")}</span>`;
+        const dot2 = () => `<span class="stk cc-g"><span class="fr" style="color:var(--cct-dim)">${SK.glyphs.dot}</span><span class="fr" style="color:var(--cct-success)">${SK.glyphs.dot}</span></span>`;
+        const tool = (id, tt) => `<div class="cc-t" id="${id}"><span class="cc-gut">${dot2()}</span><span><span class="cc-tn">${esc(tt.name)}</span>${esc(tt.args)}</span></div>`;
+        const res = (id, html) => `<div class="cc-r" id="${id}">${gut("elbow")}<span class="cc-rb">${html}</span></div>`;
+        const words = (segs) => segs.map((sg) => {
+          if (sg.id) return `<span class="cc-w"><span class="cc-id">${esc(sg.id)}</span></span>`;
+          return sg.t.split(/(?<= )/).map((w) => `<span class="cc-w">${esc(w)}</span>`).join("");
+        }).join("");
+        const answer = words(R.answer), prior = R.prior;
+        const P = R.perm;
+        const opts = P.options.map((o, i) => `<div class="cc-opt" id="cc-opt${i}">${gut("chev")}<span class="cc-n">${i + 1}.</span><span class="cc-ol">${esc(o[0])}${o[1] ? ` <span class="cc-dim">${esc(o[1])}</span>` : ""}</span></div>`).join("");
+
+        win.innerHTML = tidy(`
+          <div class="sk-cc" data-theme="${THEME}">
+            <div class="cc-term ${SHADOW}" id="cc-term" style="width:${W}px;height:${H}px;--cct-fs:${fs}px;--cct-lh:${R.lineHeight}">
+              <div class="cc-term-bar"><span class="cc-lights"><i></i><i></i><i></i></span><span class="cc-term-title">${g("sp2")}${esc(R.title)}</span></div>
+              <div class="cc-cli">
+                <div class="ag-view" id="cc-view">
+                  <div class="ag-stack" id="cc-stack" data-layout-allow-overflow>
+                    <div class="cc-u">${gut("chev")}<span>${esc(prior.prompt)}</span></div>
+                    <div class="cc-a cc-b" id="cc-a0">${gut("dot")}<span>${words(prior.answer)}</span></div>
+                    <div class="cc-done cc-b">${gut("spark")}<span>${esc(prior.worked)}</span></div>
+                    <div class="cc-u cc-b" id="cc-band">${gut("chev")}<span>${esc(R.prompt)}</span></div>
+                    <div class="cc-sum cc-b" id="cc-sum">${esc(R.summary)}</div>
+                    <div class="cc-b" id="cc-ed">${tool("cc-edT", R.edit)}${res("cc-edR", R.edit.result)}</div>
+                    <div class="cc-b" id="cc-bs">${tool("cc-bsT", R.bash)}${res("cc-bsRun", `<span class="cc-dim">${esc(R.bash.running)}</span>`)}${res("cc-bsRes", esc(R.bash.result))}</div>
+                    <div class="cc-a cc-b" id="cc-ans">${gut("dot")}<span>${answer}</span></div>
+                    <div class="cc-done cc-b" id="cc-done">${gut("spark")}<span id="cc-worked"></span></div>
+                    <div class="cc-b" id="cc-spin"><div class="cc-spin"><span class="cc-gut cc-claude">${stack(SPIN)}</span><span><span class="cc-verb" id="cc-verb">${esc(R.verb)}</span> <span class="cc-dim">(<span id="cc-count"></span>)</span></span></div></div>
+                    <div class="cc-input cc-b" id="cc-input">
+                      <div class="cc-rule"></div>
+                      <div class="cc-pline">${gut("chev")}<span><span id="cc-typed"></span><span class="cc-cursor" id="cc-cursor"></span></span></div>
+                      <div class="cc-rule"></div>
+                      <div class="cc-foot"><span class="cc-mode-accept">${g("ff")} ${esc(R.mode)}</span> <span class="cc-hint" data-layout-ignore>(shift+tab to cycle)</span> · <span id="cc-f-esc">esc to interrupt</span><span id="cc-f-agents">${g("larr")} for agents</span></div>
+                    </div>
+                    <div class="cc-perm cc-b" id="cc-perm">
+                      <div class="cc-perm-title">${esc(P.title)}</div>
+                      <div class="cc-bold">${esc(P.tip)}</div>
+                      <div class="cc-dim">${esc(P.desc)}</div>
+                      <div class="cc-dash"></div>
+                      <div>${esc(P.cmd)}</div>
+                      <div class="cc-dash"></div>
+                      <div>${esc(P.note)}</div>
+                      <div class="cc-b">${esc(P.ask)}</div>
+                      ${opts}
+                      <div class="cc-b cc-dim">${esc(P.hint)}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>`);
+      }
+
+      function animCC(tl) {
+        const R = C;
+        /* the person types the task; Enter at tEnter; then a fast run of work up to the gate */
+        const times = typeTimes(R.prompt, B.type || 0.42, 46);
+        const tEnter = times[times.length - 1] + 0.14;
+        const tSum = tEnter + 0.3, tEd = tEnter + 0.46, tEdDone = B.gate - 0.17;
+        const tPick = B.approve - 0.6, tBsDone = B.done - 0.15, tAns = B.done + 0.1, tDone = B.done + 0.8;
+        const ans = $$("#cc-ans .cc-w");
+        const chunk = 3, nChunks = Math.ceil(ans.length / chunk), ansDur = 0.55;
+        $("#cc-worked").textContent = "Worked for " + Math.floor(tDone - tEnter) + "s";
+        const el = {
+          band: $("#cc-band"), sum: $("#cc-sum"), ed: $("#cc-ed"), edR: $("#cc-edR"), edF: $$("#cc-edT .fr"),
+          bs: $("#cc-bs"), bsRun: $("#cc-bsRun"), bsRes: $("#cc-bsRes"), bsF: $$("#cc-bsT .fr"),
+          ansRow: $("#cc-ans"), done: $("#cc-done"), spin: $("#cc-spin"), spinF: $$("#cc-spin .fr"),
+          verb: $("#cc-verb"), count: $("#cc-count"), input: $("#cc-input"), perm: $("#cc-perm"),
+          opts: $$(".cc-opt"), fEsc: $("#cc-f-esc"), fAg: $("#cc-f-agents"), cursor: $("#cc-cursor"), typed: $("#cc-typed"),
+          view: $("#cc-view"), stack: $("#cc-stack")
+        };
+        const show = (e, on, disp) => { const v = on ? (disp || "") : "none"; if (e.style.display !== v) e.style.display = v; };
+        const tokens = (t) => { const n = Math.round(180 + 640 * Math.max(0, t - tEnter)); return n >= 1000 ? (n / 1000).toFixed(1) + "k" : String(n); };
+        onTick((t) => {
+          const gateOpen = t >= B.gate && t < B.approve;
+          const started = t >= tEnter;
+          show(el.band, started);
+          show(el.sum, t >= tSum);
+          show(el.ed, t >= tEd);
+          show(el.edR, t >= tEdDone, "grid");
+          const edBlink = Math.floor((t - tEd) / 0.18) % 2 === 0 ? 1 : 0.35;
+          el.edF[0].style.opacity = t < tEdDone ? edBlink : 0; el.edF[1].style.opacity = t < tEdDone ? 0 : 1;
+          show(el.bs, t >= B.approve);
+          show(el.bsRun, t < tBsDone, "grid"); show(el.bsRes, t >= tBsDone, "grid");
+          const bsBlink = Math.floor((t - B.approve) / 0.22) % 2 === 0 ? 1 : 0.35;
+          el.bsF[0].style.opacity = t < tBsDone ? bsBlink : 0; el.bsF[1].style.opacity = t < tBsDone ? 0 : 1;
+          show(el.ansRow, t >= tAns, "grid");
+          const shown = t < tAns ? 0 : Math.min(nChunks, 1 + Math.floor(((t - tAns) / ansDur) * nChunks));
+          ans.forEach((w, i) => { const v = Math.floor(i / chunk) < shown ? "1" : "0"; if (w.style.opacity !== v) w.style.opacity = v; });
+          show(el.done, t >= tDone, "grid");
+          const working = started && !gateOpen && t < tAns;
+          show(el.spin, working);
+          const k = Math.floor(Math.max(0, t) / 0.12);
+          el.spinF.forEach((f, i) => { f.style.opacity = i === SPIN_SEQ[k % SPIN_SEQ.length] ? 1 : 0; });
+          el.verb.style.setProperty("--cc-shim", (100 - 100 * ((t % 1.1) / 1.1)).toFixed(2) + "%");
+          el.count.textContent = Math.floor(Math.max(0, t - tEnter)) + "s · ↓ " + tokens(t) + " tokens";
+          show(el.perm, gateOpen);
+          show(el.input, !gateOpen);
+          el.opts.forEach((o, i) => o.classList.toggle("is-sel", i === (t >= tPick ? R.perm.pick : 0)));
+          /* the input: typed text, then cleared by Enter */
+          const s = started ? "" : R.prompt.slice(0, typedCount(times, t));
+          if (el.typed.textContent !== s) el.typed.textContent = s;
+          const busy = started && t < tDone;
+          show(el.fEsc, busy, "inline"); show(el.fAg, !busy, "inline");
+          const typing = t >= times[0] - 0.05 && t < tEnter;
+          el.cursor.style.opacity = typing || (started && t < tDone) ? 1 : (Math.floor(t / 0.53) % 2 === 0 ? 1 : 0);
+          /* follow the output: once the stack outgrows the viewport, the oldest rows scroll off the top */
+          const over = Math.max(0, el.stack.offsetHeight - el.view.clientHeight);
+          el.stack.style.transform = over ? `translateY(${-over}px)` : "";
+        });
+      }
+
+      /* ======================================================================
+         2 · Codex: the thread pauses on an approval request (outside the sandbox)
+         ====================================================================== */
+      const ico = (n, cls) => `<span class="cx-i${cls ? " " + cls : ""}" data-cx-icon="${n}"></span>`;
+      const inlineCode = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+      function buildCodex() {
+        const X = C, Z = X.zoom;
+        place.style.left = Math.round((1920 - X.w * Z) / 2) + "px";
+        place.style.top = Math.round((1080 - X.h * Z) / 2) + "px";
+        zoomer.style.zoom = Z;
+        const counts = (p, m) => `<span class="cx-plus">+${p}</span> <span class="cx-minus">-${m}</span>`;
+        const replyHTML = X.reply.split(/(`[^`]+`)/g).filter(Boolean).map((p) => p[0] === "`"
+          ? `<span class="w"><code>${esc(p.slice(1, -1))}</code></span>`
+          : p.split(/(\s+)/).filter(Boolean).map((w) => (/^\s+$/.test(w) ? w : `<span class="w">${esc(w)}</span>`)).join("")).join("");
+        const A = X.approval;
+        win.innerHTML = tidy(`
+          <div class="sk-codex cx-window" data-theme="${THEME}" style="width:${X.w}px;height:${X.h}px">
+            <div class="cx-titlebar">
+              <div class="cx-tb-lead">
+                <div class="cx-traffic"><i></i><i></i><i></i></div>
+                <span class="cx-tb-btn">${ico("arrow-left")}</span>
+                <span class="cx-tb-btn is-off">${ico("arrow-right")}</span>
+                <span class="cx-tb-btn">${ico("sidebar")}</span>
+              </div>
+              <i class="cx-tb-sep"></i>
+              <div class="cx-tb-main" style="padding-left:6px">
+                <span class="cx-tab is-grow">${ico("bubble")}<span>${esc(X.tab)}</span>${ico("close", "cx-tab-x")}</span>
+              </div>
+              <div class="cx-tb-right"><span class="cx-tb-btn">${ico("new-tab")}</span></div>
+            </div>
+            <div class="cx-body">
+              <div class="cx-rail">
+                <span class="cx-rail-btn is-active">${ico("home-fill")}</span>
+                <span class="cx-rail-btn">${ico("cards")}</span>
+                <span class="cx-rail-btn">${ico("clock")}</span>
+                <span class="cx-rail-btn">${ico("plugins")}</span>
+                <span class="cx-rail-btn">${ico("more")}</span>
+                <i class="cx-rail-div"></i>
+                <span class="cx-rail-btn">${ico("pr")}</span>
+                <span class="cx-rail-btn">${ico("openai")}</span>
+                <div class="cx-rail-foot"><span class="cx-avatar-app">${ico("openai")}</span></div>
+              </div>
+              <div class="cx-panel">
+                <div class="cx-main">
+                  <div class="cx-thread ag-thread" id="cx-thread"><div class="cx-thread-inner" id="cx-inner">
+                    <div class="cx-user"><div class="cx-bubble">${esc(X.user)}</div></div>
+                    <div class="cx-worked" id="cx-worked"><span id="cx-wtext"></span><span class="cx-i" id="cx-wchev" data-cx-icon="chevron-right" style="opacity:0"></span></div>
+                    <div id="cx-live" style="position:relative">
+                      <div class="ag-rows" id="ag-rows">${X.rows.map((r, i) => `<div class="ag-row${r.wait ? " is-wait" : ""}" id="ag-r${i}">${r.html}</div>`).join("")}</div>
+                      <div class="cx-ai ag-reply" id="cx-reply"><p>${replyHTML}</p></div>
+                      <div class="cx-files" id="cx-files">
+                        <div class="cx-files-head">
+                          <span class="cx-files-tile">${ico("diff")}</span>
+                          <div><div class="cx-files-title">${esc(X.files.title)}</div><div class="cx-files-counts">${counts(X.files.plus, X.files.minus)}</div></div>
+                          <span class="cx-files-undo">Undo${ico("undo")}</span>
+                          <span class="cx-btn">Review</span>
+                        </div>
+                        ${X.files.rows.map((r) => `<div class="cx-files-row"><span class="dir">${esc(r.dir)}</span>${esc(r.name)}<span class="cnt">${counts(r.plus, r.minus)}</span></div>`).join("")}
+                      </div>
+                    </div>
+                  </div></div>
+                  <div class="cx-dock ag-dock" id="cx-dock">
+                    <div class="ag-box" id="ag-box">
+                      <div class="ag-layer" id="cx-cwrap">
+                        <div class="cx-cwrap">
+                          <div class="cx-composer">
+                            <div class="cx-input"><span class="cx-placeholder">${esc(X.placeholder)}</span></div>
+                            <div class="cx-cfoot">
+                              <span class="cx-cbtn">${ico("plus")}</span>
+                              <span class="cx-perm">${ico("gear")}Custom</span>
+                              <span class="cx-grow"></span>
+                              <span class="cx-model">${ico("bolt", "cx-bolt")}${esc(X.model.name)} <span class="cx-effort">${esc(X.model.effort)}</span>${ico("chevron-down", "cx-chev")}</span>
+                              <span class="cx-cbtn">${ico("mic")}</span>
+                              <span class="cx-send" id="cx-send" data-state="working">${ico("send", "cx-i-send")}${ico("stop", "cx-i-stop")}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="ag-layer" id="cx-apwrap" style="opacity:0">
+                        <div class="cx-approval ag-card" id="cx-appr">
+                          <div class="ag-q">${esc(A.q)}</div>
+                          <div class="ag-why">${ico("shield")}<span>${esc(A.why)}</span></div>
+                          <div class="ag-cmd">${esc(A.cmd)}</div>
+                          <div class="ag-opts">
+                            ${A.options.map((o, i) => `<div class="ag-opt${i === 0 ? " is-sel" : ""}" id="ag-opt${i}"><span class="k">${i + 1}</span><span>${inlineCode(o)}</span></div>`).join("")}
+                          </div>
+                          <div class="ag-foot"><span class="cx-btn is-blue" id="cx-submit">${esc(A.submit)}<span class="ag-key">${IC.ret}</span></span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ptr" id="cx-ptr">${window.SKIN_ICONS_CODEX.pointer}</div>`);
+        window.SKIN_ICONS_CODEX.mount(win);
+        document.querySelectorAll(window.SKIN_CODEX_DIM_SELECTOR).forEach((e) => e.setAttribute("data-layout-ignore", ""));
+      }
+
+      function animCodex(tl) {
+        const X = C;
+        const tFiles = 5.75;
+        const box = $("#ag-box"), cwrap = $("#cx-cwrap"), apwrap = $("#cx-apwrap");
+        const hC = cwrap.offsetHeight, hA = apwrap.offsetHeight;
+        box.style.height = hC + "px";
+        const sb = boxIn($("#cx-submit"), win, X.w);
+        const o1 = boxIn($("#ag-opt0"), win, X.w);
+        /* layout facts for the two scroll states */
+        const thread = $("#cx-thread"), inner = $("#cx-inner"), rowsEl = $("#ag-rows");
+        const cs = getComputedStyle(thread);
+        const avail = thread.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+        const rowsTop = rowsEl.getBoundingClientRect().top - inner.getBoundingClientRect().top;
+        const k = inner.getBoundingClientRect().height / inner.offsetHeight || 1;
+        const rowH = $("#ag-r0").offsetHeight;
+        const gateBottom = rowsTop / k + rowH * 3;
+        const gateShift = Math.max(0, gateBottom - (avail - (hA - hC)) + 4);
+        const overflow = Math.max(0, inner.offsetHeight - avail + 4);
+
+        /* composer ↔ approval request: the dock resizes and the two cross-fade in place (no empty frames) */
+        tl.fromTo(box, { height: hC }, { height: hA, duration: 0.3, ease: K.easeName("out"), immediateRender: false }, B.gate);
+        fade(tl, cwrap, 1, 0, B.gate, 0.15, "power1.out");
+        tl.fromTo(apwrap, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, ease: K.easeName("out"), immediateRender: false }, B.gate + 0.04);
+        if (gateShift > 0) tl.fromTo(inner, { y: 0 }, { y: -gateShift, duration: 0.3, ease: K.easeName("out"), immediateRender: false }, B.gate);
+        tl.fromTo(box, { height: hA }, { height: hC, duration: 0.3, ease: K.easeName("out"), immediateRender: false }, B.approve);
+        fade(tl, apwrap, 1, 0, B.approve, 0.15, "power1.out");
+        fade(tl, cwrap, 0, 1, B.approve + 0.04, 0.25, "power1.out");
+        if (gateShift > 0) tl.fromTo(inner, { y: -gateShift }, { y: 0, duration: 0.3, ease: K.easeName("out"), immediateRender: false }, B.approve);
+
+        /* the pointer: in from off the window, presses "1 Yes, proceed", then Submit */
+        const ptr = $("#cx-ptr");
+        const start = { x: X.w + 70, y: X.h + 30 };
+        fade(tl, ptr, 0, 1, 2.62, 0.2, "power1.out");
+        const up1 = K.cursorMoveClick(tl, ptr, { x: o1.x + o1.w * 0.34, y: o1.y + o1.h * 0.55 }, 2.62, { from: start, duration: 0.5, target: "#ag-opt0" });
+        const at2 = up1 + 0.12;
+        const up2 = K.cursorMoveClick(tl, ptr, { x: sb.x + sb.w * 0.64, y: sb.y + sb.h * 0.7 }, at2, { duration: Math.max(0.3, B.approve - at2 - 0.16), target: "#cx-submit" });
+        K.cursorMove(tl, ptr, { x: sb.x + sb.w * 0.64 + 40, y: sb.y - 50 }, up2 + 0.12, { duration: 0.5 });
+        fade(tl, ptr, 1, 0, up2 + 0.1, 0.24, "power1.in");
+
+        /* live rows: each lands with a small rise; they clear when the turn ends */
+        const rows = $$(".ag-row");
+        X.rows.forEach((r, i) => {
+          const at = r.at === "gate" ? B.gate : r.at;
+          tl.fromTo(rows[i], { opacity: 0, y: 4 }, { opacity: 1, y: 0, duration: 0.25, ease: K.easeName("out"), immediateRender: false }, at);
+        });
+        fade(tl, rowsEl, 1, 0, B.done, 0.15, "power1.out");
+
+        /* result: the reply streams in 1–3 word chunks, then the files card, the thread scrolls */
+        const ws = $$("#cx-reply .w");
+        const sizes = [2, 3, 1, 2, 3, 2, 1, 3];
+        let i = 0, n = 0, t = B.done + 0.12;
+        while (i < ws.length) {
+          const c = sizes[n % sizes.length];
+          ws.slice(i, i + c).forEach((w) => tl.fromTo(w, { opacity: 0 }, { opacity: 1, duration: 0.22, ease: "power1.out", immediateRender: false }, t));
+          i += c; n++; t += 0.07;
+        }
+        if (overflow > 0) tl.fromTo(inner, { y: 0 }, { y: -overflow, duration: 0.45, ease: K.easeName("out"), immediateRender: false }, tFiles - 0.05);
+        tl.fromTo("#cx-files", { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.35, ease: K.easeName("out"), immediateRender: false }, tFiles);
+
+        /* status line, the swapping wait row and the send button: pure functions of time */
+        const wtext = $("#cx-wtext"), wchev = $("#cx-wchev"), send = $("#cx-send");
+        const waitIdx = X.rows.findIndex((r) => r.wait), waitRow = rows[waitIdx], waitR = X.rows[waitIdx];
+        const secs = (tt) => X.secondsAtStart + Math.floor(tt);
+        const setText = (e, s) => { if (e.textContent !== s) e.textContent = s; };
+        onTick((tt) => {
+          const waiting = tt >= B.gate && tt < B.approve;
+          const done = tt >= B.done;
+          setText(wtext, done ? "Worked for " + secs(B.done) + "s" : "Working for " + secs(tt) + "s");
+          const shim = !done && !waiting;
+          if (wtext.classList.contains("cx-shimmer") !== shim) wtext.classList.toggle("cx-shimmer", shim);
+          wtext.style.backgroundPosition = shim ? (100 - 100 * ((tt % 1.3) / 1.3)).toFixed(2) + "% 0" : "";
+          wchev.style.opacity = done ? 1 : 0;
+          /* "Waiting for approval" swaps to what ran once approved (text swap: out 4px up, in from 4px below) */
+          const ts = B.approve + 0.05, p = seg(tt, ts, 0.3);
+          const label = tt < ts || p < 0.5 ? waitR.html : waitR.after;
+          if (waitRow.textContent !== label) waitRow.textContent = label;
+          waitRow.classList.toggle("is-wait", label === waitR.html);
+          if (tt >= ts && tt < ts + 0.3) {
+            const q = p < 0.5 ? easeInOut(p * 2) : easeInOut((p - 0.5) * 2);
+            waitRow.style.opacity = (p < 0.5 ? 1 - q : q).toFixed(3);
+            waitRow.style.translate = `0 ${(p < 0.5 ? -4 * q : 4 * (1 - q)).toFixed(2)}px`;
+          } else { waitRow.style.translate = ""; if (tt >= ts) waitRow.style.opacity = "1"; }
+          const st = tt >= tFiles ? "empty" : "working";
+          if (send.getAttribute("data-state") !== st) send.setAttribute("data-state", st);
+        });
+      }
+
+      /* ---------------- build, measure, animate ---------------- */
+      const builders = { dots: [buildDots, animDots], "claude-code": [buildCC, animCC], codex: [buildCodex, animCodex] };
+      const [build, anim] = builders[C.product];
+      build();
+
+      Promise.all([
+        document.fonts.load('400 16px "Inter"'),
+        document.fonts.load('500 16px "Inter"'),
+        document.fonts.load('600 16px "Inter"'),
+        document.fonts.load('400 16px "JetBrains Mono"'),
+        document.fonts.load('700 16px "JetBrains Mono"')
+      ]).catch(() => null).then(() => document.fonts.ready).then(() => {
+        const tl = gsap.timeline({ paused: true });
+        /* the object rises in, holds, and is fully clear by 7.9 s so the tile loops */
+        tl.fromTo(place, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", immediateRender: false }, B.enter);
+        tl.fromTo(place, { opacity: 1 }, { opacity: 0, duration: 0.35, ease: "power1.in", immediateRender: false }, B.exit);
+        anim(tl);
+        K.drive(tl, 0, DUR, (p) => { const t = p * DUR; TICK.forEach((f) => f(t)); });
+        window.__timelines["main"] = tl;
+        tl.seek(0);
+      });
+    </script>
+  </body>
+</html>

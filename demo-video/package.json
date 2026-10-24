@@ -1,1 +1,32 @@
-{"name":"spelunk-demo-video","private":true,"type":"module","scripts":{"studio":"remotion studio src/index.tsx","render":"remotion render src/index.tsx SpelunkDemo out/spelunk-demo.mp4 --codec=h264 --crf=18","check":"tsc --noEmit","capture":"node scripts/capture.mjs"},"dependencies":{"@remotion/cli":"4.0.538","@remotion/google-fonts":"4.0.538","@remotion/media":"4.0.538","culori":"^4.0.2","lucide-react":"^0.468.0","react":"19.1.0","react-dom":"19.1.0","remotion":"4.0.538"},"devDependencies":{"@types/culori":"^4.0.1","@types/node":"^22.0.0","@types/react":"^19.1.0","@types/react-dom":"^19.1.0","playwright":"1.61.1","typescript":"^5.8.3"}}
+{
+ "name": "spelunk-demo-video",
+ "private": true,
+ "type": "module",
+ "scripts": {
+  "studio": "remotion studio src/index.tsx",
+  "render": "remotion render src/index.tsx SpelunkDemo out/spelunk-demo.mp4 --codec=h264 --crf=18",
+  "check": "tsc --noEmit",
+  "capture": "node scripts/capture.mjs",
+  "render:full": "remotion render src/index.tsx SpelunkFullDemo out/spelunk-full-demo.raw.mp4 --codec=h264 --crf=18 --audio-bitrate=320k && node scripts/master-full.mjs",
+  "qa:full": "python -I scripts/qa-full.py",
+  "native": "node scripts/render-native.mjs"
+ },
+ "dependencies": {
+  "@remotion/cli": "4.0.538",
+  "@remotion/google-fonts": "4.0.538",
+  "@remotion/media": "4.0.538",
+  "culori": "^4.0.2",
+  "lucide-react": "^0.468.0",
+  "react": "19.1.0",
+  "react-dom": "19.1.0",
+  "remotion": "4.0.538"
+ },
+ "devDependencies": {
+  "@types/culori": "^4.0.1",
+  "@types/node": "^22.0.0",
+  "@types/react": "^19.1.0",
+  "@types/react-dom": "^19.1.0",
+  "playwright": "1.61.1",
+  "typescript": "^5.8.3"
+ }
+}

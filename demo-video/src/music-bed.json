@@ -1,0 +1,18 @@
+{
+ "source": "elevenlabs-mellow-original.mp3",
+ "seconds": 131.146,
+ "jumps": [
+  {
+   "from": 40.0,
+   "to": 5.387,
+   "onsetCorr": 0.396,
+   "waveCorr": 0.353
+  },
+  {
+   "from": 40.0,
+   "to": 5.387,
+   "onsetCorr": 0.396,
+   "waveCorr": 0.353
+  }
+ ]
+}

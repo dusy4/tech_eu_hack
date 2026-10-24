@@ -44,6 +44,41 @@ class HandoffStoreTest(unittest.TestCase):
         self.assertNotIn("code_ref", doc["proposals"][1])  # ask actions have no code
         self.assertEqual(self.store.get(doc["id"])["repo"], "rust-agent-framework")
 
+    def test_change_decisions_keep_anchors_and_resolve_each(self) -> None:
+        batch = {
+            "repo": "rust-agent-framework",
+            "proposals": [{
+                "title": "Time out approval requests", "why": "Nobody answers at night", "said": "deny after thirty seconds",
+                "speaker": "Speaker 2",
+                "action": {"kind": "change", "change": "Wrap the wait in request_tool_approval in a 30 s timeout.",
+                           "anchors": [{"symbol": "request_tool_approval", "file": "crates/host/src/handler/prompt.rs", "nodeId": None},
+                                       {"symbol": "ApprovalRequiredTool", "nodeId": "sym:1"}]},
+            }],
+        }
+        doc = self.store.publish(batch)
+        action = doc["proposals"][0]["action"]
+        self.assertEqual([a["symbol"] for a in action["anchors"]], ["request_tool_approval", "ApprovalRequiredTool"])
+        self.assertNotIn("nodeId", action["anchors"][0])  # empty fields are dropped
+        self.assertEqual(len(doc["proposals"][0]["code_refs"]), 2)
+        text = handoff_markdown(doc)
+        self.assertIn("Change: Wrap the wait", text)
+        self.assertIn("crates/core/src/tool.rs:170-173", text)
+        self.assertIn("(Speaker 2)", text)
+
+    def test_change_decisions_are_validated(self) -> None:
+        for action in ({"kind": "change"}, {"kind": "change", "change": "  "},
+                       {"kind": "change", "change": "x", "anchors": ["not an object"]}):
+            with self.assertRaises(HandoffError):
+                validate_batch({"repo": "r", "proposals": [{"title": "t", "action": action}]})
+
+    def test_change_refs_survive_a_failing_resolver(self) -> None:
+        def broken(repo, name):
+            raise RuntimeError("index offline")
+        store = HandoffStore(Path(self.tmp.name), resolve_code_ref=broken)
+        doc = store.publish({"repo": "r", "proposals": [{"title": "t", "action": {"kind": "change", "change": "do it", "anchors": [{"symbol": "x"}]}}]})
+        self.assertEqual(doc["proposals"][0]["code_refs"], [None])
+        self.assertIn("not found in the index", handoff_markdown(doc))
+
     def test_list_filters_and_summarises(self) -> None:
         first = self.store.publish(BATCH)
         self.store.update_status(first["id"], "done", "wrapped run_command")

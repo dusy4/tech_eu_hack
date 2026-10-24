@@ -1,0 +1,541 @@
+/* ==========================================================================
+   Gemini app skin: gemini.google.com web + desktop app, mobile drawer,
+   Gemini Live, Canvas, Task view. Oct 2026 build ("Neural Expressive"
+   redesign from I/O 2026 + the Oct 13 Gemini 4 Argon update): pill composer,
+   model chip inside the composer (3.8 Flash / 4 Argon), Chat | Task toggle
+   under the composer, navy-glow dark home, sky-blue light home.
+
+   SIZES ARE THE REAL APP'S CSS PX (16px body). Scale the whole thing with
+   `zoom` on a wrapper (the demo uses zoom 1.7 on a 1129x635 viewport, like a
+   launch-video crop). Never edit sizes to scale.
+
+   Root: .sk-gemini      Theme: data-theme="dark" on the root or an ancestor.
+   Class prefix: gm-     Measurements per piece: DECISIONS.md
+   ========================================================================== */
+
+/* Google Sans is OFL (github.com/googlefonts/googlesans); shipped with the skin, no network. */
+@font-face { font-family: 'Google Sans'; font-style: normal; font-weight: 400 700; font-display: block;
+  src: url('fonts/GoogleSans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Google Sans'; font-style: normal; font-weight: 400 700; font-display: block;
+  src: url('fonts/GoogleSans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Google Sans Code'; font-style: normal; font-weight: 300 800; font-display: block;
+  src: url('fonts/GoogleSansCode-latin.woff2') format('woff2'); }
+
+/* ---------- tokens: light ---------- */
+.sk-gemini {
+  --gm-font: 'Google Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --gm-mono: 'Google Sans Code', 'JetBrains Mono', ui-monospace, monospace;
+
+  --gm-bg: #fdfdfd;                 /* chat page, rail, drawer */
+  --gm-surface: #ffffff;            /* composer, cards, menus */
+  --gm-surface-2: #f3f3f3;          /* code blocks, inline cards */
+  /* home: sky-blue glow centred on the composer, fading to white (Sept 2026 frame).
+     .gm-home-bg bleeds one rail width past each side of .gm-main, so these % are of
+     (main + 2 x rail); same px size as the measured glow. Mobile uses --gm-m-home-bg. */
+  --gm-home-bg:
+    radial-gradient(ellipse 56.3% 62% at 50% 57%, #c7e1fb 0%, #cfe5fb 18%, #dcecfc 38%, #e9f3fd 58%, #f5f9fe 78%, #fdfdfd 100%);
+  --gm-m-home-bg:
+    radial-gradient(ellipse 64% 62% at 50% 57%, #c7e1fb 0%, #cfe5fb 18%, #dcecfc 38%, #e9f3fd 58%, #f5f9fe 78%, #fdfdfd 100%);
+  --gm-rail-w: 72px;
+  --gm-rail-bg: #fdfdfd;            /* light rail is a solid panel with a visible edge on the glow */
+  --gm-task-bg: linear-gradient(180deg, #edf5fc 0%, #f5f9fd 42%, #fcfcfc 100%); /* task list pane (May 2026) */
+
+  --gm-text: #1f1f1f;
+  --gm-text-strong: #1b1b1b;        /* greeting */
+  --gm-text-2: #5f6368;             /* thought line, disclaimer, row summaries */
+  --gm-text-3: #80868b;             /* timestamps, section labels */
+  --gm-placeholder: #5f6368;
+  --gm-icon: #1f1f1f;
+  --gm-icon-2: #5f6368;             /* message action icons */
+
+  --gm-composer-bg: #ffffff;
+  --gm-composer-shadow: 0 0 0 1px rgba(31, 31, 31, 0.04), 0 1px 2px rgba(31, 31, 31, 0.05), 0 6px 20px -6px rgba(38, 74, 128, 0.16);
+  --gm-chip-open: #ebebeb;          /* open model chip */
+  --gm-tool-chip: #e9e9e9;          /* "Canvas" chip (Sept 2026) */
+  --gm-seg-active: rgba(31, 31, 31, 0.075);   /* selected Chat | Task segment */
+  --gm-seg-border: transparent;
+  --gm-menu-bg: #ffffff;
+  --gm-menu-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.06), 0 12px 32px -8px rgba(0, 0, 0, 0.18);
+  --gm-menu-hover: #ebebeb;         /* hovered / focused menu row */
+  --gm-send-bg: #8fcbfd;            /* light send: pale sky blue, near-black arrow */
+  --gm-send-fg: #111111;
+  --gm-bubble: #f1eff0;             /* user bubble */
+  --gm-rule: #c4c7c5;               /* thinking-step rule */
+  --gm-hairline: rgba(0, 0, 0, 0.08);
+  --gm-hover: rgba(31, 31, 31, 0.06);
+  --gm-nav-active: #ebebeb;         /* rail selected circle, sidebar selected row */
+  --gm-nav-brief: #f4e9fa;          /* drawer selected row (lavender, Sep 2026) */
+  --gm-nav-brief-text: #3f2d52;
+  --gm-blue: #0b57d0;               /* links, text buttons */
+  --gm-blue-fill: #0b57d0;          /* filled buttons ("Send" in a Gmail card) */
+  --gm-blue-on: #ffffff;
+  --gm-dot: #3c7bf6;                /* unread dot */
+  --gm-needs-bg: #cbecff;           /* "Needs input" chip */
+  --gm-needs-text: #1a6ad8;
+  --gm-done-bg: #ececec;            /* "Complete" chip */
+  --gm-link-underline: #9aa0a6;
+  --gm-avatar-bg: #7e57c2;          /* initial avatar (contacts in cards); the account uses a photo */
+  --gm-avatar-fg: #ffffff;
+  --gm-avatar-ph: #d3d3d3;          /* behind a photo while it decodes */
+  --gm-fade: #fdfdfd;               /* fade above the docked composer */
+
+  font-family: var(--gm-font);
+  color: var(--gm-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------- tokens: dark ---------- */
+.sk-gemini[data-theme="dark"],
+[data-theme="dark"] .sk-gemini {
+  --gm-bg: #000000;
+  --gm-surface: #1c1c1c;
+  --gm-surface-2: #1c1c1c;
+  /* home: deep navy radial glow on near-black, centred below the composer (Oct 2026 promo).
+     It runs edge to edge under the transparent dark rail (no seam). */
+  --gm-home-bg:
+    radial-gradient(ellipse 52.8% 78% at 50% 71%, #121a40 0%, #10183c 22%, #0d1534 40%, #0a1028 56%, #060a1a 72%, #03050d 87%, #010307 100%);
+  --gm-m-home-bg:
+    radial-gradient(ellipse 60% 78% at 50% 71%, #121a40 0%, #10183c 22%, #0d1534 40%, #0a1028 56%, #060a1a 72%, #03050d 87%, #010307 100%);
+  --gm-rail-bg: transparent;
+  --gm-task-bg: radial-gradient(90% 60% at 50% 0%, #0b1230 0%, #03050d 70%, #000000 100%);
+
+  --gm-text: #eeeeee;
+  --gm-text-strong: #ffffff;
+  --gm-text-2: #a9acaf;
+  --gm-text-3: #8d9093;
+  --gm-placeholder: #c4c4c4;
+  --gm-icon: #eeeeee;
+  --gm-icon-2: #b4b7ba;
+
+  --gm-composer-bg: #1c1c1c;
+  --gm-composer-shadow: none;
+  --gm-chip-open: #2f2f2f;
+  --gm-tool-chip: #2f2f2f;
+  --gm-seg-active: #2f2f2f;
+  --gm-seg-border: rgba(255, 255, 255, 0.07);
+  --gm-menu-bg: #212121;
+  --gm-menu-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.7);
+  --gm-menu-hover: #2f2f2f;
+  --gm-send-bg: #203b9c;            /* muted royal blue, white arrow */
+  --gm-send-fg: #ffffff;
+  --gm-bubble: #262626;
+  --gm-rule: #808080;
+  --gm-hairline: rgba(255, 255, 255, 0.1);
+  --gm-hover: rgba(255, 255, 255, 0.08);
+  --gm-nav-active: #262626;
+  --gm-nav-brief: #2f2638;
+  --gm-nav-brief-text: #ead9f7;
+  --gm-blue: #a8c7fa;
+  --gm-blue-fill: #a8c7fa;
+  --gm-blue-on: #062e6f;
+  --gm-dot: #7cacf8;
+  --gm-needs-bg: #0f2c4f;
+  --gm-needs-text: #a8c7fa;
+  --gm-done-bg: #2f2f2f;
+  --gm-link-underline: #8d9093;
+  --gm-avatar-bg: #7e57c2;
+  --gm-avatar-fg: #ffffff;
+  --gm-avatar-ph: #3a3a3a;
+  --gm-fade: #000000;
+}
+
+:where(.sk-gemini) *, :where(.sk-gemini) *::before, :where(.sk-gemini) *::after { box-sizing: border-box; }
+/* zero-specificity reset so every .gm-* rule below wins */
+:where(.sk-gemini) :where(button) { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: default; }
+:where(.sk-gemini) :where(h1, h2, h3, p, ul, ol) { margin: 0; }
+
+/* icon holder: <span class="gm-ico">svg</span>; size with --gm-ico */
+.gm-ico { display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: var(--gm-ico, 24px); height: var(--gm-ico, 24px); color: inherit; }
+.gm-ico > svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* round icon button (40px hit area, 24px icon) */
+.gm-icon-btn { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  flex: none; color: var(--gm-icon); position: relative; }
+.gm-icon-btn.is-hover { background: var(--gm-hover); }
+
+/* ==========================================================================
+   App frame (web / desktop): collapsed rail + main
+   ========================================================================== */
+.gm-app { position: relative; display: flex; width: 100%; height: 100%; overflow: hidden;
+  background: var(--gm-bg); color: var(--gm-text); font-family: var(--gm-font); font-size: 16px; line-height: 24px; }
+.gm-main { position: relative; flex: 1 1 auto; min-width: 0; height: 100%; overflow: visible; }  /* .gm-app clips */
+/* home gradient: bleeds one rail width past both sides so it stays centred on the main column
+   and runs under the (transparent, dark) rail; the solid light rail covers its left bleed */
+.gm-home-bg { position: absolute; top: 0; bottom: 0; left: calc(-1 * var(--gm-rail-w)); right: calc(-1 * var(--gm-rail-w));
+  background: var(--gm-home-bg); pointer-events: none; }
+
+/* collapsed icon rail (Sept 2026 web build; gear + avatar from the May build) */
+.gm-rail { position: relative; z-index: 2; flex: none; width: var(--gm-rail-w); height: 100%;
+  display: flex; flex-direction: column; align-items: center; padding: 14px 0 14px;
+  background: var(--gm-rail-bg); color: var(--gm-icon); }
+.gm-rail__logo { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; margin-bottom: 22px; }
+/* sparkle glyph ~1.55x the search glyph and ~1.4x the Videos glyph (Sept light frame: 43 vs 27.5 / 31 px) */
+.gm-rail__logo .gm-ico { --gm-ico: 32px; }
+.gm-rail__btn { width: 40px; height: 40px; margin-bottom: 4px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; position: relative; color: var(--gm-icon); }
+.gm-rail__btn .gm-ico { --gm-ico: 24px; }
+.gm-rail__btn.is-active { background: var(--gm-nav-active); }
+.gm-rail__btn.is-hover { background: var(--gm-hover); }
+.gm-rail__spacer { flex: 1 1 auto; }
+.gm-rail .gm-avatar { margin-top: 6px; }
+.gm-badge-dot { position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--gm-dot); box-shadow: 0 0 0 2px var(--gm-bg); }
+
+/* Avatars. The signed-in account is a PHOTO (May Spark demo, mobile drawers): <img> inside
+   .gm-avatar. Initials (.gm-avatar with text) are only for contacts in cards (Gmail "To" chip). */
+.gm-avatar { position: relative; width: 32px; height: 32px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center;
+  background: var(--gm-avatar-bg); color: var(--gm-avatar-fg); font-size: 14px; font-weight: 500; line-height: 1; overflow: hidden; }
+.gm-avatar > img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: var(--gm-avatar-ph); }
+.gm-avatar:has(> img) { background: var(--gm-avatar-ph); }
+/* Google account ring (AI Pro / Ultra members; mobile drawer frame): 2px four-colour ring,
+   2px see-through gap, photo inside. Red top, blue right, green bottom, yellow left. */
+.gm-avatar--ring { width: 36px; height: 36px; padding: 4px; background: none; overflow: visible; }
+.gm-avatar--ring:has(> img) { background: none; }
+.gm-avatar--ring::before { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from -45deg, #ea4335 0 25%, #4285f4 0 50%, #34a853 0 75%, #fbbc04 0);
+  -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 2.3px), #000 calc(100% - 1.7px));
+  mask: radial-gradient(closest-side, transparent calc(100% - 2.3px), #000 calc(100% - 1.7px)); }
+.gm-avatar--ring > span { width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--gm-avatar-bg); color: var(--gm-avatar-fg); }
+
+/* top bar of the main pane: conversation title + overflow (from the Task card head) */
+.gm-topbar { position: absolute; left: 0; right: 0; top: 0; height: 56px; display: flex; align-items: center;
+  padding: 0 12px 0 20px; z-index: 3; }
+.gm-topbar__title { font-size: 15px; line-height: 20px; color: var(--gm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gm-topbar__actions { margin-left: auto; display: flex; align-items: center; gap: 4px; color: var(--gm-icon); }
+.gm-topbar__actions .gm-ico { --gm-ico: 20px; }
+
+/* ---------- expanded sidebar (macOS app, May 2026) ---------- */
+.gm-window { position: relative; overflow: hidden; border-radius: 12px; background: var(--gm-bg);
+  box-shadow: 0 0 0 1px var(--gm-hairline), 0 1px 2px rgba(0, 0, 0, 0.06), 0 24px 60px -20px rgba(0, 0, 0, 0.3); }
+.gm-traffic { display: flex; gap: 8px; }
+.gm-traffic i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.gm-traffic i:nth-child(1) { background: #ff5f57; }
+.gm-traffic i:nth-child(2) { background: #febc2e; }
+.gm-traffic i:nth-child(3) { background: #28c840; }
+
+.gm-sidebar { position: relative; z-index: 2; flex: none; width: 272px; height: 100%; margin: 8px 0 8px 8px; border-radius: 14px;
+  display: flex; flex-direction: column; padding: 14px 8px 12px; background: var(--gm-surface); color: var(--gm-text);
+  box-shadow: 0 0 0 1px var(--gm-hairline); }
+.gm-sidebar__top { display: flex; align-items: center; justify-content: space-between; height: 28px; padding: 0 6px 0 10px; margin-bottom: 14px; }
+.gm-sidebar__top .gm-ico { --gm-ico: 18px; color: var(--gm-icon-2); }
+.gm-nav { display: flex; flex-direction: column; gap: 1px; }
+.gm-nav-item { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border-radius: 17px;
+  font-size: 14px; line-height: 20px; color: var(--gm-text); white-space: nowrap; }
+.gm-nav-item .gm-ico { --gm-ico: 18px; }
+.gm-nav-item.is-active { background: var(--gm-nav-active); }
+.gm-nav-item.is-brief { background: var(--gm-nav-brief); color: var(--gm-nav-brief-text); }
+.gm-nav-item__trail { margin-left: auto; color: var(--gm-icon-2); }
+.gm-nav-section { padding: 18px 10px 6px; font-size: 13px; line-height: 18px; color: var(--gm-text-3); }
+.gm-recent { display: flex; align-items: center; height: 32px; padding: 0 10px; border-radius: 16px; font-size: 14px;
+  color: var(--gm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gm-recent.is-active { background: var(--gm-nav-active); }
+.gm-profile { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px 8px 0; }
+.gm-profile__name { font-size: 14px; line-height: 18px; color: var(--gm-text); }
+.gm-profile__plan { font-size: 12px; line-height: 16px; color: var(--gm-text-3); }
+/* Chat | Spark segmented control (May 2026 sidebar; replaced by .gm-mode-toggle in Oct) */
+.gm-seg { display: flex; padding: 3px; border-radius: 10px; background: var(--gm-surface-2); }
+.gm-seg > span { flex: 1; height: 26px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--gm-text-2); }
+.gm-seg > span.is-active { background: var(--gm-surface); color: var(--gm-text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+.gm-beta { margin-left: 5px; font-size: 8px; letter-spacing: 0.06em; color: var(--gm-text-2); vertical-align: 2px; }
+
+/* ==========================================================================
+   Home (empty state)
+   ========================================================================== */
+.gm-home { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+  padding-top: var(--gm-home-top, 30vh); }
+.gm-greeting { margin: 0 0 40px; font-size: 36px; line-height: 44px; font-weight: 400; letter-spacing: -0.005em;
+  color: var(--gm-text-strong); text-align: center; white-space: nowrap; }
+.gm-greeting__line { display: block; }
+.gm-home-spark { --gm-ico: 32px; margin-bottom: 18px; }
+
+/* Chat | Task toggle (Oct 2026): two text segments, a filled pill behind the active one */
+.gm-mode-toggle { display: flex; align-items: center; margin-top: 13px; }
+.gm-mode { height: 36px; padding: 0 14px; border-radius: 18px; display: flex; align-items: center;
+  font-size: 15px; line-height: 20px; color: var(--gm-text); border: 1px solid transparent; white-space: nowrap; }
+.gm-mode.is-active { background: var(--gm-seg-active); border-color: var(--gm-seg-border); }
+
+/* ==========================================================================
+   Composer
+   pill (64 tall, single row)  ->  .is-expanded card (text on top, controls row below)
+   .has-text shows the send button; .is-generating swaps send for stop.
+   Radius stays 32 in both states.
+   ========================================================================== */
+.gm-composer { position: relative; width: var(--gm-composer-w, 644px); height: 64px; flex: none;
+  border-radius: 32px; background: var(--gm-composer-bg); box-shadow: var(--gm-composer-shadow); color: var(--gm-text); }
+.gm-composer.is-expanded { height: auto; min-height: 128px; }
+.gm-composer__input { position: absolute; left: 52px; right: 160px; top: 20px; font-size: 16px; line-height: 24px;
+  white-space: nowrap; overflow: hidden; }
+.gm-composer.is-expanded .gm-composer__input { position: relative; left: auto; right: auto; top: auto;
+  padding: 22px 24px 0; white-space: pre-wrap; overflow: visible; }
+.gm-composer__placeholder { color: var(--gm-placeholder); }
+.gm-composer__text { color: var(--gm-text); }
+.gm-composer.has-text .gm-composer__placeholder { display: none; }
+.gm-caret { display: inline-block; width: 1.5px; height: 20px; margin-left: 1px; vertical-align: -4px; background: var(--gm-text); }
+/* empty field: the caret sits at the start, over the placeholder */
+.gm-composer:not(.has-text):not(.is-expanded) .gm-caret { position: absolute; left: -1px; top: 2px; margin: 0; }
+
+.gm-composer__bar { position: absolute; left: 0; right: 0; bottom: 10px; height: 44px; display: flex; align-items: center;
+  padding: 0 10px 0 7px; }
+.gm-composer.is-expanded .gm-composer__bar { position: relative; bottom: auto; margin-top: 26px; margin-bottom: 12px; padding: 0 16px 0 12px; }
+.gm-composer__plus .gm-ico { --gm-ico: 24px; }
+.gm-composer__spacer { flex: 1 1 auto; }
+.gm-composer__mic { margin-left: 4px; }
+.gm-composer__mic .gm-ico { --gm-ico: 24px; }
+.gm-composer .gm-send { margin-left: 11px; }
+.gm-composer:not(.has-text):not(.is-generating) .gm-send { display: none; }
+
+.gm-send { width: 34px; height: 34px; border-radius: 50%; flex: none; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--gm-send-bg); color: var(--gm-send-fg); position: relative; }
+.gm-send .gm-ico { --gm-ico: 20px; }
+.gm-send__stop { display: none; }
+.is-generating .gm-send__arrow { display: none; }
+.is-generating .gm-send__stop { display: inline-flex; }
+
+/* model chip: plain text in the composer; filled when its menu is open */
+.gm-model-chip { height: 44px; padding: 0 17px 0 20px; border-radius: 22px; display: inline-flex; align-items: center; gap: 15px;
+  font-size: 15px; line-height: 20px; color: var(--gm-text); white-space: nowrap; flex: none; position: relative; }
+.gm-model-chip .gm-ico { --gm-ico: 20px; margin: 0 -5px; }
+.gm-model-chip.is-open { background: var(--gm-chip-open); }
+.gm-model-chip__up { display: none; }
+.gm-model-chip.is-open .gm-model-chip__down { display: none; }
+.gm-model-chip.is-open .gm-model-chip__up { display: inline-flex; }
+/* "Pro"-style chip without chevron (macOS keynote frame) */
+.gm-model-chip--bare { gap: 0; padding: 0 14px; }
+
+/* tool chip shown while a tool is on (Sept 2026: "Canvas") */
+.gm-tool-chip { height: 30px; padding: 0 13px 0 10px; margin-left: 4px; border-radius: 15px; display: inline-flex; align-items: center; gap: 6px;
+  background: var(--gm-tool-chip); color: var(--gm-text); font-size: 14px; line-height: 20px; white-space: nowrap; }
+.gm-tool-chip .gm-ico { --gm-ico: 16px; }
+
+/* disclaimer under the chat composer */
+.gm-disclaimer { font-size: 12px; line-height: 16px; color: var(--gm-text-2); text-align: center; }
+
+/* ---------- model menu: opens below the chip, right edges aligned, 5px gap ---------- */
+.gm-model-menu { position: absolute; width: 186px; padding: 10px 8px 8px; border-radius: 20px;
+  background: var(--gm-menu-bg); box-shadow: var(--gm-menu-shadow); color: var(--gm-text); z-index: 20; }
+.gm-model-option { position: relative; height: 52px; padding-left: 38px; border-radius: 13px; display: flex; flex-direction: column;
+  justify-content: center; font-size: 15px; line-height: 18px; }
+.gm-model-option + .gm-model-option { margin-top: 2px; }
+.gm-model-option__name, .gm-model-option__desc { color: var(--gm-text); white-space: nowrap; }
+.gm-model-option__check { position: absolute; left: 8px; top: 50%; margin-top: -11px; --gm-ico: 22px; visibility: hidden; }
+.gm-model-option.is-selected .gm-model-option__check { visibility: visible; }
+.gm-model-option.is-hover { background: var(--gm-menu-hover); }
+
+/* ---------- Tools menu (from +) ---------- */
+.gm-tools-menu { position: absolute; width: 232px; padding: 10px 0 8px; border-radius: 16px; background: var(--gm-menu-bg);
+  box-shadow: var(--gm-menu-shadow); color: var(--gm-text); z-index: 20; }
+.gm-tools-menu__title { padding: 4px 14px 8px; font-size: 13px; line-height: 18px; color: var(--gm-text); }
+.gm-tools-item { display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 14px; font-size: 14px; line-height: 20px; white-space: nowrap; }
+.gm-tools-item .gm-ico { --gm-ico: 18px; }
+.gm-tools-item.is-hover { background: var(--gm-menu-hover); }
+.gm-tools-sep { height: 1px; margin: 6px 0; background: var(--gm-hairline); }
+
+/* ==========================================================================
+   Conversation
+   ========================================================================== */
+.gm-chat { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; }
+.gm-thread { position: relative; width: var(--gm-col-w, 712px); flex: 1 1 auto; min-height: 0; overflow: hidden; padding-top: 64px; }
+.gm-thread__inner { position: relative; }
+.gm-chat__dock { position: relative; width: var(--gm-col-w, 712px); flex: none; padding: 0 0 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px; }
+/* content fades out under the docked composer */
+.gm-chat__dock::before { content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 36px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--gm-fade)); }
+.gm-chat__dock .gm-composer { --gm-composer-w: 100%; }
+
+/* user turn: right-aligned grey bubble (copy / edit under it on hover) */
+.gm-turn-user { display: flex; flex-direction: column; align-items: flex-end; margin-bottom: 28px; }
+.gm-bubble { max-width: 78%; padding: 16px 24px; border-radius: 28px; background: var(--gm-bubble);
+  font-size: 16px; line-height: 24px; color: var(--gm-text); }
+.gm-turn-user__actions { display: flex; gap: 2px; margin-top: 6px; margin-right: 10px; color: var(--gm-icon-2); }
+.gm-turn-user__actions .gm-icon-btn { width: 32px; height: 32px; color: var(--gm-icon-2); }
+.gm-turn-user__actions .gm-ico { --gm-ico: 18px; }
+
+/* model turn: no bubble, no avatar */
+.gm-turn-model { font-size: 16px; line-height: 24px; color: var(--gm-text); }
+/* collapsed thought line: "Categorizing end-of-year school requirements >" */
+.gm-thought-line { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; font-size: 14px; line-height: 20px; color: var(--gm-text-2); }
+.gm-thought-line .gm-ico { --gm-ico: 18px; }
+
+/* agent progress: "Thinking it through..." + steps hanging off a thin rule */
+.gm-thinking { margin-bottom: 22px; }
+.gm-thinking__head { position: relative; display: flex; align-items: center; height: 24px; padding-left: 30px; }
+.gm-thinking__glyph { position: absolute; left: 2px; top: 5px; width: 17px; height: 14px; color: var(--gm-text); }
+.gm-thinking__glyph > svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.gm-thinking__label { position: relative; font-size: 16px; line-height: 24px; color: var(--gm-text); white-space: nowrap; }
+.gm-thinking__chev { --gm-ico: 20px; color: var(--gm-text-2); margin-left: 4px; }
+.gm-steps { margin-top: 9px; }
+.gm-step { position: relative; display: flex; align-items: center; min-height: 38px; padding: 7px 0 7px 34px;
+  font-size: 16px; line-height: 24px; color: var(--gm-text); }
+.gm-step::before { content: ""; position: absolute; left: 12px; top: 4px; bottom: 4px; width: 1px; background: var(--gm-rule); }
+.gm-step.has-icon::before { display: none; }
+.gm-step__icon { position: absolute; left: 0; top: 50%; margin-top: -12px; --gm-ico: 24px; color: var(--gm-text); }
+.gm-step__icon.is-logo { --gm-ico: 20px; left: 2px; margin-top: -10px; }
+.gm-step--muted { color: var(--gm-text-2); }
+
+/* answer prose */
+.gm-answer p { margin: 0 0 14px; }
+.gm-answer h3 { margin: 22px 0 8px; font-size: 18px; line-height: 26px; font-weight: 500; }
+.gm-answer strong, .gm-answer b { font-weight: 600; }
+.gm-answer ul, .gm-answer ol { margin: 0 0 14px; padding-left: 24px; }
+.gm-answer li { margin: 0 0 6px; padding-left: 2px; }
+.gm-answer code { font-family: var(--gm-mono); font-size: 0.875em; padding: 1px 5px; border-radius: 5px; background: var(--gm-surface-2); }
+.gm-answer pre { margin: 0 0 14px; padding: 14px 16px; border-radius: 14px; background: var(--gm-surface-2); font-family: var(--gm-mono);
+  font-size: 13px; line-height: 20px; white-space: pre; overflow: hidden; }
+.gm-num { font-variant-numeric: tabular-nums; }
+.gm-mention { font-weight: 600; }
+/* generated-file link: product icon + dotted underline. The May Spark demo shows a 📄 emoji
+   before a Docs link (pageEmoji); the Oct promo shows the product's own icon before a Slides
+   link, so use .gm-doc-link--app with gsheets / gslides / gdocs for Google files. */
+.gm-doc-link { display: flex; align-items: center; gap: 8px; margin: 18px 0 6px; font-size: 20px; line-height: 28px; font-weight: 500; color: var(--gm-text); }
+.gm-doc-link .gm-ico { --gm-ico: 22px; }
+/* product mark: the page is 20px tall (24px box, page spans 2-22); pulled left so the page edge
+   sits on the text column, and an 8px visible gap before the title */
+.gm-doc-link--app { gap: 4px; }
+.gm-doc-link--app .gm-ico { --gm-ico: 24px; margin-left: -5px; }
+.gm-doc-link__text { text-decoration: underline dotted var(--gm-link-underline); text-decoration-thickness: 2px; text-underline-offset: 5px; }
+.gm-doc-link.is-hover .gm-doc-link__text { text-decoration-color: var(--gm-text); }
+/* Google-app link row (Slides/Docs/Sheets icon + dotted link, Oct 2026 promo) */
+.gm-app-link { display: inline-flex; align-items: center; gap: 8px; }
+.gm-app-link .gm-ico { --gm-ico: 20px; }
+.gm-app-link__text { text-decoration: underline dotted var(--gm-link-underline); text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
+
+/* action row under a finished answer */
+.gm-msg-actions { display: flex; align-items: center; gap: 2px; margin: 2px 0 0 -10px; color: var(--gm-icon-2); }
+.gm-msg-actions .gm-icon-btn { color: var(--gm-icon-2); width: 36px; height: 36px; }
+.gm-msg-actions .gm-ico { --gm-ico: 20px; }
+
+/* inline Gmail draft card (Oct 2026 promo, described in UI-NOTES; frame not kept) */
+.gm-mail { margin: 6px 0 14px; border-radius: 20px; background: var(--gm-surface); box-shadow: 0 0 0 1px var(--gm-hairline); overflow: hidden; }
+.gm-mail__head { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 12px 0 18px; }
+.gm-mail__head .gm-ico { --gm-ico: 20px; }
+.gm-mail__name { font-size: 15px; font-weight: 500; margin-right: auto; }
+.gm-mail__tools { display: flex; gap: 2px; color: var(--gm-icon-2); }
+.gm-mail__tools .gm-icon-btn { width: 34px; height: 34px; color: var(--gm-icon-2); }
+.gm-mail__tools .gm-ico { --gm-ico: 18px; }
+.gm-mail__row { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 18px; border-top: 1px solid var(--gm-hairline); font-size: 14px; color: var(--gm-text-2); }
+.gm-mail__to { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px 0 3px; border-radius: 14px; background: var(--gm-surface-2); color: var(--gm-text); }
+.gm-mail__to .gm-avatar { width: 22px; height: 22px; font-size: 11px; background: #1a73e8; }
+.gm-mail__subject { color: var(--gm-text); font-weight: 500; }
+.gm-mail__body { padding: 12px 18px 4px; border-top: 1px solid var(--gm-hairline); font-size: 14px; line-height: 22px; color: var(--gm-text); }
+.gm-mail__foot { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 10px 14px 14px; }
+.gm-btn { height: 40px; padding: 0 20px; border-radius: 20px; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.gm-btn .gm-ico { --gm-ico: 18px; }
+.gm-btn--text { color: var(--gm-blue); padding: 0 12px; }
+.gm-btn--filled { background: var(--gm-blue-fill); color: var(--gm-blue-on); }
+.gm-btn--tonal { background: var(--gm-chip-open); color: var(--gm-text); }
+
+/* ==========================================================================
+   Task view (May 2026 Spark demo; Task mode since Oct 2026)
+   ========================================================================== */
+.gm-tasks { position: absolute; inset: 0; display: flex; }
+.gm-tasks__list { position: relative; width: 44%; flex: none; padding: 22px 16px 0 18px; background: var(--gm-task-bg); }
+.gm-create-task { display: flex; align-items: center; gap: 10px; height: 48px; margin: 0 auto 24px; padding: 0 22px 0 18px; width: max-content;
+  border-radius: 24px; background: var(--gm-surface); font-size: 15px; color: var(--gm-text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+.gm-create-task .gm-ico { --gm-ico: 20px; }
+.gm-list-head { display: flex; align-items: center; gap: 8px; padding: 0 14px 10px; font-size: 15px; font-weight: 500; }
+.gm-list-head .gm-ico { --gm-ico: 18px; }
+.gm-task-row { position: relative; display: flex; align-items: center; height: 62px; padding: 0 16px 0 14px; border-radius: 16px; margin-bottom: 3px; }
+.gm-task-row.is-active { background: var(--gm-surface); }
+.gm-task-row__body { min-width: 0; flex: 1 1 auto; }
+.gm-task-row__title { font-size: 14px; line-height: 20px; font-weight: 500; color: var(--gm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gm-task-row__sum { font-size: 13px; line-height: 18px; color: var(--gm-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gm-task-row__meta { display: flex; align-items: center; gap: 10px; margin-left: 14px; font-size: 13px; color: var(--gm-text-2); flex: none; }
+.gm-task-row__meta .gm-ico { --gm-ico: 18px; }
+.gm-unread { width: 6px; height: 6px; border-radius: 50%; background: var(--gm-dot); margin-right: 14px; }
+.gm-needs { height: 22px; padding: 0 10px; border-radius: 11px; display: inline-flex; align-items: center; background: var(--gm-needs-bg); color: var(--gm-needs-text); font-size: 12px; }
+.gm-task-card { position: relative; flex: 1 1 auto; margin: 8px 8px 8px 6px; border-radius: 18px; background: var(--gm-surface);
+  box-shadow: 0 0 0 1px var(--gm-hairline); display: flex; flex-direction: column; overflow: hidden; }
+.gm-task-card__head { height: 52px; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 10px 0 22px; font-size: 14px; }
+.gm-task-card__head .gm-ico { --gm-ico: 20px; }
+.gm-done-chip { margin-left: auto; height: 26px; padding: 0 12px; border-radius: 13px; display: inline-flex; align-items: center; background: var(--gm-done-bg); font-size: 13px; }
+
+/* ==========================================================================
+   Canvas (split view): chat narrows to the left, the canvas is a panel.
+   Oct 2026 toolbar is a GAP: extrapolated from the 2025 panel, see DECISIONS.md.
+   ========================================================================== */
+.gm-split { position: absolute; inset: 0; display: flex; }
+.gm-split__chat { position: relative; width: 36%; flex: none; display: flex; flex-direction: column; padding: 0 18px; }
+.gm-canvas { position: relative; flex: 1 1 auto; margin: 10px 10px 10px 0; border-radius: 18px; background: var(--gm-surface);
+  box-shadow: 0 0 0 1px var(--gm-hairline), 0 4px 16px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; overflow: hidden; }
+.gm-canvas__bar { height: 52px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 8px 0 18px; border-bottom: 1px solid var(--gm-hairline); }
+.gm-canvas__bar .gm-icon-btn { width: 36px; height: 36px; }
+.gm-canvas__bar .gm-ico { --gm-ico: 20px; }
+.gm-canvas__title { font-size: 15px; color: var(--gm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: auto; }
+.gm-canvas__seg { display: flex; padding: 3px; margin-right: 6px; border-radius: 18px; background: var(--gm-surface-2); }
+.gm-canvas__seg > span { height: 28px; padding: 0 12px; border-radius: 14px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--gm-text-2); }
+.gm-canvas__seg > span.is-active { background: var(--gm-surface); color: var(--gm-text); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+.gm-canvas__seg .gm-ico { --gm-ico: 16px; }
+.gm-canvas__body { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.gm-canvas__code { padding: 16px 20px; font-family: var(--gm-mono); font-size: 13px; line-height: 20px; color: var(--gm-text); white-space: pre; }
+
+/* ==========================================================================
+   Mobile (phone screen content; put it inside the device skin's screen).
+   Authored at 1x phone CSS px (screen about 402 x 874).
+   ========================================================================== */
+.gm-mobile { position: relative; width: 100%; height: 100%; overflow: hidden;
+  background: var(--gm-bg); color: var(--gm-text); font-family: var(--gm-font); font-size: 16px; line-height: 24px; }
+.gm-m-topbar { position: absolute; left: 0; right: 0; top: 54px; height: 48px; display: flex; align-items: center; gap: 2px; padding: 0 10px; z-index: 3; }
+.gm-m-topbar .gm-icon-btn .gm-ico { --gm-ico: 24px; }
+.gm-m-topbar__model { display: inline-flex; align-items: center; gap: 2px; font-size: 17px; padding: 0 6px; }
+.gm-m-topbar__model .gm-ico { --gm-ico: 20px; }
+.gm-m-topbar .gm-avatar { margin-left: auto; margin-right: 6px; }
+.gm-m-home { position: absolute; inset: 0; background: var(--gm-m-home-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 36px 250px; }
+.gm-m-home > .gm-ico { --gm-ico: 36px; margin-bottom: 18px; }
+.gm-m-greeting { font-size: 34px; line-height: 42px; text-align: center; color: var(--gm-text-strong); }
+.gm-m-composer { position: absolute; left: 10px; right: 10px; bottom: 34px; border-radius: 28px; background: var(--gm-composer-bg);
+  box-shadow: var(--gm-composer-shadow); padding: 14px 10px 8px 18px; }
+.gm-m-composer__text { font-size: 16px; line-height: 24px; min-height: 28px; color: var(--gm-placeholder); }
+.gm-m-composer__text.has-text { color: var(--gm-text); }
+.gm-m-composer__bar { display: flex; align-items: center; gap: 4px; height: 40px; margin-left: -8px; }
+.gm-m-composer__bar .gm-tool-chip { margin-left: 0; }
+.gm-m-composer__bar .gm-model-chip { height: 36px; padding: 0 10px 0 12px; gap: 12px; font-size: 14px; margin-left: auto; }
+.gm-m-composer__bar .gm-send { width: 34px; height: 34px; margin-left: 2px; }
+
+/* drawer (May / Sep 2026) */
+.gm-drawer { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 52px 0 24px; background: var(--gm-bg); color: var(--gm-text); }
+.gm-drawer__head { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 14px 0 22px; margin-bottom: 14px; font-size: 20px; font-weight: 500; }
+.gm-drawer__head .gm-ico { --gm-ico: 24px; }
+.gm-drawer .gm-nav-item { height: 40px; gap: 16px; padding: 0 14px 0 12px; margin: 0 10px 2px; border-radius: 20px; font-size: 17px; width: max-content; }
+.gm-drawer .gm-nav-item .gm-ico { --gm-ico: 24px; }
+.gm-drawer .gm-nav-section { padding: 18px 22px 8px; font-size: 15px; }
+.gm-drawer .gm-recent { height: 40px; padding: 0 22px; font-size: 16px; border-radius: 0; justify-content: space-between; }
+.gm-drawer .gm-recent .gm-ico { --gm-ico: 20px; color: var(--gm-icon); }
+.gm-drawer .gm-profile { padding: 12px 18px 0; gap: 12px; }
+.gm-drawer .gm-avatar { width: 36px; height: 36px; font-size: 15px; }
+.gm-drawer .gm-profile__name { font-size: 16px; line-height: 20px; }
+.gm-drawer .gm-profile__plan { font-size: 12px; line-height: 16px; }
+.gm-drawer .gm-profile .gm-ico { --gm-ico: 24px; margin-left: auto; }
+
+/* ---------- Gemini Live (always dark, runs in place over the chat) ---------- */
+.gm-live { position: absolute; inset: 0; background: #000000; color: #ffffff; overflow: hidden; font-family: var(--gm-font); }
+.gm-live__glow { position: absolute; left: -20%; right: -20%; bottom: -8%; height: 46%; pointer-events: none;
+  background: radial-gradient(60% 75% at 50% 100%, rgba(22, 34, 92, 0.95) 0%, rgba(14, 22, 64, 0.6) 45%, rgba(0, 0, 0, 0) 100%); }
+.gm-live__transcript { position: absolute; left: 24px; right: 24px; top: 98px; font-size: 28px; line-height: 34px; color: #ffffff; }
+.gm-live__card { position: absolute; left: 34px; right: 34px; border-radius: 30px; background: #1f1f1f; padding: 10px; overflow: hidden; }
+.gm-live__card-head { display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 14px; font-size: 20px; color: #ffffff; }
+.gm-live__card-head .gm-ico { --gm-ico: 24px; }
+.gm-live__bar { position: absolute; left: 0; right: 0; bottom: 38px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.gm-live__btn { width: 49px; height: 49px; border-radius: 50%; background: #1a1a1a; color: #ffffff; display: flex; align-items: center; justify-content: center; flex: none; }
+.gm-live__btn .gm-ico { --gm-ico: 22px; }
+.gm-live__btn.is-on-camera { background: #f3efe6; color: #1f1f1f; }
+.gm-live__btn.is-active-cam { background: #c2e7ff; color: #001d35; }
+/* the glowing centre pill (about 2.3x a button's width): dark crown, bright blue body, white rim at the bottom */
+.gm-live__orb { position: relative; width: 114px; height: 59px; margin: 0 5px; border-radius: 30px; overflow: hidden; flex: none;
+  background: radial-gradient(130% 150% at 50% 120%, #f2f6ff 0%, #b9d0ff 16%, #6f9cf9 32%, #4479ee 48%, #2e5bd6 62%, #1c3591 78%, #0b1236 94%);
+  box-shadow: 0 0 18px rgba(70, 120, 240, 0.45), 0 0 46px rgba(70, 120, 240, 0.2); }
+.gm-live__orb::before { content: ""; position: absolute; left: 10%; right: 10%; top: -30%; height: 72%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(2, 3, 12, 0.98), rgba(10, 12, 40, 0.75) 55%, rgba(20, 40, 120, 0) 100%); }
+.gm-live__orb::after { content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: radial-gradient(75% 38% at 50% 100%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 72%); mix-blend-mode: screen; }
+.gm-live__orb-core { position: absolute; left: 28%; right: 28%; top: 30%; height: 26%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(126, 96, 226, 0.55), rgba(126, 96, 226, 0)); }
+
+/* ---------- macOS pointer (demo / component use) ---------- */
+.gm-pointer { position: absolute; left: 0; top: 0; width: 26px; height: 26px; z-index: 50; pointer-events: none; }
+.gm-pointer > svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.35)); }

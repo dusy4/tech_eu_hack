@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"variant","type":"enum","label":"Variant","default":"0","options":[{"value":"0","label":"Claude Code"},{"value":"1","label":"Codex"},{"value":"2","label":"ChatGPT"}]},
+  {"id":"theme","type":"enum","label":"Theme","default":"light","options":[{"value":"light","label":"Light"},{"value":"dark","label":"Dark"}]}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts/fonts.css" />
+    <link rel="stylesheet" href="assets/skins/claude-code/skin.css" />
+    <link rel="stylesheet" href="assets/skins/codex/skin.css" />
+    <link rel="stylesheet" href="assets/skins/chatgpt/skin.css" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/kit/motion/motion.js"></script>
+    <script src="assets/skins/claude-code/icons.js"></script>
+    <script src="assets/skins/codex/icons.js"></script>
+    <script src="assets/skins/chatgpt/icons.js"></script>
+    <style>
+      /* ---------- stage (DESIGN.md tokens) ---------- */
+      :root { --stage: #F5F5F4; }
+      body.is-dark { --stage: #0E0E0F; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--stage); }
+      * { box-sizing: border-box; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--stage); font-family: "Inter", sans-serif; }
+      #stage { position: absolute; inset: 0; background: var(--stage); }
+      #cam { position: absolute; inset: 0; transform-origin: 960px 540px; }
+      #place { position: absolute; }
+      #frame { position: relative; }
+
+      /* ==========================================================
+         Shared skills surface. Each variant maps its skin tokens
+         onto these --si-* properties (see .v-cc / .v-cx / .v-cg).
+         Sizes are the product's own 1x CSS px; #zoomer presents
+         the whole object at 1.76x. Three type tiers per frame:
+         20 (title) / 16 (names, nav, header) / 14.5 (everything
+         secondary; mono and chips at 13.5, the same tier).
+         ========================================================== */
+      .si-page { position: relative; }
+      .si-hrow { display: flex; align-items: flex-start; gap: 16px; }
+      .si-hcol { flex: 1; min-width: 0; }
+      .si-h1 { font-size: 20px; line-height: 27px; font-weight: var(--si-w-semi); letter-spacing: -0.02em; color: var(--si-ink); }
+      .si-sub { margin-top: 2px; font-size: 14.5px; line-height: 20px; color: var(--si-ink-2); font-weight: var(--si-w); }
+      .si-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 31px; padding: 0 12px 0 10px; border-radius: var(--si-btn-r, 8px);
+        border: 1px solid var(--si-line-2); background: var(--si-btn-bg); color: var(--si-ink); font-size: 14.5px; font-weight: var(--si-w-med); white-space: nowrap; margin-top: 2px; }
+      .si-btn svg { width: 15px; height: 15px; }
+
+      .si-list { position: relative; margin-top: 18px; border-radius: var(--si-list-r, 12px); background: var(--si-card);
+        box-shadow: 0 0 0 1px var(--si-line-2); overflow: hidden; }
+      .si-ring { position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1.5px var(--si-ring); opacity: 0; pointer-events: none; z-index: 3; }
+      .si-bar { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: var(--si-bar); box-shadow: inset 0 -1px 0 var(--si-line); }
+      .si-path { font-family: "JetBrains Mono", monospace; font-size: 13.5px; color: var(--si-ink-2); letter-spacing: 0; }
+      .si-bar-label { font-size: 14.5px; color: var(--si-ink-2); font-weight: var(--si-w-med); }
+      .si-fold { position: relative; width: 17px; height: 17px; flex: none; color: var(--si-ink-2); }
+      .si-fold > span { position: absolute; inset: 0; display: block; }
+      .si-fold svg { width: 100%; height: 100%; display: block; }
+      .si-fold .is-open { color: var(--si-ring); opacity: 0; }
+      .si-count { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 14.5px; color: var(--si-ink-2); font-variant-numeric: tabular-nums; }
+      .si-roll { display: inline-block; height: 19px; line-height: 19px; overflow: hidden; vertical-align: top; }
+      .si-roll-in { display: flex; flex-direction: column; }
+      .si-roll-in > span { height: 19px; display: block; text-align: right; }
+
+      .si-item { position: relative; }
+      .si-row { position: relative; height: var(--si-row-h, 62px); display: flex; align-items: center; padding: 0 14px; }
+      .si-item + .si-item > .si-row::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--si-line); z-index: 2; }
+      .si-rc { position: relative; z-index: 1; flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: 13px; }
+      .si-tile-w { position: relative; width: var(--si-tile-s, 34px); height: var(--si-tile-s, 34px); flex: none; }
+      .si-tile { position: relative; width: 100%; height: 100%; border-radius: var(--si-tile-r, 9px); background: var(--si-tile); color: var(--si-tile-ink); display: grid; place-items: center; }
+      .si-tile svg { width: 18px; height: 18px; display: block; }
+      .si-tile > * { grid-area: 1 / 1; }
+      .si-tile-lit { color: var(--si-lit-ink); opacity: 0; display: grid; place-items: center; }
+      .si-glow { position: absolute; inset: 2px; border-radius: 10px; background: var(--si-accent); filter: blur(9px); opacity: 0; }
+      .si-bloom { position: absolute; inset: 0; border-radius: var(--si-tile-r, 9px); box-shadow: 0 0 0 1.5px var(--si-accent); opacity: 0; }
+      .si-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+      .si-nm { display: flex; align-items: center; gap: 8px; }
+      .si-nm b { font-size: 16px; line-height: 21px; font-weight: var(--si-w-med); color: var(--si-ink); letter-spacing: var(--si-track, -0.01em); }
+      .si-tx > span { font-size: 14.5px; line-height: 19.5px; margin-top: 1px; color: var(--si-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: var(--si-w); }
+      .si-chip { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: var(--si-chip-r, 6px); background: var(--si-chip-bg); color: var(--si-chip-ink);
+        font-size: 13.5px; line-height: 1; font-weight: var(--si-w-med); letter-spacing: -0.005em; opacity: 0; transform-origin: 0% 50%; }
+      .si-tog { position: relative; flex: none; width: var(--si-tog-w, 32px); height: var(--si-tog-h, 19px); border-radius: 99px; background: var(--si-tog-off); }
+      .si-tog.is-on { background: var(--si-tog-on); }
+      .si-th { position: absolute; top: 2px; left: 2px; width: calc(var(--si-tog-h, 19px) - 4px); height: calc(var(--si-tog-h, 19px) - 4px); border-radius: 50%;
+        background: var(--si-thumb); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22), 0 0 0 0.5px rgba(0, 0, 0, 0.06); }
+      .si-tog.is-on .si-th { transform: translateX(var(--si-travel, 13px)); background: var(--si-thumb-on, var(--si-thumb)); }
+
+      /* the new row: slot opens, dashed drop target, then a neutral "just added" band */
+      .si-slot { height: 0; overflow: hidden; }
+      .si-band { position: absolute; inset: 0; opacity: 0; }
+      .si-dash { position: absolute; inset: 7px 10px; border-radius: 9px; border: 1.5px dashed var(--si-dash); background: var(--si-dash-bg); }
+
+      /* SKILL.md, the card that is dragged in */
+      #drag { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 40; }
+      .si-cardf { position: absolute; width: 348px; border-radius: 12px; background-color: var(--si-paper); overflow: hidden; color: var(--si-ink); }
+      .si-edge { position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--si-paper-line); pointer-events: none; z-index: 2; }
+      .si-card-in { position: relative; width: 348px; }
+      .si-card-h { height: 38px; display: flex; align-items: center; gap: 7px; padding: 0 13px 0 13px; background: var(--si-paper-bar); box-shadow: inset 0 -1px 0 var(--si-line); }
+      .si-card-h svg { width: 15px; height: 15px; display: block; color: var(--si-ink-2); flex: none; }
+      .si-card-h .si-crumb { font-family: "JetBrains Mono", monospace; font-size: 13.5px; color: var(--si-ink-2); }
+      .si-card-h b { font-family: "JetBrains Mono", monospace; font-size: 13.5px; font-weight: 600; color: var(--si-ink); margin-left: -7px; }
+      .si-card-h .si-size { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 13.5px; color: var(--si-ink-2); }
+      .si-code { position: relative; padding: 12px 14px 13px; font-family: "JetBrains Mono", monospace; font-size: 13.5px; line-height: 20px; white-space: pre; letter-spacing: 0; }
+      .si-code .k { color: var(--si-key); }
+      .si-code .v { color: var(--si-ink); }
+      .si-code .d { color: var(--si-ink-2); }
+      .si-code .h { color: var(--si-ink); font-weight: 600; }
+      .si-code .p { color: var(--si-ink-2); }
+      .si-code .fade { -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.15) 100%); mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.15) 100%); }
+      /* the row the card turns into (a twin of the real row, revealed inside the card as it lands) */
+      .si-ghost { position: absolute; left: 0; top: 0; opacity: 0; z-index: 1; }
+
+      /* macOS pointer (22x30, hotspot at 3,2) */
+      #cur { position: absolute; left: 0; top: 0; width: 22px; height: 30px; margin: -2px 0 0 -3px; z-index: 60; transform-origin: 3px 2px;
+        filter: drop-shadow(0 1.5px 2.5px rgba(0, 0, 0, 0.35)); }
+      #cur svg { width: 100%; height: 100%; display: block; }
+
+      /* ==========================================================
+         Variant 0: Claude Code desktop app, Customize > Skills
+         Plain stroke icons like the app's own rows; blue checked
+         controls (the app's worktree checkbox / selection blue);
+         clay is spent once, on the skill that lights up.
+         ========================================================== */
+      .v-cc {
+        --si-w: var(--ccd-w); --si-w-med: var(--ccd-w-med); --si-w-semi: var(--ccd-w-semi); --si-track: var(--ccd-track);
+        --si-card: #ffffff; --si-bar: #f6f6f3;
+        --si-ink: var(--ccd-text); --si-ink-2: var(--ccd-text2);
+        --si-line: #ededea; --si-line-2: var(--ccd-card-line);
+        --si-tile: rgba(217, 119, 87, 0); --si-tile-ink: var(--ccd-text2); --si-tile-s: 30px; --si-tile-r: 8px;
+        --si-accent: var(--cc-clay); --si-lit-ink: #ffffff;
+        --si-tog-on: var(--ccd-blue); --si-ring: var(--ccd-blue);
+        --si-tog-off: #dddcd7; --si-thumb: #ffffff;
+        --si-btn-bg: #ffffff; --si-btn-r: 7px; --si-list-r: 10px;
+        --si-chip-bg: var(--ccd-chip); --si-chip-ink: var(--ccd-chip-text); --si-chip-r: 6px;
+        --si-dash: rgba(47, 111, 209, 0.5); --si-dash-bg: rgba(47, 111, 209, 0.045);
+        --si-paper: #ffffff; --si-paper-bar: #f8f8f5; --si-paper-line: rgba(0, 0, 0, 0.09); --si-key: #8b5a45;
+      }
+      [data-theme="dark"] .v-cc {
+        --si-card: #1a1a1a; --si-bar: #1f1f1f;
+        --si-line: #262626; --si-line-2: #2e2e2e;
+        --si-tog-off: #3b3b39; --si-thumb: #f4f4f2;
+        --si-btn-bg: #1a1a1a;
+        --si-dash: rgba(112, 160, 236, 0.72); --si-dash-bg: rgba(61, 125, 219, 0.10);
+        --si-paper: #222221; --si-paper-bar: #262625; --si-paper-line: rgba(255, 255, 255, 0.10); --si-key: #e0a58f;
+      }
+      .v-cc .cc-win { display: flex; flex-direction: column; }
+      .v-cc .cc-head .cc-title { font-size: 16px; }
+      .v-cc .cc-head .cc-badge-dot { display: inline-flex; margin-right: 8px; }
+      .v-cc .cc-head .cc-badge-dot .cc-tb-i { margin-right: 0; }
+      .v-cc .cc-head .cc-badge-dot::after { box-shadow: 0 0 0 1.5px var(--ccd-bg); }
+      .v-cc .si-page { flex: 1; padding: 16px 34px 0; background: var(--ccd-bg); }
+      .v-cc .si-tile svg { width: 18px; height: 18px; }
+
+      /* ==========================================================
+         Variant 1: Codex (ChatGPT desktop app), Skills
+         ========================================================== */
+      .v-cx {
+        --si-w: 400; --si-w-med: 500; --si-w-semi: 600; --si-track: -0.006em;
+        --si-card: #ffffff; --si-bar: #fafafa;
+        --si-ink: var(--cx-ink); --si-ink-2: var(--cx-ink-2);
+        --si-line: rgba(0, 0, 0, 0.065); --si-line-2: rgba(0, 0, 0, 0.1);
+        --si-tile: #f2f2f2; --si-tile-ink: #4a4a4a;
+        --si-accent: var(--cx-blue); --si-lit-ink: #ffffff;
+        --si-tog-on: var(--cx-blue); --si-ring: var(--cx-blue);
+        --si-tog-off: #e2e2e2; --si-thumb: #ffffff; --si-tog-w: 30px; --si-tog-h: 18px; --si-travel: 12px;
+        --si-btn-bg: #ffffff; --si-btn-r: 9px; --si-list-r: 14px;
+        --si-chip-bg: rgba(58, 134, 247, 0.11); --si-chip-ink: #1f5fc4; --si-chip-r: 999px;
+        --si-dash: rgba(58, 134, 247, 0.55); --si-dash-bg: rgba(58, 134, 247, 0.05);
+        --si-paper: #ffffff; --si-paper-bar: #fafafa; --si-paper-line: rgba(0, 0, 0, 0.09); --si-key: #2a62a3;
+      }
+      [data-theme="dark"] .v-cx {
+        --si-card: #1d1d1d; --si-bar: #212121;
+        --si-line: rgba(255, 255, 255, 0.07); --si-line-2: rgba(255, 255, 255, 0.1);
+        --si-tile: #2b2b2b; --si-tile-ink: #c4c4c4;
+        --si-tog-off: #3d3d3d; --si-thumb: #f2f2f2;
+        --si-btn-bg: #1d1d1d;
+        --si-chip-bg: rgba(64, 128, 230, 0.18); --si-chip-ink: #8ab8ff;
+        --si-dash: rgba(80, 140, 230, 0.65); --si-dash-bg: rgba(49, 113, 208, 0.10);
+        --si-paper: #242424; --si-paper-bar: #282828; --si-paper-line: rgba(255, 255, 255, 0.10); --si-key: #82b4ff;
+      }
+      .v-cx .cx-panel { flex-direction: column; }
+      .v-cx .si-page { flex: 1; padding: 22px 34px 0; }
+      .v-cx .cx-rail { gap: 4px; }
+      .v-cx .cx-rail-btn { width: 38px; height: 38px; }
+      .v-cx .cx-rail-btn .cx-i { width: 21px; height: 21px; }
+      .v-cx .cx-rail-dot { top: 5px; right: 5px; box-shadow: 0 0 0 1.5px var(--cx-chrome); }
+      .v-cx .cx-rail-foot { margin-bottom: 10px; }
+      .v-cx .si-btn.cx-btn { height: 31px; padding: 0 14px 0 11px; border: 0; font-size: 14.5px; gap: 6px; margin-top: 2px; }
+      .v-cx .si-btn.cx-btn .cx-i { width: 15px; height: 15px; }
+
+      /* ==========================================================
+         Variant 2: ChatGPT Settings > Skills (dialog)
+         ========================================================== */
+      .v-cg {
+        --si-w: 400; --si-w-med: 500; --si-w-semi: 600; --si-track: -0.006em;
+        --si-card: #ffffff; --si-bar: #f9f9f9;
+        --si-ink: var(--cg-text); --si-ink-2: var(--cg-text-2);
+        --si-line: rgba(0, 0, 0, 0.065); --si-line-2: rgba(0, 0, 0, 0.1);
+        --si-tile: #f3f3f3; --si-tile-ink: #4d4d4d;
+        --si-accent: var(--cg-btn); --si-lit-ink: var(--cg-btn-ink);
+        --si-tog-on: var(--cg-btn); --si-ring: var(--cg-text);
+        --si-tog-off: #e3e3e3; --si-thumb: #ffffff; --si-tog-h: 20px; --si-tog-w: 34px; --si-travel: 14px;
+        --si-btn-bg: #ffffff; --si-btn-r: 99px; --si-list-r: 14px;
+        --si-chip-bg: #f0f0f0; --si-chip-ink: #5d5d5d; --si-chip-r: 999px;
+        --si-dash: rgba(13, 13, 13, 0.32); --si-dash-bg: rgba(13, 13, 13, 0.025);
+        --si-paper: #ffffff; --si-paper-bar: #f9f9f9; --si-paper-line: rgba(0, 0, 0, 0.09); --si-key: #5d5d5d;
+      }
+      [data-theme="dark"] .v-cg {
+        --si-card: #212121; --si-bar: #262626;
+        --si-line: rgba(255, 255, 255, 0.07); --si-line-2: rgba(255, 255, 255, 0.1);
+        --si-tile: #303030; --si-tile-ink: #d0d0d0;
+        --si-tog-off: #4a4a4a; --si-thumb: #f2f2f2; --si-thumb-on: #212121;
+        --si-btn-bg: #212121;
+        --si-chip-bg: #383838; --si-chip-ink: #c4c4c4;
+        --si-dash: rgba(242, 242, 242, 0.35); --si-dash-bg: rgba(242, 242, 242, 0.04);
+        --si-paper: #2c2c2c; --si-paper-bar: #303030; --si-paper-line: rgba(255, 255, 255, 0.10); --si-key: #b4b4b4;
+      }
+      .cgs { position: relative; display: flex; border-radius: 18px; overflow: hidden; background: #ffffff; color: var(--cg-text); font-family: var(--cg-font); }
+      [data-theme="dark"] .cgs { background: #212121; }
+      .cgs-nav { width: 190px; flex: none; padding: 10px 8px; background: #f9f9f9; box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.06); }
+      [data-theme="dark"] .cgs-nav { background: #1b1b1b; box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.06); }
+      .cgs-x { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: var(--cg-text-2); margin: 0 0 6px 2px; }
+      .cgs-x .cg-i { width: 20px; height: 20px; }
+      .cgs-item { height: 36px; display: flex; align-items: center; gap: 10px; padding: 0 10px; border-radius: 9px; font-size: 16px; color: var(--cg-text); letter-spacing: -0.006em; white-space: nowrap; }
+      .cgs-item .cg-i { width: 18px; height: 18px; color: var(--cg-text); flex: none; }
+      .cgs-item.is-on { background: #ececec; font-weight: 500; }
+      [data-theme="dark"] .cgs-item.is-on { background: #363636; }
+      .cgs-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+      .cgs-head { height: 58px; flex: none; display: flex; align-items: center; margin: 0 28px; box-shadow: inset 0 -1px 0 var(--si-line); font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+      .v-cg .si-page { flex: 1; padding: 16px 28px 0; }
+      .v-cg .si-hrow { align-items: center; }
+      .v-cg .si-sub { margin-top: 0; }
+      .v-cg .si-list { margin-top: 16px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="6.6" data-width="1920" data-height="1080">
+      <div id="stage" class="clip" data-start="0" data-duration="6.6" data-track-index="0">
+        <div id="cam">
+          <div id="place">
+            <div id="zoomer">
+              <div id="frame"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* ==================================================================
+         CONFIG: all content for the three variants
+         ================================================================== */
+      const CONFIG = {
+        "0": {
+          product: "Claude Code",
+          skin: "cc", w: 700, h: 454, zoom: 1.76,
+          head: "Customize",
+          title: "Skills",
+          sub: "Folders of instructions Claude loads when a task needs them.",
+          button: "Upload skill", buttonIcon: "upload",
+          folder: "tech_eu_hack/.claude/skills", folderMono: true,
+          count: [16, 17], countWord: "skills",
+          chip: "New",
+          rows: [
+            { name: "index-repo", desc: "Index a repo and start the repo-analysis MCP server", icon: "download" },
+            { name: "repo-analysis", desc: "Answer code questions with the code-graph tools", icon: "doc" },
+            { name: "update-ilograph", desc: "Update ilograph.yaml to match the codebase", icon: "layout" }
+          ],
+          insertAt: 2,
+          skill: {
+            name: "spelunk-handoff", desc: "Pick up and carry out decisions accepted in Spelunk", icon: "tag",
+            size: "2.4 KB",
+            code: [
+              [["d", "---"]],
+              [["k", "name: "], ["v", "spelunk-handoff"]],
+              [["k", "description: "], ["v", "Pick up and carry"]],
+              [["v", "  out decisions accepted in Spelunk."]],
+              [["d", "---"]],
+              [["h", "# Acting on a Spelunk handoff"]],
+              [["p", "list_handoffs, get_handoff, build, done"]]
+            ]
+          }
+        },
+        "1": {
+          product: "Codex",
+          skin: "cx", w: 706, h: 456, zoom: 1.76,
+          title: "Skills",
+          sub: "Instructions and scripts Codex loads when a task matches.",
+          button: "New skill", buttonIcon: "plus",
+          folder: "~/.codex/skills", folderMono: true,
+          count: [3, 4], countWord: "skills",
+          chip: "New",
+          rows: [
+            { name: "doc", desc: "Read and edit .docx files, formatting intact", icon: "doc" },
+            { name: "skill-installer", desc: "Install curated skills from openai/skills", icon: "download" },
+            { name: "vercel-deploy", desc: "Deploy the current project to Vercel", icon: "vercel" }
+          ],
+          insertAt: 1,
+          skill: {
+            name: "gh-fix-ci", desc: "Fix failing GitHub Actions checks on a PR", icon: "github",
+            size: "2.1 KB",
+            code: [
+              [["d", "---"]],
+              [["k", "name: "], ["v", "gh-fix-ci"]],
+              [["k", "description: "], ["v", "Fix failing GitHub"]],
+              [["v", "  Actions checks on the open PR."]],
+              [["d", "---"]],
+              [["h", "# Fix failing CI"]],
+              [["p", "Run gh pr checks, read the failing log"]]
+            ]
+          }
+        },
+        "2": {
+          product: "ChatGPT",
+          skin: "cg", w: 706, h: 442, zoom: 1.76,
+          title: "Skills",
+          sub: "Instructions ChatGPT can reuse in any chat.",
+          button: "Upload", buttonIcon: "upload",
+          folder: "Your skills", folderMono: false,
+          count: [3, 4], countWord: "skills",
+          chip: "New",
+          nav: [["gear", "General"], ["bell", "Notifications"], ["personalize", "Personalization"], ["puzzle", "Apps"], ["book", "Skills", true],
+                ["scheduled", "Schedules"], ["sliders", "Data controls"], ["shield-check", "Security"], ["person-circle", "Account"]],
+          rows: [
+            { name: "docs", desc: "Create and edit Word documents", icon: "doc" },
+            { name: "pdfs", desc: "Read, fill and create PDF files", icon: "pdf" },
+            { name: "spreadsheets", desc: "Build and analyze Excel spreadsheets", icon: "table" }
+          ],
+          insertAt: 1,
+          skill: {
+            name: "expense-report", desc: "Turn receipts into an expense report", icon: "receipt",
+            size: "1.1 KB",
+            code: [
+              [["d", "---"]],
+              [["k", "name: "], ["v", "expense-report"]],
+              [["k", "description: "], ["v", "Turn receipts into"]],
+              [["v", "  an expense report with totals."]],
+              [["d", "---"]],
+              [["h", "# Expense report"]],
+              [["p", "For each receipt: date, vendor, amount"]]
+            ]
+          }
+        }
+      };
+
+      /* ---------------- icons (20-unit grid, currentColor) ---------------- */
+      const SW = { cc: 1.45, cx: 1.6, cg: 1.6 };
+      const STROKE = (body, sw) => `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+      const FILL = (body, vb) => `<svg viewBox="${vb || "0 0 24 24"}" fill="currentColor" fill-rule="evenodd" aria-hidden="true">${body}</svg>`;
+      const FILE = '<path d="M5.75 2.75h5.5l4 4v9a1.5 1.5 0 0 1-1.5 1.5h-8a1.5 1.5 0 0 1-1.5-1.5v-11.5a1.5 1.5 0 0 1 1.5-1.5Z"/><path d="M11 2.75V7h4.25"/>';
+      const GLYPH = {
+        folder: '<path d="M2.75 6A1.75 1.75 0 0 1 4.5 4.25h3.1l1.75 2h6.15A1.75 1.75 0 0 1 17.25 8v6.25A1.75 1.75 0 0 1 15.5 16h-11a1.75 1.75 0 0 1-1.75-1.75Z"/>',
+        "folder-open": '<path d="M2.9 14.6V6a1.75 1.75 0 0 1 1.75-1.75h2.85l1.75 2h5.2A1.75 1.75 0 0 1 16.2 8v1.3"/><path d="M3.3 15.4 5.1 10.6A1.75 1.75 0 0 1 6.74 9.5h10.05a.9.9 0 0 1 .84 1.22l-1.72 4.36A1.4 1.4 0 0 1 14.6 16H3.75a.5.5 0 0 1-.45-.6Z"/>',
+        file: FILE,
+        upload: '<path d="M10 12.25V3.75M6.75 7 10 3.75 13.25 7"/><path d="M3.75 11.75v2.5a2 2 0 0 0 2 2h8.5a2 2 0 0 0 2-2v-2.5"/>',
+        plus: '<path d="M10 4.25v11.5M4.25 10h11.5"/>',
+        tag: '<path d="M3.25 4.75v4.6c0 .4.16.78.44 1.06l6.2 6.2a1.5 1.5 0 0 0 2.12 0l4.3-4.3a1.5 1.5 0 0 0 0-2.12l-6.2-6.2a1.5 1.5 0 0 0-1.06-.44h-4.3a1.5 1.5 0 0 0-1.5 1.5Z"/><circle cx="6.9" cy="6.9" r="1.15"/>',
+        layout: '<rect x="2.75" y="3.75" width="14.5" height="12.5" rx="2.25"/><path d="M2.75 7.75h14.5M7.75 7.75v8.5"/>',
+        // pdf: a file with a type label across its lower half (distinct from doc's text lines)
+        pdf: FILE + '<rect x="6.25" y="10.25" width="7.5" height="4.25" rx="1.1"/>',
+        browser: '<rect x="2.75" y="3.75" width="14.5" height="12.5" rx="2.25"/><path d="M2.75 7.25h14.5"/><path d="m7.4 11.6 1.75 1.75 3.5-3.5"/>',
+        doc: FILE + '<path d="M7.25 9.75h5.5M7.25 12.25h5.5M7.25 14.75h3"/>',
+        download: '<path d="M10 3.25v8.25M6.75 8.25 10 11.5l3.25-3.25"/><path d="M3.75 12.5v1.75a2 2 0 0 0 2 2h8.5a2 2 0 0 0 2-2V12.5"/>',
+        receipt: '<path d="M5.25 2.75h9.5v14.5l-1.6-1.05-1.58 1.05-1.57-1.05-1.57 1.05-1.58-1.05-1.6 1.05Z"/><path d="M7.75 6.75h4.5M7.75 9.5h4.5M7.75 12.25h2.5"/>',
+        // spreadsheet: a grid inside the file
+        table: FILE + '<rect x="6.25" y="9.25" width="7.5" height="5.75" rx=".9"/><path d="M6.25 12.1h7.5M9.5 9.25v5.75"/>'
+      };
+      const LOGO = {
+        github: 'M12 0c6.63 0 12 5.276 12 11.79-.001 5.067-3.29 9.567-8.175 11.187-.6.118-.825-.25-.825-.56 0-.398.015-1.665.015-3.242 0-1.105-.375-1.813-.81-2.181 2.67-.295 5.475-1.297 5.475-5.822 0-1.297-.465-2.344-1.23-3.169.12-.295.54-1.503-.12-3.125 0 0-1.005-.324-3.3 1.209a11.32 11.32 0 00-3-.398c-1.020 0-2.04.133-3 .398-2.295-1.518-3.3-1.209-3.3-1.209-.66 1.622-.24 2.83-.12 3.125-.765.825-1.23 1.887-1.23 3.169 0 4.51 2.79 5.527 5.46 5.822-.345.294-.66.81-.765 1.577-.69.31-2.415.81-3.495-.973-.225-.354-.9-1.223-1.845-1.209-1.005.015-.405.56.015.781.51.28 1.095 1.327 1.23 1.666.24.663 1.020 1.93 4.035 1.385 0 .988.015 1.916.015 2.196 0 .31-.225.664-.825.56C3.303 21.374-.003 16.867 0 11.791 0 5.276 5.37 0 12 0z',
+        vercel: 'M12 1.6l11 19.05H1L12 1.6z'
+      };
+      const icon = (name, sw) => LOGO[name] ? FILL(`<path d="${LOGO[name]}"/>`) : STROKE(GLYPH[name] || "", sw);
+      const POINTER = '<svg viewBox="0 0 22 30" aria-hidden="true"><path d="M2.6 2.2v19.9l5.1-4.9 3.25 7.65 3.6-1.55-3.2-7.5h7.05Z" fill="#000" stroke="#fff" stroke-width="1.7" stroke-linejoin="round"/></svg>';
+
+      /* ---------------- variables (read once) ---------------- */
+      const V = (window.__hyperframes && window.__hyperframes.getVariables) ? window.__hyperframes.getVariables() : {};
+      const variant = ["0", "1", "2"].includes(String(V.variant)) ? String(V.variant) : "0";
+      const theme = V.theme === "dark" ? "dark" : "light";
+      const C = CONFIG[variant];
+      const K = window.KitMotion;
+      const EOUT = K.easeName("out");
+      const EPOP = K.easeName("pop");
+      const sw = SW[C.skin];
+
+      if (theme === "dark") document.body.classList.add("is-dark");
+      const place = document.getElementById("place"), zoomer = document.getElementById("zoomer"), frame = document.getElementById("frame");
+      place.style.left = Math.round((1920 - C.w * C.zoom) / 2) + "px";
+      place.style.top = Math.round((1080 - C.h * C.zoom) / 2) + "px";
+      zoomer.style.zoom = C.zoom;
+      frame.style.width = C.w + "px";
+      frame.style.height = C.h + "px";
+      frame.setAttribute("data-theme", theme);
+
+      /* ---------------- shared markup ---------------- */
+      const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      // one row body; `live` = the real new row (ids for the timeline), `twin` = the copy inside the card
+      function rowBody(r, mode) {
+        const isNew = mode === "live" || mode === "twin";
+        let tile;
+        if (mode === "live") {
+          tile = `<span class="si-tile-w"><i class="si-glow" id="glow"></i><i class="si-bloom" id="bloom"></i><span class="si-tile" id="tile"><span class="si-tile-base" id="tileBase">${icon(r.icon, sw)}</span><span class="si-tile-lit" id="tileLit">${icon(r.icon, sw + 0.15)}</span></span></span>`;
+        } else {
+          tile = `<span class="si-tile-w"><span class="si-tile">${icon(r.icon, sw)}</span></span>`;
+        }
+        const chip = isNew ? `<span class="si-chip"${mode === "live" ? ' id="chip"' : ""}>${C.chip}</span>` : "";
+        const tog = mode === "live" ? `<span class="si-tog" id="tog"><i class="si-th" id="th"></i></span>`
+          : mode === "twin" ? `<span class="si-tog"><i class="si-th"></i></span>`
+          : `<span class="si-tog is-on"><i class="si-th"></i></span>`;
+        return `<div class="si-rc"${mode === "live" ? ' id="newRc"' : ""}>${tile}<span class="si-tx"><span class="si-nm"><b>${esc(r.name)}</b>${chip}</span><span>${esc(r.desc)}</span></span>${tog}</div>`;
+      }
+      function rowHTML(r, isNew) {
+        if (isNew) return `<div class="si-item si-slot" id="slot"><div class="si-row is-new" id="newRow"><i class="si-band" id="band"></i><i class="si-dash" id="dash"></i>${rowBody(r, "live")}</div></div>`;
+        return `<div class="si-item"><div class="si-row">${rowBody(r, "row")}</div></div>`;
+      }
+      const all = C.rows.slice();
+      const rowsHTML = all.map((r, i) => (i === C.insertAt ? rowHTML(C.skill, true) : "") + rowHTML(r, false)).join("") + (C.insertAt >= all.length ? rowHTML(C.skill, true) : "");
+      const buttonHTML = C.skin === "cx"
+        ? `<span class="si-btn cx-btn is-dark" id="addBtn"><span class="cx-i" data-cx-icon="plus"></span>${C.button}</span>`
+        : `<span class="si-btn" id="addBtn">${STROKE(GLYPH[C.buttonIcon], sw)}${C.button}</span>`;
+      const pageHTML = `
+        <div class="si-page">
+          <div class="si-hrow">
+            <div class="si-hcol">
+              ${C.skin === "cg" ? "" : `<div class="si-h1">${C.title}</div>`}
+              <div class="si-sub">${C.sub}</div>
+            </div>
+            ${buttonHTML}
+          </div>
+          <div class="si-list" id="list">
+            <i class="si-ring" id="ring"></i>
+            <div class="si-bar">
+              <span class="si-fold"><span id="foldC">${STROKE(GLYPH.folder, sw)}</span><span class="is-open" id="foldO">${STROKE(GLYPH["folder-open"], sw)}</span></span>
+              <span class="${C.folderMono ? "si-path" : "si-bar-label"}">${C.folder}</span>
+              <span class="si-count"><span class="si-roll"><span class="si-roll-in" id="roll"><span>${C.count[0]}</span><span>${C.count[1]}</span></span></span>${C.countWord}</span>
+            </div>
+            <div class="si-rows">${rowsHTML}</div>
+          </div>
+        </div>`;
+
+      /* ---------------- per-variant chrome ---------------- */
+      let surface = "";
+      if (C.skin === "cc") {
+        surface = `
+          <div class="sk-cc v-cc" data-theme="${theme}">
+            <div class="cc-win no-side" id="win" style="width:${C.w}px;height:${C.h}px">
+              <header class="cc-head has-lights">
+                <span class="cc-lights"><i></i><i></i><i></i></span>
+                <span class="cc-badge-dot"><i data-cc-icon="sidebar" class="cc-tb-i"></i></span><i data-cc-icon="arrow-left" class="cc-tb-i"></i>
+                <span class="cc-head-gap"></span>
+                <i data-cc-icon="customize" class="cc-env"></i><span class="cc-title">${C.head}</span>
+              </header>
+              ${pageHTML}
+            </div>
+          </div>`;
+      } else if (C.skin === "cx") {
+        surface = `
+          <div class="sk-codex v-cx" data-theme="${theme}">
+          <div class="cx-window" id="win" style="width:${C.w}px;height:${C.h}px">
+            <div class="cx-titlebar">
+              <div class="cx-tb-lead">
+                <div class="cx-traffic"><i></i><i></i><i></i></div>
+                <span class="cx-tb-btn"><span class="cx-i" data-cx-icon="arrow-left"></span></span>
+                <span class="cx-tb-btn is-off"><span class="cx-i" data-cx-icon="arrow-right"></span></span>
+                <span class="cx-tb-btn"><span class="cx-i" data-cx-icon="sidebar"></span></span>
+              </div>
+            </div>
+            <div class="cx-body">
+              <div class="cx-rail">
+                <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="home"></span><i class="cx-rail-dot"></i></span>
+                <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="cards"></span></span>
+                <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="clock"></span></span>
+                <span class="cx-rail-btn is-active"><span class="cx-i" data-cx-icon="plugins"></span></span>
+                <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="more"></span></span>
+                <i class="cx-rail-div"></i>
+                <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="pr"></span></span>
+                <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="openai"></span></span>
+                <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="calendar"></span></span>
+                <div class="cx-rail-foot"><span class="cx-avatar-app"><span class="cx-i" data-cx-icon="openai"></span></span></div>
+              </div>
+              <div class="cx-panel">${pageHTML}</div>
+            </div>
+          </div>
+          </div>`;
+      } else {
+        const nav = C.nav.map(([ic, label, on]) => `<div class="cgs-item${on ? " is-on" : ""}"><i class="cg-i" data-i="${ic}"></i>${label}</div>`).join("");
+        surface = `
+          <div class="sk-chatgpt v-cg" data-theme="${theme}">
+            <div class="cgs" id="win" style="width:${C.w}px;height:${C.h}px">
+              <div class="cgs-nav"><div class="cgs-x"><i class="cg-i" data-i="close"></i></div>${nav}</div>
+              <div class="cgs-main"><div class="cgs-head">${C.title}</div>${pageHTML}</div>
+            </div>
+          </div>`;
+      }
+      const codeHTML = C.skill.code.map((line, i, arr) => {
+        const segs = line.map(([cls, tx]) => `<span class="${cls}">${esc(tx)}</span>`).join("");
+        return `<div class="${i === arr.length - 1 ? "fade" : ""}">${segs}</div>`;
+      }).join("");
+      const cardHTML = `
+        <div id="drag">
+          <div class="si-cardf" id="card">
+            <i class="si-edge" id="cardEdge"></i>
+            <div class="si-ghost" id="ghost"><div class="si-row">${rowBody(C.skill, "twin")}</div></div>
+            <div class="si-card-in" id="cardIn">
+              <div class="si-card-h">${STROKE(GLYPH.file, sw)}<span class="si-crumb">${C.skill.name}/</span><b>SKILL.md</b><span class="si-size">${C.skill.size}</span></div>
+              <div class="si-code">${codeHTML}</div>
+            </div>
+          </div>
+        </div>
+        <div id="cur">${POINTER}</div>`;
+      frame.innerHTML = surface + cardHTML;
+
+      // card and pointer sit in the skin's token scope so --si-* resolve
+      const scope = frame.querySelector(".v-cc, .v-cx, .v-cg");
+      scope.style.position = "relative";
+      scope.appendChild(document.getElementById("drag"));
+      scope.appendChild(document.getElementById("cur"));
+
+      if (window.SKIN_CLAUDE_CODE) SKIN_CLAUDE_CODE.mount(frame);
+      if (window.SKIN_ICONS_CODEX) SKIN_ICONS_CODEX.mount(frame);
+      if (window.SKIN_ICONS_CHATGPT) SKIN_ICONS_CHATGPT.mount(frame);
+
+      const $ = (s) => frame.querySelector(s);
+      const css = (name) => getComputedStyle(scope).getPropertyValue(name).trim();
+
+      // win shadow (DESIGN.md floating UI window)
+      const win = $("#win");
+      win.style.boxShadow = theme === "dark"
+        ? "0 0 0 1px rgba(255,255,255,.08), 0 24px 60px -20px rgba(0,0,0,.8)"
+        : "0 0 0 1px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06), 0 24px 60px -20px rgba(0,0,0,.25)";
+
+      /* ---------------- colour helpers ---------------- */
+      function rgb(str) {
+        const m = str.match(/rgba?\(([^)]+)\)/);
+        if (m) { const p = m[1].split(",").map((x) => parseFloat(x)); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; }
+        const h = str.replace("#", "");
+        const f = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+        return [parseInt(f.slice(0, 2), 16), parseInt(f.slice(2, 4), 16), parseInt(f.slice(4, 6), 16), 1];
+      }
+      const mix = (a, b, t) => { const A = rgb(a), B = rgb(b); return `rgb(${Math.round(A[0] + (B[0] - A[0]) * t)}, ${Math.round(A[1] + (B[1] - A[1]) * t)}, ${Math.round(A[2] + (B[2] - A[2]) * t)})`; };
+      const alpha = (c, a) => { const A = rgb(c); return `rgba(${A[0]}, ${A[1]}, ${A[2]}, ${a})`; };
+
+      /* ==================================================================
+         Timeline: one motion design for all three variants (6.6s)
+         ================================================================== */
+      function anim(tl) {
+        const isDark = theme === "dark";
+        const accent = css("--si-accent");
+        const togOn = css("--si-tog-on");
+        const togOff = css("--si-tog-off");
+        const tileBg = css("--si-tile");
+        const cardBg = getComputedStyle($("#list")).backgroundColor;
+        // a neutral "just added" band, like the products' own selected rows
+        const band = mix(cardBg, css("--si-ink"), isDark ? 0.065 : 0.04);
+        $("#band").style.background = band;
+        const ROWH = $("#newRow").offsetHeight;
+
+        // -- measure in the frame's own 1x px (works with CSS zoom) --
+        const fr = frame.getBoundingClientRect(), k = frame.offsetWidth / fr.width;
+        const box = (el) => { const r = el.getBoundingClientRect(); return { x: (r.left - fr.left) * k, y: (r.top - fr.top) * k, w: r.width * k, h: r.height * k }; };
+        const slot = $("#slot");
+        slot.style.height = ROWH + "px";
+        const rowB = box($("#newRow"));
+        const togB = box($("#tog"));
+        slot.style.height = "0px";
+        const ghost = $("#ghost");
+        ghost.style.width = rowB.w + "px";
+        ghost.style.height = rowB.h + "px";
+
+        const card = $("#card");
+        const cardW = card.offsetWidth, cardH = card.offsetHeight;
+        const grab = { x: cardW - 86, y: 19 };            // held by its header, like a file in Finder
+        card.style.left = -grab.x + "px";
+        card.style.top = -grab.y + "px";
+        gsap.set(card, { transformOrigin: `${grab.x}px ${grab.y}px` });
+
+        // where the card is released (centred on the open slot) and where it comes from (off-frame right)
+        const cardDrop = { x: rowB.x + rowB.w / 2 - cardW / 2 + 10, y: rowB.y + rowB.h / 2 - cardH / 2 - 4 };
+        const dropPt = { x: cardDrop.x + grab.x, y: cardDrop.y + grab.y };
+        const frameRight = (1920 - parseFloat(place.style.left)) / C.zoom;
+        const start = { x: frameRight + grab.x + 160, y: dropPt.y - 170 };
+        const drag = $("#drag"), cur = $("#cur");
+
+        const T = { enter: 0.1, drag: 0.5, dragDur: 1.05, out: 6.2, end: 6.6 };
+        T.over = T.drag + 0.6;                 // the card is over the list: the folder opens a slot
+        T.release = T.drag + T.dragDur + 0.12; // the pointer lets go
+        T.morph = T.release + 0.08;            // the card reshapes into the row
+        T.swap = T.morph + 0.34;               // the real row takes over (pixel-identical twin)
+
+        /* ---- enter: the page lands on the empty stage ---- */
+        K.fadeUp(tl, win, T.enter, { distance: 12, blur: 2, duration: 0.6 });
+
+        /* ---- drag: SKILL.md comes in from the right, held by the pointer ---- */
+        const lifted = isDark
+          ? "0px 1px 2px 0px rgba(0,0,0,0.5), 0px 12px 22px -6px rgba(0,0,0,0.45), 0px 34px 64px -14px rgba(0,0,0,0.7)"
+          : "0px 1px 2px 0px rgba(0,0,0,0.07), 0px 12px 22px -6px rgba(0,0,0,0.12), 0px 34px 64px -14px rgba(0,0,0,0.26)";
+        const contact = isDark
+          ? "0px 1px 1px 0px rgba(0,0,0,0.5), 0px 3px 8px -2px rgba(0,0,0,0.4), 0px 6px 16px -8px rgba(0,0,0,0.3)"
+          : "0px 1px 1px 0px rgba(0,0,0,0.08), 0px 3px 8px -2px rgba(0,0,0,0.10), 0px 6px 16px -8px rgba(0,0,0,0.10)";
+        const flat = "0px 0px 0px 0px rgba(0,0,0,0), 0px 0px 0px 0px rgba(0,0,0,0), 0px 0px 0px 0px rgba(0,0,0,0)";
+        card.style.boxShadow = lifted;
+        [drag, cur].forEach((el) => {
+          tl.fromTo(el, { x: start.x }, { x: dropPt.x, duration: T.dragDur, ease: "power3.out", immediateRender: false }, T.drag);
+          tl.fromTo(el, { y: start.y }, { y: dropPt.y, duration: T.dragDur, ease: "sine.inOut", immediateRender: false }, T.drag);
+        });
+        // a small tilt only (≤3°), so the mono text stays crisp
+        tl.fromTo(card, { rotation: 3, scale: 1.025 }, { rotation: 1.2, duration: T.dragDur, ease: "power2.out", immediateRender: false }, T.drag);
+
+        /* ---- over the folder: it opens a slot at the skill's alphabetical place ---- */
+        tl.fromTo("#ring", { opacity: 0 }, { opacity: 0.6, duration: 0.2, ease: EOUT, immediateRender: false }, T.over);
+        tl.fromTo("#foldO", { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power1.inOut", immediateRender: false }, T.over);
+        tl.fromTo("#foldC", { opacity: 1 }, { opacity: 0, duration: 0.18, ease: "power1.inOut", immediateRender: false }, T.over);
+        tl.fromTo(slot, { height: 0 }, { height: ROWH, duration: 0.42, ease: EOUT, immediateRender: false }, T.over + 0.04);
+        tl.fromTo("#dash", { opacity: 0, scale: 0.98 }, { opacity: 1, scale: 1, duration: 0.3, ease: EOUT, immediateRender: false }, T.over + 0.14);
+
+        /* ---- release: the card lands and becomes the row ---- */
+        const r = T.release, m = T.morph;
+        tl.fromTo(cur, { scale: 0.9 }, { scale: 1, duration: 0.12, ease: "power2.out", immediateRender: false }, r);
+        tl.fromTo(card, { rotation: 1.2, scale: 1.025 }, { rotation: 0, scale: 1, duration: 0.16, ease: "power2.out", immediateRender: false }, r);
+        tl.fromTo(card, { boxShadow: lifted }, { boxShadow: contact, duration: 0.16, ease: "power2.out", immediateRender: false }, r);
+        // FLIP: the opaque card reshapes straight into the slot's rect (never translucent over other rows)
+        tl.fromTo(card, { x: 0, y: 0, width: cardW, height: cardH, borderRadius: 12 },
+          { x: rowB.x - dropPt.x + grab.x, y: rowB.y - dropPt.y + grab.y, width: rowB.w, height: rowB.h, borderRadius: 0, duration: 0.34, ease: "power3.out", immediateRender: false }, m);
+        tl.fromTo(card, { backgroundColor: css("--si-paper") }, { backgroundColor: band, duration: 0.22, ease: "power1.inOut", immediateRender: false }, m);
+        tl.fromTo(card, { boxShadow: contact }, { boxShadow: flat, duration: 0.26, ease: "power1.out", immediateRender: false }, m + 0.08);
+        tl.fromTo("#cardEdge", { opacity: 1 }, { opacity: 0, duration: 0.24, ease: "power1.out", immediateRender: false }, m + 0.1);
+        // contents cross: the file text leaves first, the row it becomes resolves at the end
+        tl.fromTo("#cardIn", { opacity: 1 }, { opacity: 0, duration: 0.09, ease: "power1.out", immediateRender: false }, m);
+        tl.fromTo(ghost, { opacity: 0 }, { opacity: 1, duration: 0.13, ease: "power1.out", immediateRender: false }, m + 0.08);
+        tl.fromTo("#dash", { opacity: 1 }, { opacity: 0, duration: 0.14, ease: "power1.out", immediateRender: false }, m + 0.02);
+        tl.fromTo("#ring", { opacity: 0.6 }, { opacity: 0, duration: 0.3, ease: "power1.out", immediateRender: false }, m + 0.1);
+        // swap to the real row (identical pixels: same band, same content)
+        const s = T.swap;
+        tl.fromTo("#band", { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none", immediateRender: false }, s);
+        tl.fromTo("#newRc", { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none", immediateRender: false }, s);
+        tl.fromTo(card, { opacity: 1 }, { opacity: 0, duration: 0.01, ease: "none", immediateRender: false }, s + 0.01);
+        tl.fromTo("#foldO", { opacity: 1 }, { opacity: 0, duration: 0.18, ease: "power1.inOut", immediateRender: false }, s + 0.02);
+        tl.fromTo("#foldC", { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power1.inOut", immediateRender: false }, s + 0.02);
+        tl.fromTo("#roll", { yPercent: 0 }, { yPercent: -50, duration: 0.34, ease: "power2.inOut", immediateRender: false }, s + 0.04);
+
+        /* ---- switch it on: the new ability lights up ---- */
+        const togPt = { x: togB.x + togB.w * 0.62, y: togB.y + togB.h * 0.55 };
+        const tClick = K.cursorMoveClick(tl, cur, togPt, s + 0.12, { from: { x: dropPt.x, y: dropPt.y }, target: "#tog" });
+        const travel = parseFloat(css("--si-travel")) || 13;
+        K.toggle(tl, "#th", tClick, { on: true, travel: travel, track: "#tog", onColor: togOn, offColor: togOff });
+        const thumbOn = css("--si-thumb-on");
+        if (thumbOn) tl.fromTo("#th", { backgroundColor: css("--si-thumb") }, { backgroundColor: thumbOn, duration: 0.2, ease: "power1.out", immediateRender: false }, tClick + 0.05);
+        const tLit = tClick + 0.04;
+        tl.fromTo("#tile", { backgroundColor: tileBg }, { backgroundColor: accent, duration: 0.26, ease: EOUT, immediateRender: false }, tLit);
+        tl.fromTo("#tileBase", { opacity: 1 }, { opacity: 0, duration: 0.14, ease: "power1.out", immediateRender: false }, tLit);
+        tl.fromTo("#tileLit", { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "power1.out", immediateRender: false }, tLit + 0.04);
+        // stroke glyphs draw on in the lit colour; filled logos just turn
+        frame.querySelectorAll("#tileLit path, #tileLit circle, #tileLit rect").forEach((p) => {
+          if (p.closest("svg").getAttribute("fill") === "currentColor") return;
+          const len = Math.ceil(p.getTotalLength()) + 1;
+          p.style.strokeDasharray = String(len);
+          tl.fromTo(p, { strokeDashoffset: len }, { strokeDashoffset: 0, duration: 0.5, ease: EOUT, immediateRender: false }, tLit + 0.04);
+        });
+        tl.fromTo("#tile", { scale: 1 }, { scale: 1.08, duration: 0.16, ease: "power2.out", immediateRender: false }, tLit);
+        tl.fromTo("#tile", { scale: 1.08 }, { scale: 1, duration: 0.34, ease: EOUT, immediateRender: false }, tLit + 0.16);
+        tl.fromTo("#bloom", { opacity: 0.6, scale: 1 }, { opacity: 0, scale: 1.65, duration: 0.75, ease: EOUT, immediateRender: false }, tLit + 0.04);
+        const soft = C.skin === "cg" && !isDark;
+        const glowPeak = soft ? 0.3 : 0.6, glowRest = soft ? 0.14 : 0.3;
+        tl.fromTo("#glow", { opacity: 0 }, { opacity: glowPeak, duration: 0.3, ease: EOUT, immediateRender: false }, tLit + 0.02);
+        tl.fromTo("#glow", { opacity: glowPeak }, { opacity: glowRest, duration: 1.1, ease: "power1.inOut", immediateRender: false }, tLit + 0.34);
+
+        // pointer steps away and fades
+        K.cursorMove(tl, cur, { x: togPt.x + 40, y: togPt.y + 58 }, tClick + 0.3, { duration: 0.55 });
+        tl.fromTo(cur, { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "power1.in", immediateRender: false }, tClick + 0.52);
+
+        // "New" chip pops in beside the name; the arrival band settles back to the list colour
+        tl.fromTo("#chip", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.34, ease: EPOP, immediateRender: false }, tLit + 0.5);
+        tl.fromTo("#band", { opacity: 1 }, { opacity: 0, duration: 0.6, ease: "power1.inOut", immediateRender: false }, tLit + 0.85);
+
+        /* ---- one slow push-in, then clear for the loop ---- */
+        tl.fromTo("#cam", { scale: 1 }, { scale: 1.03, duration: T.end, ease: "none", immediateRender: false }, 0);
+        tl.fromTo(place, { opacity: 1 }, { opacity: 0, duration: 0.4, ease: "power1.in", immediateRender: false }, T.out);
+        tl.to({}, { duration: 0.01 }, T.end - 0.01);
+
+        // initial state (after the kit primed its elements)
+        gsap.set([drag, cur], { x: start.x, y: start.y });
+        gsap.set(cur, { scale: 0.9 });
+        gsap.set(card, { rotation: 3, scale: 1.025 });
+        gsap.set(["#dash", "#newRc"], { opacity: 0 });
+        return { tClick, tLit, hero: tLit + 1.6 };
+      }
+
+      /* ---------------- layout-audit hints ---------------- */
+      // the dragged card and the pointer pass over the page on purpose
+      frame.querySelectorAll("#drag, #drag *, #cur").forEach((el) => { el.setAttribute("data-layout-allow-overlap", ""); el.setAttribute("data-layout-allow-occlusion", ""); el.setAttribute("data-layout-allow-overflow", ""); });
+      // the page under the card is covered on purpose while the card is dragged over it
+      frame.querySelectorAll(".si-page, .si-page *").forEach((el) => el.setAttribute("data-layout-allow-occlusion", ""));
+      $("#roll").setAttribute("data-layout-allow-overflow", "");
+
+      const fontsReady = Promise.all([
+        document.fonts.load('400 16px "Inter"'), document.fonts.load('500 16px "Inter"'), document.fonts.load('600 16px "Inter"'),
+        document.fonts.load('400 12px "JetBrains Mono"'), document.fonts.load('600 12px "JetBrains Mono"')
+      ]).then(() => document.fonts.ready).catch(() => null);
+
+      fontsReady.then(() => {
+        const tl = gsap.timeline({ paused: true });
+        window.__siTimes = anim(tl);
+        window.__timelines["main"] = tl;
+        tl.seek(0);
+      });
+    </script>
+  </body>
+</html>

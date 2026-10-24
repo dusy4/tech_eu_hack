@@ -1,0 +1,516 @@
+<!doctype html>
+<!--
+  DEVICE SKIN · canonical markup
+  ------------------------------------------------------------------
+  Copy the block you need into a component. Every piece must sit inside
+  an element with class "sk-device" (that element carries the theme:
+  data-theme="light" | "dark").
+
+  Icons: either inline them from JS — `${SKIN_ICONS_DEVICE.ios_signal}` —
+  or keep the <span data-dv-icon="…"></span> placeholders below and call
+  SKIN_DEVICE_HYDRATE(rootEl) once after inserting the markup.
+
+  Scale: everything is authored at 1 px = 1 pt. Wrap a piece in an element
+  with `zoom:<n>` to size it for 1080p (phone ≈ 1.06, Mac desktop = 1920/1512,
+  Chrome window ≈ 1.25). Do not scale with transform (blurs text).
+
+  This file is viewable on its own (open it in a browser from library/_skins/device/).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Device skin · snippets</title>
+<link rel="stylesheet" href="../../_shared/fonts/fonts.css">
+<link rel="stylesheet" href="skin.css">
+<script src="icons.js"></script>
+<style>
+  body{margin:0;padding:40px;background:#F5F5F4;font-family:Inter,sans-serif}
+  body.dark{background:#0E0E0F;color:#FAFAFA}
+  h2{font:600 15px/1 Inter;margin:48px 0 16px;color:#6B6B6B}
+  .row{display:flex;gap:40px;align-items:flex-start;flex-wrap:wrap}
+  .frame{position:relative}
+</style>
+</head>
+<body>
+<button onclick="document.body.classList.toggle('dark');document.querySelectorAll('.sk-device').forEach(e=>e.dataset.theme=document.body.classList.contains('dark')?'dark':'light')">Toggle theme</button>
+
+<!-- =================================================================
+     1. iPHONE · frame + app screen (status bar, Dynamic Island, home bar)
+     .dv-statusbar inherits --dv-ios-label (black in light, white in dark).
+     Add .dv-statusbar--light / .dv-home-indicator--light over dark or
+     photo content. Put your app UI in .dv-screen (402 × 874; keep the top
+     54 px and bottom 34 px as safe areas).
+     ================================================================= -->
+<h2>1 · iPhone frame + app screen</h2>
+<div class="sk-device" data-theme="light">
+  <div class="dv-iphone">
+    <i class="dv-iphone__btn dv-iphone__btn--action"></i>
+    <i class="dv-iphone__btn dv-iphone__btn--vol-up"></i>
+    <i class="dv-iphone__btn dv-iphone__btn--vol-down"></i>
+    <i class="dv-iphone__btn dv-iphone__btn--power"></i>
+    <i class="dv-iphone__btn dv-iphone__btn--camera"></i>
+    <div class="dv-iphone__glass">
+      <div class="dv-screen">
+        <!-- your app UI goes here, absolutely positioned or as a full-size child -->
+        <div class="dv-island"></div>
+        <div class="dv-statusbar">
+          <div class="dv-statusbar__time">9:41</div>
+          <div class="dv-statusbar__icons">
+            <span class="dv-sb-signal" data-dv-icon="ios_signal"></span>
+            <span class="dv-sb-wifi" data-dv-icon="ios_wifi"></span>
+            <span class="dv-sb-battery" data-dv-icon="ios_battery"></span>
+          </div>
+        </div>
+        <div class="dv-home-indicator"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================
+     2. iOS LOCK SCREEN with a notification stack
+     - Wallpaper: .dv-wall-ios (theme-aware abstract, iOS 26 style).
+     - The status-bar time is EMPTY on the lock screen (big clock instead).
+     - Stack presentation (iOS default "Stack"): the newest card in front;
+       older cards become 10 px slivers below it. Recreate the sliver by
+       translating the older card down 9 px, scaleX .94 and clipping it:
+         clip-path: inset(<cardHeight-10>px 0 0 0)
+       or use the static .dv-notif-peek elements shown here.
+     - List presentation: wrap cards in .dv-notif-list (8 px gap).
+     ================================================================= -->
+<h2>2 · iOS lock screen + notifications</h2>
+<div class="sk-device" data-theme="light">
+  <div class="dv-iphone">
+    <i class="dv-iphone__btn dv-iphone__btn--action"></i><i class="dv-iphone__btn dv-iphone__btn--vol-up"></i><i class="dv-iphone__btn dv-iphone__btn--vol-down"></i><i class="dv-iphone__btn dv-iphone__btn--power"></i><i class="dv-iphone__btn dv-iphone__btn--camera"></i>
+    <div class="dv-iphone__glass"><div class="dv-screen">
+      <div class="dv-wall-ios"></div>
+      <div class="dv-island"></div>
+      <div class="dv-statusbar dv-statusbar--light">
+        <div class="dv-statusbar__time"></div>
+        <div class="dv-statusbar__icons"><span class="dv-sb-signal" data-dv-icon="ios_signal"></span><span class="dv-sb-wifi" data-dv-icon="ios_wifi"></span><span class="dv-sb-battery" data-dv-icon="ios_battery"></span></div>
+      </div>
+      <div class="dv-lock">
+        <div class="dv-lock__padlock" data-dv-icon="ios_lock"></div>
+        <div class="dv-lock__date">Thursday, October 15</div>
+        <div class="dv-lock__time">9:41</div>
+
+        <div class="dv-notif-area">
+          <div class="dv-notif-stack">
+            <div class="dv-notif-peek dv-notif-peek--2"></div>
+            <div class="dv-notif-peek dv-notif-peek--1"></div>
+            <!-- front card (position:relative so the stack takes its height) -->
+            <div class="dv-notif">
+              <span class="dv-appicon dv-appicon--chatgpt" data-dv-icon="glyph_openai"></span>
+              <div class="dv-notif__main">
+                <div class="dv-notif__head"><div class="dv-notif__title">ChatGPT</div><div class="dv-notif__time">now</div></div>
+                <div class="dv-notif__body">Your Q3 board deck is ready: 14 slides, with revenue updated through September.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dv-lock__qa dv-lock__qa--left" data-dv-icon="ios_flashlight"></div>
+        <div class="dv-lock__qa dv-lock__qa--right" data-dv-icon="ios_camera"></div>
+      </div>
+      <div class="dv-home-indicator dv-home-indicator--light"></div>
+    </div></div>
+  </div>
+</div>
+
+<!-- =================================================================
+     2b. iOS LOCK SCREEN · List view that reaches the clock (the launch-video crop:
+     island + status bar + date + clock + notifications in one frame).
+     - .dv-notif-area--list starts the list 24 pt under the clock; newest card on top.
+     - A new card: push the cards below it down by (its height + 8) over ~0.55 s expo.out,
+       then pop it in 0.1 s later (opacity 0 → 1, scale .94 → 1, y −16 → 0). Put the layout
+       offset on a wrapper and the entrance on the .dv-notif itself (keeps the glass blur).
+     - Messages / WhatsApp / Slack DMs use the communication layout: the sender's round
+       avatar (.dv-avatar, monogram on the iOS grey gradient, or a photo) with the app icon
+       as a 17 pt badge at its bottom-right (.dv-notif__sender).
+     ================================================================= -->
+<h2>2b · iOS lock screen, list under the clock</h2>
+<div class="sk-device" data-theme="light">
+  <div class="dv-iphone">
+    <i class="dv-iphone__btn dv-iphone__btn--action"></i><i class="dv-iphone__btn dv-iphone__btn--vol-up"></i><i class="dv-iphone__btn dv-iphone__btn--vol-down"></i><i class="dv-iphone__btn dv-iphone__btn--power"></i><i class="dv-iphone__btn dv-iphone__btn--camera"></i>
+    <div class="dv-iphone__glass"><div class="dv-screen">
+      <div class="dv-wall-ios"></div>
+      <div class="dv-island"></div>
+      <div class="dv-statusbar dv-statusbar--light">
+        <div class="dv-statusbar__time"></div>
+        <div class="dv-statusbar__icons"><span class="dv-sb-signal" data-dv-icon="ios_signal"></span><span class="dv-sb-wifi" data-dv-icon="ios_wifi"></span><span class="dv-sb-battery" data-dv-icon="ios_battery"></span></div>
+      </div>
+      <div class="dv-lock">
+        <div class="dv-lock__padlock" data-dv-icon="ios_lock"></div>
+        <div class="dv-lock__date">Thursday, October 15</div>
+        <div class="dv-lock__time">9:41</div>
+        <div class="dv-notif-area dv-notif-area--list">
+          <div class="dv-notif-list">
+            <div class="dv-notif">
+              <span class="dv-appicon dv-appicon--chatgpt" data-dv-icon="glyph_openai"></span>
+              <div class="dv-notif__main">
+                <div class="dv-notif__head"><div class="dv-notif__title">ChatGPT</div><div class="dv-notif__time">now</div></div>
+                <div class="dv-notif__body">Your Q3 board deck is ready: 14 slides, with revenue updated through September.</div>
+              </div>
+            </div>
+            <!-- communication notification: avatar + app badge -->
+            <div class="dv-notif">
+              <span class="dv-notif__sender"><span class="dv-avatar">MC</span><span class="dv-appicon dv-appicon--messages" data-dv-icon="glyph_messages"></span></span>
+              <div class="dv-notif__main">
+                <div class="dv-notif__head"><div class="dv-notif__title">Maya Chen</div><div class="dv-notif__time">now</div></div>
+                <div class="dv-notif__body">Landed! Grabbing a cab now. Still on for Prado at 8?</div>
+              </div>
+            </div>
+            <div class="dv-notif">
+              <span class="dv-appicon dv-appicon--slack" data-dv-icon="glyph_slack"></span>
+              <div class="dv-notif__main">
+                <div class="dv-notif__head"><div class="dv-notif__title">#design-crit</div><div class="dv-notif__time">12m ago</div></div>
+                <div class="dv-notif__body">Lena Park: Posted the v3 onboarding flow. Comments by noon?</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dv-lock__qa dv-lock__qa--left" data-dv-icon="ios_flashlight"></div>
+        <div class="dv-lock__qa dv-lock__qa--right" data-dv-icon="ios_camera"></div>
+      </div>
+      <div class="dv-home-indicator dv-home-indicator--light"></div>
+    </div></div>
+  </div>
+</div>
+
+<!-- =================================================================
+     3. iOS NOTIFICATION (single card, any context: lock screen, banner)
+     As a top banner over an unlocked app: position it at top:8px inside
+     .dv-screen with left/right 10px (it drops in from above the island).
+     Title = sender or app name (600). Time = "now" / "2m ago". Body ≤ 4 lines.
+     Lead: the app icon (.dv-appicon, 38) or, for person-to-person messages, the
+     communication layout (.dv-notif__sender = .dv-avatar + a 17 pt app-icon badge).
+     ================================================================= -->
+<h2>3 · iOS notification cards (list)</h2>
+<div class="sk-device" data-theme="light" style="width:382px;padding:20px;background:#6E9CF5;border-radius:24px">
+  <div class="dv-notif-list">
+    <div class="dv-notif">
+      <span class="dv-notif__sender"><span class="dv-avatar">SR</span><span class="dv-appicon dv-appicon--messages" data-dv-icon="glyph_messages"></span></span>
+      <div class="dv-notif__main">
+        <div class="dv-notif__head"><div class="dv-notif__title">Sam Rivera</div><div class="dv-notif__time">2m ago</div></div>
+        <div class="dv-notif__body">Landing at 6:40. Want to grab dinner after?</div>
+      </div>
+    </div>
+    <div class="dv-notif">
+      <span class="dv-appicon dv-appicon--whatsapp" data-dv-icon="glyph_whatsapp"></span>
+      <div class="dv-notif__main">
+        <div class="dv-notif__head"><div class="dv-notif__title">Muse</div><div class="dv-notif__time">now</div></div>
+        <div class="dv-notif__body">Found 3 tee times on Saturday morning. Want me to book 8:10?</div>
+      </div>
+    </div>
+    <div class="dv-notif">
+      <span class="dv-appicon dv-appicon--slack" data-dv-icon="glyph_slack"></span>
+      <div class="dv-notif__main">
+        <div class="dv-notif__head"><div class="dv-notif__title">#launch · Grok Bot</div><div class="dv-notif__time">now</div></div>
+        <div class="dv-notif__body">Changelog drafted and posted for review.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================
+     4. APP ICONS · <span class="dv-appicon dv-appicon--APP">{glyph}</span>
+     Size with --s (default 38px). Dark theme switches to iOS 18+/26 dark
+     icon variants (black tile, coloured glyph) where the app has one.
+     Add .dv-appicon--mac for the macOS drop shadow.
+     APP: chatgpt | messages | mail | whatsapp | slack | grok | claude
+     ================================================================= -->
+<h2>4 · App icons</h2>
+<div class="sk-device row" data-theme="light" style="gap:14px">
+  <span class="dv-appicon dv-appicon--chatgpt" style="--s:60px" data-dv-icon="glyph_openai"></span>
+  <span class="dv-appicon dv-appicon--messages" style="--s:60px" data-dv-icon="glyph_messages"></span>
+  <span class="dv-appicon dv-appicon--mail" style="--s:60px" data-dv-icon="glyph_mail"></span>
+  <span class="dv-appicon dv-appicon--whatsapp" style="--s:60px" data-dv-icon="glyph_whatsapp"></span>
+  <span class="dv-appicon dv-appicon--slack" style="--s:60px" data-dv-icon="glyph_slack"></span>
+  <span class="dv-appicon dv-appicon--grok" style="--s:60px" data-dv-icon="glyph_grok"></span>
+  <span class="dv-appicon dv-appicon--claude" style="--s:60px" data-dv-icon="glyph_claude"></span>
+</div>
+
+<!-- =================================================================
+     5. macOS 26 DESKTOP + MENU BAR (1512 × 851 pt; zoom 1920/1512 to fill 1080p)
+     Tahoe menu bar is transparent; its ink follows the theme
+     (light wallpaper → black ink, dark wallpaper → white ink).
+     Left: Apple menu, the frontmost app's name in bold, then that app's menus
+     (Finder: File Edit View Go Window Help · Safari: File Edit View History
+     Bookmarks Window Help). Right: battery, Wi-Fi, Spotlight, Control Center, clock.
+     Showing the whole menu bar at a launch-video zoom: size .dv-desktop to the frame
+     (e.g. 960 × 540 at zoom 2), so both ends of the bar are on screen.
+     ================================================================= -->
+<h2>5 · Mac desktop + menu bar (+ window, notification, cursor)</h2>
+<div class="sk-device" data-theme="light" style="zoom:.6">
+  <div class="dv-desktop">
+    <div class="dv-menubar">
+      <div class="dv-menubar__left">
+        <span class="dv-menubar__apple" data-dv-icon="mac_apple"></span>
+        <span class="dv-menubar__app">Finder</span>
+        <span class="dv-menubar__item">File</span><span class="dv-menubar__item">Edit</span><span class="dv-menubar__item">View</span>
+        <span class="dv-menubar__item">Go</span><span class="dv-menubar__item">Window</span><span class="dv-menubar__item">Help</span>
+      </div>
+      <div class="dv-menubar__right">
+        <span class="dv-menubar__icon dv-menubar__icon--bat" data-dv-icon="mac_battery"></span>
+        <span class="dv-menubar__icon" data-dv-icon="mac_wifi"></span>
+        <span class="dv-menubar__icon" data-dv-icon="mac_spotlight"></span>
+        <span class="dv-menubar__icon dv-menubar__icon--cc" data-dv-icon="mac_control_center"></span>
+        <span class="dv-menubar__clock">Thu Oct 15 9:41 AM</span>
+      </div>
+    </div>
+
+    <!-- 6a. Generic window, simple title bar (radius 16) -->
+    <div class="dv-window" style="left:80px;top:70px;width:560px;height:360px">
+      <div class="dv-window__titlebar">
+        <div class="dv-traffic"><i></i><i></i><i></i></div>
+        <div class="dv-window__title">Untitled</div>
+      </div>
+      <div class="dv-window__body"><!-- app content --></div>
+      <div class="dv-window__rim"></div>
+    </div>
+
+    <!-- 6b. Tahoe app window: toolbar style (radius 26) + floating inset sidebar.
+         The traffic lights live inside the sidebar panel. -->
+    <div class="dv-window dv-window--toolbar" style="left:690px;top:70px;width:720px;height:440px">
+      <div class="dv-window__sidebar">
+        <div class="dv-traffic"><i></i><i></i><i></i></div>
+        <div class="dv-sidebar__section">Favorites</div>
+        <div class="dv-sidebar__row is-selected"><span data-dv-icon="sidebar"></span>Recents</div>
+        <div class="dv-sidebar__row"><span data-dv-icon="tabs"></span>Documents</div>
+      </div>
+      <div style="position:absolute;left:236px;right:0;top:0;bottom:0"><!-- app content --></div>
+      <div class="dv-window__rim"></div>
+    </div>
+
+    <!-- 7. macOS notification banner (top-right). Add .is-hover to show the close button;
+         .is-pressed on .dv-mac-notif__close while it is clicked, then slide the banner out to the right. -->
+    <div class="dv-mac-notif dv-mac-notif--corner is-hover">
+      <span class="dv-mac-notif__close" data-dv-icon="close_x"></span>
+      <span class="dv-appicon dv-appicon--grok dv-appicon--mac" data-dv-icon="glyph_grok"></span>
+      <div class="dv-mac-notif__main">
+        <div class="dv-mac-notif__head"><div class="dv-mac-notif__title">Grok</div><div class="dv-mac-notif__time">now</div></div>
+        <div class="dv-mac-notif__body">Your weekly report is ready: signups up 18% week over week, churn flat at 2.1%.</div>
+      </div>
+    </div>
+
+    <!-- Cursor (see section 10 for all states) -->
+    <div class="dv-cursor" style="left:1310px;top:104px">
+      <span class="dv-cursor__arrow" data-dv-icon="cursor_arrow"></span>
+      <span class="dv-cursor__hand" data-dv-icon="cursor_hand"></span>
+      <span class="dv-cursor__ibeam" data-dv-icon="cursor_ibeam"></span>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================================
+     8. SAFARI 26 window (Tahoe). Single-tab "Separate" layout: one
+     toolbar row; glass capsules group the buttons; centred address field
+     shows the bare domain (in narrow windows it shrinks, then slides right, so
+     it never meets the button groups; adjust --lead/--trail if you change them).
+     Page content goes in .dv-safari__page.
+     Loading: tween .dv-safari__progress scaleX 0 → 1, then fade it.
+     8a = a loaded page · 8b = the Start Page (empty field with placeholder,
+     Favorites grid of site icons, Privacy Report card).
+     ================================================================= -->
+<h2>8 · Safari window</h2>
+<div class="sk-device frame" data-theme="light" style="height:520px;zoom:.8">
+  <div class="dv-window dv-window--toolbar dv-safari" style="left:0;top:0;width:1040px;height:500px">
+    <div class="dv-safari__toolbar">
+      <div class="dv-traffic"><i></i><i></i><i></i></div>
+      <div class="dv-capsule"><span class="dv-capsule__btn" data-dv-icon="sidebar"></span><span class="dv-capsule__btn dv-capsule__btn--narrow" data-dv-icon="chev_down_small"></span></div>
+      <div class="dv-capsule"><span class="dv-capsule__btn" data-dv-icon="chev_left"></span><span class="dv-capsule__btn is-disabled" data-dv-icon="chev_right"></span></div>
+      <div class="dv-safari__address">
+        <span class="dv-capsule__btn" data-dv-icon="page_menu"></span>
+        <span class="dv-safari__url">claude.ai</span>
+        <span class="dv-capsule__btn" data-dv-icon="reload"></span>
+        <div class="dv-safari__progress"></div>
+      </div>
+      <div class="dv-safari__spacer"></div>
+      <div class="dv-capsule"><span class="dv-capsule__btn" data-dv-icon="share"></span><span class="dv-capsule__btn" data-dv-icon="plus"></span><span class="dv-capsule__btn" data-dv-icon="tabs"></span></div>
+    </div>
+    <div class="dv-safari__page"><!-- page content --></div>
+    <div class="dv-window__rim"></div>
+  </div>
+</div>
+
+<h2>8b · Safari Start Page</h2>
+<div class="sk-device frame" data-theme="light" style="height:560px;zoom:.8">
+  <div class="dv-window dv-window--toolbar dv-safari" style="left:0;top:0;width:820px;height:540px">
+    <div class="dv-safari__toolbar">
+      <div class="dv-traffic"><i></i><i></i><i></i></div>
+      <div class="dv-capsule"><span class="dv-capsule__btn" data-dv-icon="sidebar"></span><span class="dv-capsule__btn dv-capsule__btn--narrow" data-dv-icon="chev_down_small"></span></div>
+      <div class="dv-capsule"><span class="dv-capsule__btn is-disabled" data-dv-icon="chev_left"></span><span class="dv-capsule__btn is-disabled" data-dv-icon="chev_right"></span></div>
+      <!-- unfocused, empty: the magnifier and the placeholder are centred together -->
+      <div class="dv-safari__address">
+        <span class="dv-safari__url"><span class="dv-safari__ph"><span data-dv-icon="search"></span>Search or enter website name</span></span>
+      </div>
+      <div class="dv-safari__spacer"></div>
+      <div class="dv-capsule"><span class="dv-capsule__btn" data-dv-icon="share"></span><span class="dv-capsule__btn" data-dv-icon="plus"></span><span class="dv-capsule__btn" data-dv-icon="tabs"></span></div>
+    </div>
+    <div class="dv-safari__page">
+      <div class="dv-startpage"><div class="dv-startpage__inner">
+        <div class="dv-startpage__head"><span class="dv-startpage__title">Favorites</span><span class="dv-startpage__more">Show More</span></div>
+        <div class="dv-favs">
+          <!-- a tile = the site's touch icon: set the tile background + glyph colour inline -->
+          <div class="dv-fav"><span class="dv-fav__tile" style="background:#FFFFFF;color:#000" data-dv-icon="glyph_apple"></span><span class="dv-fav__label">Apple</span></div>
+          <div class="dv-fav"><span class="dv-fav__tile" style="background:#FFFFFF" data-dv-icon="glyph_google"></span><span class="dv-fav__label">Google</span></div>
+          <div class="dv-fav"><span class="dv-fav__tile" style="background:#FFFFFF;color:#181717" data-dv-icon="glyph_github"></span><span class="dv-fav__label">GitHub</span></div>
+          <div class="dv-fav"><span class="dv-fav__tile" style="background:#F5F4ED;color:#D97757" data-dv-icon="glyph_claude"></span><span class="dv-fav__label">Claude</span></div>
+          <div class="dv-fav"><span class="dv-fav__tile" style="background:#091717;color:#20B8CD" data-dv-icon="glyph_perplexity"></span><span class="dv-fav__label">Perplexity</span></div>
+          <!-- sites without a touch icon get a monogram tile -->
+          <div class="dv-fav"><span class="dv-fav__tile dv-fav__tile--letter" style="background:#5B6CF0">W</span><span class="dv-fav__label">Wikipedia</span></div>
+        </div>
+        <div class="dv-startpage__head"><span class="dv-startpage__title">Privacy Report</span></div>
+        <div class="dv-privacy"><span class="dv-privacy__icon" data-dv-icon="sp_shield"></span><span>In the last seven days, Safari has prevented 41 trackers from profiling you and hidden your IP address from known trackers.</span></div>
+      </div></div>
+    </div>
+    <div class="dv-window__rim"></div>
+  </div>
+</div>
+
+<!-- =================================================================
+     9. CHROME window (GM3 / Chrome Refresh on macOS)
+     Tabs: .is-active for the current tab (toolbar colour, flared feet).
+           Inactive tabs show a right separator; add .no-sep to the tab
+           just before the active one.
+     Favicon states: a glyph · .dv-chrome__favicon--spinner with cr_spinner
+           (rotate it from the timeline) while loading.
+     Omnibox states:
+       idle     → .dv-chrome__siteinfo (tune chip) + URL; host in ink, path in .dv-path
+       focused  → background:var(--dv-cr-toolbar); box-shadow: inset 0 0 0 2px var(--dv-cr-link);
+                  search icon in .dv-chrome__siteinfo--plain; placeholder in .dv-placeholder
+       typing   → .dv-chrome__popup over the omnibox (left/top = omnibox − 4px,
+                  width = omnibox + 8px); typed text + inline autocomplete in .dv-auto
+     Reload button shows cr_stop while loading.
+     ================================================================= -->
+<h2>9 · Chrome window</h2>
+<div class="sk-device frame" data-theme="light" style="height:560px">
+  <div class="dv-chrome" style="left:0;top:0;width:1200px;height:540px">
+    <div class="dv-chrome__tabstrip">
+      <div class="dv-traffic"><i></i><i></i><i></i></div>
+      <span class="dv-chrome__tabsearch" data-dv-icon="cr_tab_search"></span>
+      <div class="dv-chrome__tabs">
+        <div class="dv-chrome__tab no-sep">
+          <span class="dv-chrome__favicon" data-dv-icon="glyph_github"></span>
+          <span class="dv-chrome__tabtitle" data-layout-allow-overflow><span data-layout-allow-overflow>Pull requests · vercel/next.js</span></span>
+          <span class="dv-chrome__tabclose" data-dv-icon="cr_close"></span>
+        </div>
+        <div class="dv-chrome__tab is-active">
+          <span class="dv-chrome__favicon" style="color:#D97757" data-dv-icon="glyph_claude"></span>
+          <span class="dv-chrome__tabtitle" data-layout-allow-overflow><span data-layout-allow-overflow>Claude</span></span>
+          <span class="dv-chrome__tabclose" data-dv-icon="cr_close"></span>
+        </div>
+        <span class="dv-chrome__newtab" data-dv-icon="cr_plus"></span>
+      </div>
+    </div>
+    <div class="dv-chrome__toolbar">
+      <span class="dv-chrome__btn" data-dv-icon="cr_back"></span>
+      <span class="dv-chrome__btn is-disabled" data-dv-icon="cr_forward"></span>
+      <span class="dv-chrome__btn" data-dv-icon="cr_reload"></span>
+      <div class="dv-chrome__omnibox">
+        <span class="dv-chrome__siteinfo" data-dv-icon="cr_tune"></span>
+        <div class="dv-chrome__url">claude.ai<span class="dv-path">/new</span></div>
+        <span class="dv-chrome__star" data-dv-icon="cr_star"></span>
+      </div>
+      <span class="dv-chrome__btn" data-dv-icon="cr_puzzle"></span>
+      <span class="dv-chrome__avatar">A</span>
+      <span class="dv-chrome__btn" data-dv-icon="cr_kebab"></span>
+    </div>
+    <div class="dv-chrome__page"><!-- page content --></div>
+
+    <!-- omnibox dropdown (only while typing) -->
+    <div class="dv-chrome__popup" style="left:118px;top:46px;width:946px">
+      <div class="dv-chrome__omnibox" style="background:transparent">
+        <span class="dv-chrome__siteinfo dv-chrome__siteinfo--plain" data-dv-icon="cr_search"></span>
+        <div class="dv-chrome__url">clau<span class="dv-auto">de.ai</span></div>
+      </div>
+      <div class="dv-chrome__popup-sep"></div>
+      <!-- row 1 = the inline-autocompleted URL (selected: tint + blue focus bar); then a search for exactly what was typed;
+           then completions with the untyped part in <b>; history rows use cr_history -->
+      <div class="dv-chrome__row is-selected"><span class="dv-chrome__row-icon dv-chrome__row-icon--favicon"><span style="display:block;width:16px;height:16px;color:#D97757" data-dv-icon="glyph_claude"></span></span><span><span class="dv-link">claude.ai</span><span class="dv-dash">–</span>Claude</span></div>
+      <div class="dv-chrome__row"><span class="dv-chrome__row-icon" data-dv-icon="cr_search"></span><span>clau</span></div>
+      <div class="dv-chrome__row"><span class="dv-chrome__row-icon" data-dv-icon="cr_search"></span><span>clau<b>de code</b></span></div>
+      <div class="dv-chrome__row"><span class="dv-chrome__row-icon" data-dv-icon="cr_history"></span><span><span class="dv-link">claude.ai/recents</span><span class="dv-dash">–</span>Chats · Claude</span></div>
+    </div>
+    <div class="dv-chrome__rim"></div>
+  </div>
+</div>
+
+<!-- =================================================================
+     9b. CHROME NEW TAB PAGE (Google as the search engine) inside .dv-chrome__page
+     Top right: Gmail · Images · apps grid · account avatar. Centre: the Google
+     wordmark (272 × 92; white in dark), the search box ("realbox", 584 × 48,
+     radius 24) with the four-colour mic and Lens buttons, the shortcut tiles,
+     and "Customize Chrome" bottom right. --top on .dv-ntp moves the column.
+     The tab shows no favicon, title "New Tab"; the omnibox placeholder reads
+     "Search Google or type a URL".
+     ================================================================= -->
+<h2>9b · Chrome New Tab Page</h2>
+<div class="sk-device frame" data-theme="light" style="height:560px">
+  <div class="dv-chrome" style="left:0;top:0;width:1020px;height:540px">
+    <div class="dv-chrome__tabstrip">
+      <div class="dv-traffic"><i></i><i></i><i></i></div>
+      <span class="dv-chrome__tabsearch" data-dv-icon="cr_tab_search"></span>
+      <div class="dv-chrome__tabs">
+        <div class="dv-chrome__tab is-active">
+          <span class="dv-chrome__favicon"></span>
+          <span class="dv-chrome__tabtitle" data-layout-allow-overflow><span data-layout-allow-overflow>New Tab</span></span>
+          <span class="dv-chrome__tabclose" data-dv-icon="cr_close"></span>
+        </div>
+        <span class="dv-chrome__newtab" data-dv-icon="cr_plus"></span>
+      </div>
+    </div>
+    <div class="dv-chrome__toolbar">
+      <span class="dv-chrome__btn is-disabled" data-dv-icon="cr_back"></span>
+      <span class="dv-chrome__btn is-disabled" data-dv-icon="cr_forward"></span>
+      <span class="dv-chrome__btn" data-dv-icon="cr_reload"></span>
+      <div class="dv-chrome__omnibox">
+        <span class="dv-chrome__siteinfo dv-chrome__siteinfo--plain" data-dv-icon="cr_search"></span>
+        <div class="dv-chrome__url"><span class="dv-placeholder">Search Google or type a URL</span></div>
+      </div>
+      <span class="dv-chrome__btn" data-dv-icon="cr_puzzle"></span>
+      <span class="dv-chrome__avatar">C</span>
+      <span class="dv-chrome__btn" data-dv-icon="cr_kebab"></span>
+    </div>
+    <div class="dv-chrome__page">
+      <div class="dv-ntp">
+        <div class="dv-ntp__links"><span class="dv-ntp__link">Gmail</span><span class="dv-ntp__link">Images</span><span class="dv-ntp__apps" data-dv-icon="cr_apps"></span><span class="dv-ntp__avatar">C</span></div>
+        <div class="dv-ntp__logo" data-dv-icon="glyph_google_wordmark"></div>
+        <div class="dv-ntp__search">
+          <span class="dv-ntp__search-icon" data-dv-icon="cr_search"></span>
+          <span class="dv-ntp__placeholder">Search Google or type a URL</span>
+          <span class="dv-ntp__search-btn" data-dv-icon="g_mic"></span>
+          <span class="dv-ntp__search-btn" data-dv-icon="g_lens"></span>
+        </div>
+        <div class="dv-ntp__tiles">
+          <div class="dv-ntp__tile"><span class="dv-ntp__tile-icon" data-dv-icon="glyph_github"></span><span class="dv-ntp__tile-label">GitHub</span></div>
+          <div class="dv-ntp__tile"><span class="dv-ntp__tile-icon" data-dv-icon="glyph_openai"></span><span class="dv-ntp__tile-label">ChatGPT</span></div>
+          <div class="dv-ntp__tile"><span class="dv-ntp__tile-icon" data-dv-icon="glyph_google"></span><span class="dv-ntp__tile-label">Google</span></div>
+        </div>
+        <div class="dv-ntp__custom"><span style="display:block;width:18px;height:18px" data-dv-icon="cr_customize"></span>Customize Chrome</div>
+      </div>
+    </div>
+    <div class="dv-chrome__rim"></div>
+  </div>
+</div>
+
+<!-- =================================================================
+     10. macOS POINTER · .dv-cursor (left/top or GSAP x/y = the hotspot)
+     States: default arrow · .is-hand (links, buttons) · .is-ibeam (text
+     fields; hotspot = middle of the beam). Pressed: GSAP scale .88 for
+     ~0.08 s, back to 1 in ~0.12 s (transform-origin is the tip).
+     macOS hides the pointer while the user types: fade it out after the click.
+     .dv-cursor--white = the white-with-black-outline arrow used in Apple and
+     Anthropic launch renders (a macOS pointer-colour setting).
+     ================================================================= -->
+<h2>10 · Pointer states</h2>
+<div class="sk-device row" data-theme="light" style="position:relative;height:60px;gap:0;zoom:2">
+  <div class="dv-cursor" style="left:20px;top:14px"><span class="dv-cursor__arrow" data-dv-icon="cursor_arrow"></span><span class="dv-cursor__hand" data-dv-icon="cursor_hand"></span><span class="dv-cursor__ibeam" data-dv-icon="cursor_ibeam"></span></div>
+  <div class="dv-cursor is-hand" style="left:80px;top:14px"><span class="dv-cursor__arrow" data-dv-icon="cursor_arrow"></span><span class="dv-cursor__hand" data-dv-icon="cursor_hand"></span><span class="dv-cursor__ibeam" data-dv-icon="cursor_ibeam"></span></div>
+  <div class="dv-cursor is-ibeam" style="left:140px;top:26px"><span class="dv-cursor__arrow" data-dv-icon="cursor_arrow"></span><span class="dv-cursor__hand" data-dv-icon="cursor_hand"></span><span class="dv-cursor__ibeam" data-dv-icon="cursor_ibeam"></span></div>
+  <div class="dv-cursor dv-cursor--white" style="left:200px;top:14px"><span class="dv-cursor__arrow" data-dv-icon="cursor_arrow"></span><span class="dv-cursor__hand" data-dv-icon="cursor_hand"></span><span class="dv-cursor__ibeam" data-dv-icon="cursor_ibeam"></span></div>
+</div>
+
+<script>SKIN_DEVICE_HYDRATE(document);</script>
+</body>
+</html>

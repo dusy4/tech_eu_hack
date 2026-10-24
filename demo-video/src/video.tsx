@@ -27,7 +27,7 @@ function Shot({file,trim=0,camera=[]}:{file:string;trim?:number;camera?:CameraMo
 }
 export function SpelunkDemo(){
  return <SnapCnUIProvider theme={theme}><AbsoluteFill style={{background:paper}}>
-  <Audio src={staticFile('audio/elevenlabs-score.wav')} volume={.85}/>
+  <Audio src={staticFile('audio/elevenlabs-score.wav')} volume={1}/>
   <Sequence durationInFrames={90}>
    <TextReveal text="Great discussions. Lost decisions." fontSize={54} initialScale={1.35} color={ink} wordStagger={5}/>
   </Sequence>

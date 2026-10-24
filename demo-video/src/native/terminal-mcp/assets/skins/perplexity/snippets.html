@@ -1,0 +1,396 @@
+<!doctype html>
+<!--
+  PERPLEXITY SKIN: canonical markup.
+  Copy the piece you need into your component. Every piece must sit inside an element with
+  class "sk-pplx" (the window already is one). Theme: data-theme="light|dark" on .sk-pplx or an ancestor.
+
+  Icons: write <i data-ic="name"></i> and call window.pplxHydrate(rootEl) once after inserting the
+  markup (icons.js), or build strings with window.SKIN_ICONS_PERPLEXITY.name yourself.
+  Icon size = font-size of the parent (svg.pxi is 1em square).
+
+  Scale 1 = the official 1080p reference frames. For video, present pieces bigger with a transform on a wrapper:
+  the demo crops the page at scale 1.38-1.42 (.px-crop, section 7) and shows the Comet window at scale 1.3.
+  Open this file directly in a browser to see every piece rendered.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Perplexity skin snippets</title>
+<link rel="stylesheet" href="../../_shared/fonts/fonts.css">
+<link rel="stylesheet" href="skin.css">
+<script src="icons.js"></script>
+<style>
+  body { margin: 0; padding: 40px; background: #e9e7e4; font-family: Inter, sans-serif; display: flex; flex-direction: column; gap: 48px; }
+  .label { font: 600 13px/1 Inter, sans-serif; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+  .row { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+  .pad { padding: 28px; background: var(--px-bg); border-radius: 12px; }
+</style>
+</head>
+<body>
+
+<!-- =====================================================================
+     1. COMET WINDOW + PERPLEXITY WEB APP (home / empty state, Search mode)
+     Window size: set --px-w / --px-h on .px-window (defaults 1400 x 880).
+     Structure: .px-window > .px-tabstrip + .px-frame > .px-toolbar + .px-viewport
+     ===================================================================== -->
+<section>
+<div class="label">1 · Comet window + home (sidebar, empty state, idle composer)</div>
+<div class="sk-pplx px-window" data-theme="light">
+  <!-- tab strip: traffic lights, tabs, new tab, overflow chevron, profile -->
+  <div class="px-tabstrip">
+    <div class="px-traffic"><i></i><i></i><i></i></div>
+    <div class="px-tab is-active"><div class="px-favicon"><i data-ic="logo"></i></div><span>Perplexity</span></div>
+    <div class="px-tab-new"><i data-ic="plus"></i></div>
+    <div class="px-tabstrip-end"><i data-ic="chevronDown"></i><div class="px-profile"></div></div>
+  </div>
+  <div class="px-frame">
+    <!-- toolbar: back / forward / reload / voice, URL, actions, Assistant button.
+         Right-hand order (comet-sidebar-assistant.png): star link | puzzle download | reader voice | Assistant.
+         Sites without extensions/downloads (web-home-light-sidebar-in-comet.png) drop the middle pair and its divider. -->
+    <div class="px-toolbar">
+      <div class="px-nav"><i data-ic="back"></i><span class="is-dim"><i data-ic="forward"></i></span><i data-ic="reload"></i><i data-ic="mic"></i></div>
+      <div class="px-url"><div class="px-favicon"><i data-ic="logo"></i></div><span>perplexity.ai</span></div>
+      <div class="px-toolbar-end">
+        <i data-ic="star"></i><i data-ic="link"></i><div class="px-tb-sep"></div>
+        <i data-ic="reader"></i><i data-ic="voice"></i><div class="px-tb-sep"></div>
+        <!-- "Assistant" is regular weight, mid-grey, whether or not the panel is open (.is-on keeps the same look) -->
+        <div class="px-assistant-btn"><i data-ic="comet"></i><span>Assistant</span></div>
+      </div>
+    </div>
+    <div class="px-viewport">
+      <div class="px-app">
+        <!-- SIDEBAR (Sep 2026 order). .is-active = current page (New on the home screen). -->
+        <aside class="px-sidebar">
+          <div class="px-sb-head"><span class="px-logo"><i data-ic="logo"></i></span><div class="px-sb-head-icons"><i data-ic="search"></i><i data-ic="sidebar"></i></div></div>
+          <nav class="px-sb-nav">
+            <div class="px-sb-item is-active"><span class="px-sb-plus"><i data-ic="plus"></i></span><span>New</span></div>
+            <div class="px-sb-item"><i data-ic="computer"></i><span>Computer</span></div>
+            <div class="px-sb-item"><i data-ic="automations"></i><span>Automations</span></div>
+            <div class="px-sb-item"><i data-ic="artifacts"></i><span>Artifacts</span></div>
+            <div class="px-sb-item"><i data-ic="customize"></i><span>Customize</span></div>
+          </nav>
+          <!-- collapsible groups -->
+          <div class="px-sb-groups">
+            <div class="px-sb-group"><span>Pinned</span><i data-ic="chevronRight"></i></div>
+            <div class="px-sb-group"><span>Projects</span><i data-ic="chevronRight"></i></div>
+            <div class="px-sb-group"><span>Sessions</span><i data-ic="chevronRight"></i></div>
+          </div>
+          <!-- footer: user + plan + notifications -->
+          <div class="px-sb-foot"><div class="px-avatar">JL</div><div class="px-user"><b>Jordan Lee</b><span>Max</span></div><span class="px-bell"><i data-ic="bell"></i></span></div>
+        </aside>
+        <main class="px-main">
+          <!-- HOME (Search). For Computer use the .is-computer block in section 2. -->
+          <div class="px-home">
+            <div class="px-home-label">Search</div>
+            <h1 class="px-home-title">What do you want to know?</h1>
+            <!-- COMPOSER: idle -->
+            <div class="px-composer">
+              <div class="px-input"><span class="px-placeholder">Ask anything…</span></div>
+              <div class="px-ctrls">
+                <div class="px-icon-btn"><i data-ic="plus"></i></div>
+                <!-- segmented mode toggle; .is-on marks the active mode -->
+                <div class="px-seg">
+                  <div class="px-seg-opt is-on"><i data-ic="search"></i><span>Search</span><i class="px-chev" data-ic="chevronDown"></i></div>
+                  <div class="px-seg-opt"><i data-ic="computer"></i><span>Computer</span></div>
+                </div>
+                <div class="px-spacer"></div>
+                <div class="px-model"><span>Model</span><i data-ic="chevronDown"></i></div>
+                <div class="px-icon-btn px-mic"><i data-ic="mic"></i></div>
+                <!-- idle = voice-mode button; swap to arrowRight once text is typed; stop while generating -->
+                <div class="px-round"><i data-ic="voice"></i></div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- =====================================================================
+     2. COMPOSER STATES + COMPUTER START SCREEN
+     ===================================================================== -->
+<section>
+<div class="label">2 · Composer: typing / generating / Computer + effort pill / Computer start screen</div>
+<div class="row">
+  <div class="sk-pplx pad" data-theme="light" style="width:880px">
+    <!-- TYPING: text + teal caret, send arrow replaces the voice button -->
+    <div class="px-composer">
+      <div class="px-input">Is Claude Opus 5.5 cheaper than GPT-6 Astra?<span class="px-caret"></span></div>
+      <div class="px-ctrls">
+        <div class="px-icon-btn"><i data-ic="plus"></i></div>
+        <div class="px-seg"><div class="px-seg-opt is-on"><i data-ic="search"></i><span>Search</span><i class="px-chev" data-ic="chevronDown"></i></div><div class="px-seg-opt"><i data-ic="computer"></i><span>Computer</span></div></div>
+        <div class="px-spacer"></div>
+        <div class="px-model"><span>Model</span><i data-ic="chevronDown"></i></div>
+        <div class="px-icon-btn px-mic"><i data-ic="mic"></i></div>
+        <div class="px-round"><i data-ic="arrowRight"></i></div>
+      </div>
+    </div>
+    <br>
+    <!-- GENERATING (follow-up composer at the bottom of a thread): stop square -->
+    <div class="px-composer is-followup">
+      <div class="px-input"><span class="px-placeholder">Ask a follow-up…</span></div>
+      <div class="px-ctrls">
+        <div class="px-icon-btn"><i data-ic="plus"></i></div>
+        <div class="px-seg"><div class="px-seg-opt is-on"><i data-ic="search"></i><span>Search</span><i class="px-chev" data-ic="chevronDown"></i></div><div class="px-seg-opt"><i data-ic="computer"></i><span>Computer</span></div></div>
+        <div class="px-spacer"></div>
+        <div class="px-model"><span>Model</span><i data-ic="chevronDown"></i></div>
+        <div class="px-icon-btn px-mic"><i data-ic="mic"></i></div>
+        <div class="px-round is-stop"><i data-ic="stop"></i></div>
+      </div>
+    </div>
+    <br>
+    <!-- COMPUTER MODE (Sep 2026): Search shown as a ghost segment, Computer ▾ active, effort pill "High ▾",
+         plus the project / connector strip under the composer -->
+    <div class="px-composer">
+      <div class="px-input"><span class="px-placeholder">Describe a task…</span></div>
+      <div class="px-ctrls">
+        <div class="px-icon-btn"><i data-ic="plus"></i></div>
+        <div class="px-seg"><div class="px-seg-opt is-ghost"><i data-ic="search"></i></div><div class="px-seg-opt is-on"><i data-ic="computer"></i><span>Computer</span><i class="px-chev" data-ic="chevronDown"></i></div></div>
+        <div class="px-spacer"></div>
+        <div class="px-model is-pill"><i class="px-effort-ic" data-ic="effort"></i><span>High</span><i data-ic="chevronDown"></i></div>
+        <div class="px-icon-btn px-mic"><i data-ic="mic"></i></div>
+        <div class="px-round"><i data-ic="voice"></i></div>
+      </div>
+    </div>
+    <div class="px-composer-foot"><span><i data-ic="folder"></i>Work in a project<i data-ic="chevronDown"></i></span><span>Connect an app</span></div>
+  </div>
+
+  <!-- COMPUTER START SCREEN (dark): monitor glyph + condensed serif heading -->
+  <div class="sk-pplx pad" data-theme="dark" style="width:880px">
+    <div class="px-home is-computer" style="margin:0;width:auto;padding:24px 0 0">
+      <div class="px-home-glyph"><i data-ic="computer"></i></div>
+      <h1 class="px-home-serif">What should we work on?</h1>
+      <div class="px-composer">
+        <div class="px-input">Compare our Q2 actuals against budget and flag lines more than 10% off.<span class="px-caret"></span></div>
+        <div class="px-ctrls">
+          <div class="px-icon-btn"><i data-ic="plus"></i></div>
+          <div class="px-seg"><div class="px-seg-opt is-ghost"><i data-ic="search"></i></div><div class="px-seg-opt is-on"><i data-ic="computer"></i><span>Computer</span></div></div>
+          <div class="px-spacer"></div>
+          <div class="px-model"><span>Orchestrator</span><i data-ic="chevronDown"></i></div>
+          <div class="px-icon-btn px-mic"><i data-ic="mic"></i></div>
+          <div class="px-round"><i data-ic="arrowRight"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- =====================================================================
+     3. POPOVERS: "+" menu, effort slider, model pickers
+     Position them absolutely under / above the control that opens them.
+     ===================================================================== -->
+<section>
+<div class="label">3 · "+" menu · effort popover · model pickers (Computer hybrid, Search)</div>
+<div class="row">
+  <!-- "+" MENU (mode list). Trailing chevron = submenu, teal check = active mode, Max badge = plan-gated -->
+  <div class="sk-pplx" data-theme="light">
+    <div class="px-menu">
+      <div class="px-menu-item"><i data-ic="paperclip"></i><span>Upload files or images</span></div>
+      <div class="px-menu-item"><i data-ic="plug"></i><span>Connectors and sources</span><i class="px-trail" data-ic="chevronRight"></i></div>
+      <div class="px-menu-item"><i data-ic="skills"></i><span>Use skills</span><i class="px-trail" data-ic="chevronRight"></i></div>
+      <div class="px-menu-sep"></div>
+      <div class="px-menu-item"><i data-ic="computer"></i><span>Computer</span><i class="px-trail is-check" data-ic="check"></i></div>
+      <div class="px-menu-item"><i data-ic="telescope"></i><span>Deep research</span></div>
+      <div class="px-menu-item"><i data-ic="gavel"></i><span>Model council</span><span class="px-badge">Max</span></div>
+      <div class="px-menu-item"><i data-ic="more"></i><span>More</span><i class="px-trail" data-ic="chevronRight"></i></div>
+    </div>
+  </div>
+
+  <!-- EFFORT POPOVER (opens from the "High ▾" pill in Computer mode). --px-level sets the fill. -->
+  <div class="sk-pplx" data-theme="light">
+    <div class="px-effort" style="--px-level:64%">
+      <div class="px-effort-head"><i data-ic="openai"></i><b>GPT-6 Astra</b> for deep thinking on complex tasks.</div>
+      <div class="px-slider"><div class="px-slider-fill"></div><span class="px-slider-end"></span><div class="px-slider-knob"></div></div>
+      <div class="px-effort-row"><span>Custom</span><i data-ic="chevronRight"></i></div>
+    </div>
+  </div>
+
+  <!-- HYBRID MODEL PICKER (Personal Computer, opens from "Orchestrator ▾"). Real list from the Sep 2026 frame. -->
+  <div class="sk-pplx" data-theme="dark">
+    <div class="px-picker">
+      <div class="px-picker-card"><div class="px-picker-label"><span>Hybrid</span><i data-ic="info"></i><span class="px-toggle is-on"></span></div></div>
+      <div class="px-picker-card">
+        <div class="px-picker-label"><span>Local</span><i data-ic="info"></i></div>
+        <div class="px-picker-row"><i data-ic="cpu"></i><span>Qwen3.6 35B-A3B</span></div>
+      </div>
+      <div class="px-picker-card">
+        <div class="px-picker-label"><span>Cloud</span><i data-ic="info"></i></div>
+        <div class="px-picker-row"><i data-ic="cpu"></i><span>Default</span><i class="px-trail" data-ic="check"></i></div>
+        <div class="px-picker-row"><i data-ic="openai"></i><span>GPT-6 Astra</span></div>
+        <div class="px-picker-row"><i data-ic="openai"></i><span>GPT-5.6 Sol</span></div>
+        <div class="px-picker-row"><i data-ic="openai"></i><span>GPT-5.6 Terra</span></div>
+        <div class="px-picker-row"><i data-ic="claude"></i><span>Claude Fable 5.1</span></div>
+        <div class="px-picker-row"><i data-ic="claude"></i><span>Claude Opus 5</span></div>
+        <div class="px-picker-row"><i data-ic="claude"></i><span>Claude Sonnet 5</span></div>
+        <div class="px-picker-row"><i data-ic="glm"></i><span>GLM 5.3</span></div>
+        <div class="px-picker-row"><i data-ic="kimi"></i><span>Kimi K3</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEARCH-MODE MODEL PICKER (opens from "Model ▾"). EXTRAPOLATED: no official 2026 frame.
+       Same popover chrome as the hybrid picker, one card. Names from the 10/05/26 changelog. -->
+  <div class="sk-pplx" data-theme="light">
+    <div class="px-picker">
+      <div class="px-picker-card" style="margin:0">
+        <div class="px-picker-row"><i data-ic="logo"></i><span>Best</span><i class="px-trail" data-ic="check"></i></div>
+        <div class="px-picker-row"><i data-ic="openai"></i><span>GPT-6.1 Sol</span></div>
+        <div class="px-picker-row"><i data-ic="openai"></i><span>GPT-6 Astra</span></div>
+        <div class="px-picker-row"><i data-ic="claude"></i><span>Claude Opus 5.5</span></div>
+        <div class="px-picker-row"><i data-ic="claude"></i><span>Claude Sonnet 5</span></div>
+        <div class="px-picker-row"><i data-ic="kimi"></i><span>Kimi K3</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- =====================================================================
+     4. ANSWER PAGE: header, user prompt, working steps, thinking mark,
+        serif answer with citation chips, table, action row, follow-up dock
+     ===================================================================== -->
+<section>
+<div class="label">4 · Answer page (light)</div>
+<div class="sk-pplx" data-theme="light" style="width:1180px;height:1000px;display:flex;border-radius:12px;overflow:hidden">
+  <main class="px-main">
+    <!-- thread header (extrapolated: title left, more + Share right) -->
+    <div class="px-thread-head"><span class="px-title">Is Claude Opus 5.5 cheaper than GPT-6 Astra?</span><div class="px-head-end"><div class="px-icon-btn"><i data-ic="more"></i></div><div class="px-share-btn"><i data-ic="share"></i><span>Share</span></div></div></div>
+    <div class="px-scroll"><div class="px-thread">
+      <!-- USER MESSAGE: right-aligned pale bubble -->
+      <div class="px-q">Is Claude Opus 5.5 cheaper than GPT-6 Astra?</div>
+      <!-- WORKING STEPS: icon + grey sentence + chevron (globeSearch / code / scanText icons) -->
+      <div class="px-steps">
+        <div class="px-step"><i data-ic="globeSearch"></i><span>Searching the web</span><i class="px-chev" data-ic="chevronRight"></i></div>
+        <div class="px-step"><i data-ic="globeSearch"></i><span>Reading the Anthropic and OpenAI pricing pages</span><i class="px-chev" data-ic="chevronRight"></i></div>
+        <div class="px-step"><i data-ic="code"></i><span>Comparing input and output prices per million tokens</span><i class="px-chev" data-ic="chevronRight"></i></div>
+      </div>
+      <!-- THINKING INDICATOR: teal Perplexity mark under the steps (animate scale/rotation gently);
+           remove it when the answer starts streaming -->
+      <div class="px-thinking"><i data-ic="logo"></i></div>
+      <!-- ANSWER: serif body, serif headings, grey bullets, inline citation chips (shield + domain + "+N") -->
+      <div class="px-answer">
+        <p>Yes. Claude Opus 5.5 costs 60% less than GPT-6 Astra for both input and output tokens, though GPT-6.1 Sol is cheaper than either.<span class="px-cite"><i data-ic="shield"></i><span>anthropic</span><span class="px-cite-more">+2</span></span></p>
+        <h3>API price per 1M tokens</h3>
+        <!-- TABLE: sans cells, bold header row on a tinted band, hairline grid, chips inside cells -->
+        <table class="px-table">
+          <tr><th>Model</th><th>Input</th><th>Output</th><th>Released</th></tr>
+          <tr><td>Claude Opus 5.5</td><td>$4</td><td>$20</td><td>Sep 22, 2026 <span class="px-cite" style="margin:0 0 0 6px"><i data-ic="shield"></i><span>anthropic</span></span></td></tr>
+          <tr><td>GPT-6 Astra</td><td>$10</td><td>$50</td><td>Sep 3, 2026 <span class="px-cite" style="margin:0 0 0 6px"><i data-ic="shield"></i><span>datacamp</span><span class="px-cite-more">+1</span></span></td></tr>
+        </table>
+        <h3>When the cheaper model is worth it</h3>
+        <ul><li>Sonnet 5.5 scores 70.6% on Terminal-Bench 4.0, higher than Opus 5.5, at $2 / $10.<span class="px-cite"><i data-ic="shield"></i><span>anthropic</span><span class="px-cite-more">+1</span></span></li></ul>
+      </div>
+      <!-- ACTION ROW: share, download, copy, rewrite, then stacked favicons + N sources.
+           Favicons are the cited sites' real marks, 24px discs overlapping by ~40% (later ones on top), in citation order.
+           Brand marks: icons.js (anthropic, openai, claude) or assets/logos/ in a component. Disc = --px-fav-bg unless the
+           site's favicon has its own ground (anthropic.com ivory). In dark the disc is #2b2925 with a light mark. -->
+      <div class="px-actions"><i data-ic="share"></i><i data-ic="download"></i><i data-ic="copy"></i><i data-ic="rewrite"></i>
+        <div class="px-sources"><div class="px-favs"><span class="px-fav" style="background:#f0eee6;color:#141413"><i data-ic="anthropic" style="width:15px;height:15px"></i></span><span class="px-fav" style="color:#0d0d0d"><i data-ic="openai"></i></span><span class="px-fav" style="color:#d97757"><i data-ic="claude" style="width:17px;height:17px"></i></span></div><span>9 sources</span></div></div>
+    </div></div>
+    <!-- FOLLOW-UP DOCK: composer pinned to the bottom with a fade above it -->
+    <div class="px-dock"><div class="px-composer is-followup"><div class="px-input"><span class="px-placeholder">Ask a follow-up…</span></div>
+      <div class="px-ctrls"><div class="px-icon-btn"><i data-ic="plus"></i></div><div class="px-seg"><div class="px-seg-opt is-on"><i data-ic="search"></i><span>Search</span><i class="px-chev" data-ic="chevronDown"></i></div><div class="px-seg-opt"><i data-ic="computer"></i><span>Computer</span></div></div><div class="px-spacer"></div><div class="px-model"><span>Model</span><i data-ic="chevronDown"></i></div><div class="px-icon-btn px-mic"><i data-ic="mic"></i></div><div class="px-round"><i data-ic="voice"></i></div></div></div></div>
+  </main>
+</div>
+</section>
+
+<!-- =====================================================================
+     5. COMPUTER SESSION PIECES: prompt with file chips, usage card
+     ===================================================================== -->
+<section>
+<div class="label">5 · Computer session: prompt + file chips, Usage card</div>
+<div class="row">
+  <div class="sk-pplx pad" data-theme="light" style="width:760px;display:flex;flex-direction:column">
+    <div class="px-q">Review my tax returns and brokerage statements from 2018 on and flag the holdings that cost the most.</div>
+    <div class="px-files"><div class="px-file"><i>PDF</i>Tax_Returns_2018_2025.pdf</div><div class="px-file"><i>PDF</i>Executive_Review.pdf</div></div>
+    <!-- FILE CITATION: paperclip + filename that fades out (.is-file) -->
+    <div class="px-answer" style="margin-top:22px">
+      <p>Advisory fees were the largest drag on returns in 2023.<span class="px-cite is-file"><i data-ic="paperclip"></i><span>Tax_Returns_2018_2025.pdf</span></span></p>
+    </div>
+  </div>
+  <div class="sk-pplx" data-theme="light">
+    <div class="px-card px-usage">
+      <div class="px-usage-row"><span>Usage</span><i data-ic="chevronDown" style="margin-left:auto"></i></div>
+      <div class="px-usage-row"><i data-ic="credits"></i><span>Credits used</span><em>0.00</em></div>
+      <div class="px-usage-row"><i data-ic="cpu"></i><span>Local tokens used</span><em>0</em></div>
+      <div class="px-usage-row"><i data-ic="clock"></i><span>Worked for</span><em>8s</em></div>
+      <div class="px-usage-btn">Manage credits and usage</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- =====================================================================
+     6. COMET ASSISTANT SIDE PANEL + AGENT TIMELINE
+     Put .px-site (the web page) and .px-assist side by side inside .px-viewport.
+     While the agent drives the page, add .px-agent-glow inside .px-site (cyan edge glow) and swap the
+     composer's send button for .px-agent-pill ("Working…" / "Typing…" + cyan stop square).
+     No ring is drawn around the element being clicked: the page's own state changes show the action.
+     ===================================================================== -->
+<section>
+<div class="label">6 · Comet Assistant panel: empty, and agent at work (light / dark)</div>
+<div class="row">
+  <!-- EMPTY: big faint Comet mark, page-context tab above the composer -->
+  <div class="sk-pplx" data-theme="light" style="height:760px;display:flex">
+    <aside class="px-assist">
+      <div class="px-assist-head"><i data-ic="more"></i></div>
+      <div class="px-assist-body"><div class="px-assist-empty"><i data-ic="comet"></i></div></div>
+      <div class="px-ctx-wrap">
+        <div class="px-ctx"><div class="px-favicon"><svg viewBox="0 0 24 24" fill="currentColor" style="width:12px;height:12px"><path d="M3.6 9.1 12 4.2l8.4 4.9L12 14z"/><path d="m5.9 12.8 6.1 3.6 6.1-3.6 2.3 1.4-8.4 4.9-8.4-4.9z" opacity=".62"/></svg></div><span>Fieldstone | Companies</span></div>
+        <div class="px-composer is-assist"><div class="px-input"></div>
+          <div class="px-ctrls"><div class="px-icon-btn is-ring"><i data-ic="plus"></i></div><div class="px-spacer"></div><div class="px-icon-btn px-mic"><i data-ic="mic"></i></div><div class="px-round"><i data-ic="arrowUp"></i></div></div></div>
+      </div>
+    </aside>
+  </div>
+  <!-- AGENT AT WORK: request bubble, vertical step timeline (grey dots, teal dot = current step),
+       action sub-labels: click "Clicking", pageRead "Reading page", pageScroll "Scrolling", typing "Typing";
+       while running, the send button becomes the dark-teal agent pill with a cyan stop square -->
+  <div class="sk-pplx" data-theme="dark" style="height:760px;display:flex">
+    <aside class="px-assist">
+      <div class="px-assist-head"><i data-ic="more"></i></div>
+      <div class="px-assist-body">
+        <div class="px-q">Find AI companies headquartered in San Francisco and save the top results to my “AI in SF” list</div>
+        <div class="px-agent">
+          <div class="px-agent-step"><span class="px-agent-dot"></span><div class="px-agent-title">Opening the headquarters filter</div><div class="px-agent-sub"><i data-ic="click"></i><span>Clicking</span></div></div>
+          <div class="px-agent-step"><span class="px-agent-dot"></span><div class="px-agent-title">Reading the filtered results</div><div class="px-agent-sub"><i data-ic="pageRead"></i><span>Reading page</span></div></div>
+          <div class="px-agent-step is-active"><span class="px-agent-dot"></span><div class="px-agent-title">Scrolling through 214 results</div><div class="px-agent-sub"><i data-ic="pageScroll"></i><span>Scrolling</span></div></div>
+        </div>
+      </div>
+      <div class="px-ctx-wrap">
+        <div class="px-ctx"><div class="px-favicon"><svg viewBox="0 0 24 24" fill="currentColor" style="width:12px;height:12px"><path d="M3.6 9.1 12 4.2l8.4 4.9L12 14z"/><path d="m5.9 12.8 6.1 3.6 6.1-3.6 2.3 1.4-8.4 4.9-8.4-4.9z" opacity=".62"/></svg></div><span>Fieldstone | Companies</span></div>
+        <div class="px-composer is-assist"><div class="px-input"></div>
+          <div class="px-ctrls"><div class="px-icon-btn is-ring"><i data-ic="plus"></i></div><div class="px-spacer"></div><div class="px-icon-btn px-mic"><i data-ic="mic"></i></div><div class="px-agent-pill"><span>Working…</span><span class="px-pill-stop"></span></div></div></div>
+      </div>
+    </aside>
+  </div>
+</div>
+</section>
+
+<!-- =====================================================================
+     7. VIDEO HELPERS: page crop, pointer, button hover / pressed
+     .px-crop is a full-bleed crop of the page with no window chrome, the framing Perplexity's own
+     launch videos use for the composer and for answers. Size it to frame / scale and scale a wrapper:
+       <div style="transform:scale(1.38)"><div class="sk-pplx px-crop" style="width:1393px;height:785px"> … </div></div>
+     .px-pointer is the white, dark-outlined arrow from Perplexity's videos. Its tip is 0.1em from the left
+     and 0.06em from the top of the box. Animate it with x / y; press = scale 0.92 for ~90 ms.
+     .px-round.is-hover lightens the send button while the pointer rests on it.
+     ===================================================================== -->
+<section>
+<div class="label">7 · Video helpers: crop, pointer, send button hover</div>
+<div class="row">
+  <div class="sk-pplx px-crop" data-theme="light" style="width:900px;height:300px">
+    <div class="px-main"><div class="px-home" style="width:832px">
+      <div class="px-composer"><div class="px-input">Is Claude Opus 5.5 cheaper than GPT-6 Astra?</div>
+        <div class="px-ctrls"><div class="px-icon-btn"><i data-ic="plus"></i></div><div class="px-seg"><div class="px-seg-opt is-on"><i data-ic="search"></i><span>Search</span><i class="px-chev" data-ic="chevronDown"></i></div><div class="px-seg-opt"><i data-ic="computer"></i><span>Computer</span></div></div><div class="px-spacer"></div><div class="px-model"><span>Model</span><i data-ic="chevronDown"></i></div><div class="px-icon-btn px-mic"><i data-ic="mic"></i></div><div class="px-round is-hover"><i data-ic="arrowRight"></i></div></div></div>
+    </div></div>
+    <div class="px-pointer" style="left:822px;top:196px"><i data-ic="pointer"></i></div>
+  </div>
+</div>
+</section>
+
+<script>window.pplxHydrate(document);</script>
+</body>
+</html>

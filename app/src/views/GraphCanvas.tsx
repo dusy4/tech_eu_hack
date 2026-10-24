@@ -8,6 +8,7 @@ import {
 import ELK from "elkjs/lib/elk.bundled.js";
 import "@xyflow/react/dist/style.css";
 import type { ViewSpec, ViewNode } from "../data/types";
+import type { Anchor } from "../engine/roomTypes";
 import { Icon, type IconName } from "../ui/Icon";
 import { NumberTicker } from "@/components/motion/number-ticker";
 import { EASE_OUT } from "@/lib/ease";
@@ -30,10 +31,26 @@ const TAG_SW: Record<string, Swatch> = { HostRoot: SW.plum, FunctionComponent: S
 const RING_SW = [SW.ink, SW.yellow, SW.green, SW.blue];
 const RING_NAME = ["Changed symbol", "Direct callers", "One hop out", "Tests"];
 
-/** The legend group a node belongs to: its phase, fiber tag or ring. */
+// Views of the real index have no phases: nodes are coloured by the crate they live in.
+const CRATE_SW = [SW.blue, SW.green, SW.yellow, SW.plum, SW.rose, SW.ink];
+// Each crate in a view gets the next colour, in order of appearance, so neighbours never share one.
+const crateOf = (n: ViewNode) => String(n.meta?.crate ?? n.meta?.lane ?? "");
+const crateOrder = new WeakMap<ViewSpec, string[]>();
+const crateSwatch = (spec: ViewSpec, crate: string) => {
+  let order = crateOrder.get(spec);
+  if (!order) crateOrder.set(spec, (order = [...new Set(spec.nodes.filter((n) => !n.meta?.context).map(crateOf))]));
+  const i = order.indexOf(crate);
+  return CRATE_SW[(i < 0 ? order.length : i) % CRATE_SW.length];
+};
+/** A recorded sample flow has hand-placed positions; anything else is laid out automatically. */
+const isSampleFlow = (spec: ViewSpec) => spec.archetype === "flowTrace" && spec.nodes.every((n) => FLOW_GRID[n.id]);
+const byCrate = (spec: ViewSpec) => spec.archetype !== "algoStepper" && spec.archetype !== "blastRadius" && !isSampleFlow(spec);
+
+/** The legend group a node belongs to: its phase, fiber tag, ring or crate. */
 export function groupOf(spec: ViewSpec, id: string): string {
   const n = spec.nodes.find((x) => x.id === id);
   if (!n) return "";
+  if (byCrate(spec)) return n.meta?.context ? "Context call" : `crate ${String(n.meta?.crate ?? n.meta?.lane ?? "?")}`;
   if (spec.archetype === "flowTrace") return n.meta?.context ? "Context call" : String(n.meta?.phase);
   if (spec.archetype === "algoStepper") return String(n.meta?.tag);
   return RING_NAME[Number(n.meta?.ring ?? 0)];
@@ -42,6 +59,7 @@ export function groupOf(spec: ViewSpec, id: string): string {
 export function swatchFor(spec: ViewSpec, id: string): Swatch {
   const n = spec.nodes.find((x) => x.id === id);
   if (!n) return SW.ink;
+  if (byCrate(spec)) return crateSwatch(spec, crateOf(n));
   if (spec.archetype === "flowTrace") {
     const parent = n.meta?.parent ? spec.nodes.find((x) => x.id === n.meta!.parent) : undefined;
     return PHASE_SW[String((parent ?? n).meta?.phase)] ?? SW.ink;
@@ -114,6 +132,95 @@ function Group({ data }: NodeProps<Node<GroupData>>) {
   );
 }
 
+/** A proposal from the conversation, drawn on the graph next to the code it is about. */
+export type GraphProposal = {
+  id: string;
+  kind: "focus" | "ask" | "change" | "view";
+  title: string;
+  /** The change to build, or why it was proposed. */
+  detail?: string;
+  speaker?: string;
+  state: "pending" | "approved" | "sent" | "in_progress" | "done" | "dismissed";
+  anchors: Anchor[];
+};
+
+type ProposalData = GraphProposal & { onVerdict?: (id: string, verdict: "accept" | "decline") => void };
+
+const PROPOSAL_W = 300;
+const PROPOSAL_H = 168;
+const STATE_TEXT: Record<GraphProposal["state"], string> = {
+  pending: "",
+  approved: "Accepted · ready for the agent",
+  sent: "Sent to the agent",
+  in_progress: "The agent is building it",
+  done: "Built by the agent",
+  dismissed: "The agent set it aside",
+};
+
+function ProposalCard({ data }: NodeProps<Node<ProposalData>>) {
+  const reduce = useReducedMotion();
+  const pending = data.state === "pending";
+  const label = data.kind === "view" ? "View" : data.kind === "change" ? "Change" : data.kind === "ask" ? "Question" : "Focus";
+  return (
+    <motion.div
+      className={`gprop k-${data.kind} st-${data.state}`}
+      style={{ width: PROPOSAL_W, minHeight: PROPOSAL_H }}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(8px) scale(0.98)" }}
+      animate={{ opacity: 1, transform: "translateY(0px) scale(1)" }}
+      transition={{ duration: 0.26, ease: EASE_OUT }}
+    >
+      <Handle type="target" id="t" position={Position.Top} />
+      <div className="gprop-head">
+        <span className="gprop-kind">{label}</span>
+        {data.speaker && <span className="gprop-who">from {data.speaker}</span>}
+      </div>
+      <b className="gprop-title">{data.title}</b>
+      {data.detail && <p className="gprop-detail">{data.detail}</p>}
+      {pending ? (
+        <div className="gprop-actions">
+          {/* nodrag/nopan: buttons inside a React Flow node must not start a pan or a drag. */}
+          <button
+            className="gprop-btn yes nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onVerdict?.(data.id, "accept");
+            }}
+          >
+            <Icon name="tick" size={14} /> {data.kind === "view" ? "Show it" : "Accept"}
+          </button>
+          <button
+            className="gprop-btn nodrag nopan"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onVerdict?.(data.id, "decline");
+            }}
+          >
+            Decline
+          </button>
+        </div>
+      ) : (
+        <div className={`gprop-state st-${data.state}`}>
+          {data.state === "in_progress" ? <i className="ar-spin" /> : <Icon name="tick" size={14} />} {STATE_TEXT[data.state]}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+/** A symbol a proposal touches that this view doesn't draw: it hangs above the proposal, dashed. */
+function GhostSymbol({ data }: NodeProps<Node<{ label: string; file?: string; width: number }>>) {
+  return (
+    <div className="gp s-outline ctx gghost" style={{ width: data.width, ["--fill" as string]: "#f48120", ["--ink" as string]: "#fff" }} title={data.file}>
+      <Handle type="target" id="t" position={Position.Top} />
+      <span className="gp-in">
+        <span className="gp-chip"><Icon name="fn" size={15} stroke={2} /></span>
+        <span className="gp-label">{data.label}</span>
+      </span>
+      <Handle type="source" id="b" position={Position.Bottom} />
+    </div>
+  );
+}
+
 type RingsData = { w: number; h: number; cx: number; cy: number; radii: number[]; xs: number; reached: number };
 
 // Each ring the impact reaches sends one ripple out from the changed symbol to that ring.
@@ -171,7 +278,7 @@ function DotEdge(p: EdgeProps<Edge<DotData>>) {
   );
 }
 
-const nodeTypes = { pill: Pill, box: Group, rings: Rings };
+const nodeTypes = { pill: Pill, box: Group, rings: Rings, proposal: ProposalCard, ghost: GhostSymbol };
 const edgeTypes = { dot: DotEdge };
 
 // ── Layouts ────────────────────────────────────────────────────────────────
@@ -215,6 +322,7 @@ const fitFor = (right: number) =>
   ({ padding: { top: "76px", right: `${right + 24}px`, bottom: "96px", left: "24px" }, maxZoom: 1.6 }) as const;
 
 const elk = new ELK();
+const NONE: GraphProposal[] = [];
 
 async function treeLayout(spec: ViewSpec): Promise<Record<string, [number, number]>> {
   const res = await elk.layout({
@@ -230,6 +338,25 @@ async function treeLayout(spec: ViewSpec): Promise<Record<string, [number, numbe
   });
   const pos: Record<string, [number, number]> = {};
   res.children?.forEach((c) => (pos[c.id] = [(c.x ?? 0) * 1.2, (c.y ?? 0) * 1.1]));
+  return pos;
+}
+
+/** Real-repo flows, call trees and the rest: left to right, callers before callees. */
+async function layeredLayout(spec: ViewSpec): Promise<Record<string, [number, number]>> {
+  const res = await elk.layout({
+    id: "root",
+    layoutOptions: {
+      "elk.algorithm": "layered",
+      "elk.direction": "RIGHT",
+      "elk.spacing.nodeNode": "28",
+      "elk.layered.spacing.nodeNodeBetweenLayers": "64",
+      "elk.layered.nodePlacement.strategy": "BRANDES_KOEPF",
+    },
+    children: spec.nodes.map((n) => ({ id: n.id, width: pillWidth(n.label, 150), height: PILL_H })),
+    edges: spec.edges.map((e, i) => ({ id: `e${i}`, sources: [e.from], targets: [e.to] })),
+  });
+  const pos: Record<string, [number, number]> = {};
+  res.children?.forEach((c) => (pos[c.id] = [c.x ?? 0, c.y ?? 0]));
   return pos;
 }
 
@@ -310,9 +437,12 @@ type Props = {
   rightInset?: number;
   /** Extra controls appended to the tool strip. */
   tools?: ReactNode;
+  /** Proposals from the conversation, drawn under the graph and linked to the nodes they touch. */
+  proposals?: GraphProposal[];
+  onProposal?: (id: string, verdict: "accept" | "decline") => void;
 };
 
-function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onToggleInspector, suggested, flyTo, rightInset = 0, tools }: Props) {
+function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onToggleInspector, suggested, flyTo, rightInset = 0, tools, proposals = NONE, onProposal }: Props) {
   const rf = useReactFlow();
   const wrap = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState<string>();
@@ -325,8 +455,14 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
   const FIT = useMemo(() => fitFor(rightInset), [rightInset]);
 
   useEffect(() => {
+    let live = true;
     setTreePos(undefined);
-    if (spec.archetype === "algoStepper") treeLayout(spec).then(setTreePos);
+    const layout = spec.archetype === "algoStepper" ? treeLayout : spec.archetype === "blastRadius" || isSampleFlow(spec) ? undefined : layeredLayout;
+    // A layout that fails (a malformed view) draws nothing rather than crashing the room.
+    layout?.(spec).then((p) => live && setTreePos(p)).catch(() => live && setTreePos({}));
+    return () => {
+      live = false;
+    };
   }, [spec]);
 
   // The usable area's shape, minus the overlays the fit keeps clear. Rounded so small resizes don't relayout.
@@ -347,7 +483,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
   const blast = useMemo(() => (spec.archetype === "blastRadius" ? blastLayout(spec, aspect) : undefined), [spec, aspect]);
 
   const pos = useMemo(() => {
-    if (spec.archetype === "flowTrace") return FLOW_POS;
+    if (isSampleFlow(spec)) return FLOW_POS;
     if (blast) return blast.pos;
     return treePos ?? {};
   }, [spec, treePos, blast]);
@@ -386,6 +522,12 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
       if (frame.skipped?.includes(n.id)) return "skipped";
       return frame.visited?.includes(n.id) ? "past" : "outline";
     }
+    if (spec.archetype !== "blastRadius") {
+      // Call trees and other live views: what the steps so far have shown is done.
+      if (!ready) return "idle";
+      if (focus.includes(n.id)) return "now";
+      return spec.steps.slice(0, step).some((st) => st.focus.includes(n.id)) ? "past" : "idle";
+    }
     const ring = Number(n.meta?.ring ?? 0);
     if (!ready) return "idle";
     if (focus.includes(n.id)) return "now";
@@ -396,7 +538,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
     n.kind === "test" ? "test" : n.kind === "state" ? "code" : n.kind === "fiber" ? (n.meta?.tag === "HostText" ? "file" : "layers") : "fn";
 
   const nodes: Node[] = [];
-  if (spec.archetype === "flowTrace") {
+  if (isSampleFlow(spec)) {
     FLOW_GROUPS.forEach((g) =>
       nodes.push({ id: g.id, type: "box", position: { x: g.x, y: g.y }, width: g.w, height: g.h, data: g, draggable: false, selectable: false, zIndex: g.kind === "package" ? -2 : -1 }),
     );
@@ -417,7 +559,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
     const p = pos[n.id];
     if (!p) return;
     if (n.meta?.context && !showCtx) return;
-    const width = spec.archetype === "flowTrace" ? FLOW_W : pillWidth(n.label, spec.archetype === "algoStepper" ? 150 : 140);
+    const width = isSampleFlow(spec) ? FLOW_W : pillWidth(n.label, spec.archetype === "blastRadius" ? 140 : 150);
     nodes.push({
       id: n.id,
       type: "pill",
@@ -469,7 +611,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
         source: from,
         target: to,
         type: "dot",
-        ...(spec.archetype === "blastRadius" ? {} : handlesFor(pos[from], pos[to])),
+        ...(spec.archetype === "blastRadius" ? {} : isSampleFlow(spec) ? handlesFor(pos[from], pos[to]) : { sourceHandle: "r", targetHandle: "l" }),
         data: {
           color: swatchFor(spec, spec.archetype === "blastRadius" ? to : from).fill,
           lit,
@@ -483,6 +625,67 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
       };
     });
 
+  // Proposals sit in a lane under the graph, each under the nodes it touches, linked by a dashed line.
+  // Symbols a proposal names that this view doesn't draw hang between the graph and its card.
+  const pillBox = new Map(nodes.filter((n) => n.type === "pill").map((n) => [n.id, { x: n.position.x, w: Number(n.width ?? 140) }]));
+  const bottom = Math.max(0, ...nodes.filter((n) => n.type !== "box").map((n) => n.position.y + Number(n.height ?? PILL_H)));
+  const left = Math.min(0, ...nodes.map((n) => n.position.x));
+  const lane = bottom + 150;
+  const propPos: Record<string, [number, number]> = {};
+  const wanted = proposals
+    .map((p) => {
+      const on = p.anchors.flatMap((a) => (a.nodeId && pillBox.has(a.nodeId) ? [pillBox.get(a.nodeId)!] : []));
+      return { p, want: on.length ? on.reduce((sum, b) => sum + b.x + b.w / 2, 0) / on.length - PROPOSAL_W / 2 : Number.POSITIVE_INFINITY };
+    })
+    // Stable: cards with no anchor on screen keep their order of arrival at the end of the lane.
+    .sort((a, b) => a.want - b.want);
+  let cursor = left;
+  for (const { p, want } of wanted) {
+    const x = Math.max(cursor, Number.isFinite(want) ? want : cursor);
+    cursor = x + PROPOSAL_W + 28;
+    propPos[p.id] = [x, lane];
+    nodes.push({ id: `prop:${p.id}`, type: "proposal", position: { x, y: lane }, width: PROPOSAL_W, height: PROPOSAL_H, draggable: false, selectable: false, zIndex: 5, data: { ...p, onVerdict: onProposal } satisfies ProposalData });
+    const color = p.state === "pending" ? "#f48120" : "#12a594";
+    const link = (source: string, sourceHandle: string, straight: boolean) =>
+      edges.push({ id: `${source}->prop:${p.id}`, source, target: `prop:${p.id}`, sourceHandle, targetHandle: "t", type: "dot", data: { color, lit: true, flowing: false, current: false, dim: false, context: true, straight } satisfies DotData });
+    p.anchors
+      .filter((a) => !a.nodeId || !pillBox.has(a.nodeId))
+      .forEach((a, i) => {
+        const label = a.symbol.split("::").slice(-2).join("::");
+        const w = Math.min(PROPOSAL_W, pillWidth(label, 140));
+        const gid = `ghost:${p.id}:${i}`;
+        nodes.push({ id: gid, type: "ghost", position: { x: x + i * 22, y: lane - 84 + i * 10 }, width: w, height: PILL_H, draggable: false, selectable: false, zIndex: 4, data: { label, file: a.file, width: w } });
+        link(gid, "b", true);
+      });
+    p.anchors.forEach((a) => a.nodeId && pillBox.has(a.nodeId) && link(a.nodeId, "b", false));
+  }
+
+  // Fit to every node's known box. React Flow's own fitView only counts nodes it has measured, and
+  // nodes given an explicit size aren't measured, so it would fit the proposal cards alone.
+  const bounds = useRef({ x: 0, y: 0, width: 1, height: 1 });
+  {
+    const boxes = nodes.filter((n) => n.width && n.height);
+    if (boxes.length) {
+      const x0 = Math.min(...boxes.map((n) => n.position.x));
+      const y0 = Math.min(...boxes.map((n) => n.position.y));
+      const x1 = Math.max(...boxes.map((n) => n.position.x + Number(n.width)));
+      const y1 = Math.max(...boxes.map((n) => n.position.y + Number(n.height)));
+      bounds.current = { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+    }
+  }
+  const fitAll = (duration: number) => {
+    const el = wrap.current;
+    if (!el) return;
+    const { width: W, height: H } = el.getBoundingClientRect();
+    const [t, r, b, l] = [76, rightInset + 24, 96, 24];
+    const box = bounds.current;
+    const zoom = Math.max(0.25, Math.min(FIT.maxZoom, (W - l - r) / box.width, (H - t - b) / box.height));
+    rf.setViewport(
+      { x: l + (W - l - r - box.width * zoom) / 2 - box.x * zoom, y: t + (H - t - b - box.height * zoom) / 2 - box.y * zoom, zoom },
+      { duration },
+    );
+  };
+
   // Refit when the answer or the frame changes; timers, not frames, so hidden tabs still lay out.
   // The first fit lands instantly; later ones (resize, panel opening) glide so the view never jumps.
   const fitted = useRef(false);
@@ -493,7 +696,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
     const fit = () => {
       clearTimeout(t);
       t = window.setTimeout(() => {
-        rf.fitView({ ...FIT, duration: fitted.current ? 300 : 0 });
+        fitAll(fitted.current ? 300 : 0);
         fitted.current = true;
       }, 60);
     };
@@ -504,11 +707,11 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
       ro.disconnect();
       clearTimeout(t);
     };
-  }, [spec.id, treePos, blast, FIT, rf]);
+  }, [spec.id, treePos, blast, FIT, rf, wanted.length]);
 
   // The flow is one wide band; when fitting it whole would shrink labels past legibility, follow the step instead.
   const FLOW_SPAN = 1760 * FX;
-  const tooSmall = spec.archetype === "flowTrace" && availW / FLOW_SPAN < 0.75;
+  const tooSmall = isSampleFlow(spec) && availW / FLOW_SPAN < 0.75;
   useEffect(() => {
     if (tooSmall) setFollow(true);
   }, [tooSmall, spec.id]);
@@ -522,10 +725,11 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
   // Bringing a node into view: if it's already on screen, the highlight is enough; otherwise
   // pan at the current zoom. Zooming in on a click is disorienting and loses the surroundings.
   useEffect(() => {
-    if (!flyTo || !pos[flyTo.id] || !wrap.current) return;
-    const [x, y] = pos[flyTo.id];
+    const at = flyTo && (pos[flyTo.id] ?? propPos[flyTo.id]);
+    if (!flyTo || !at || !wrap.current) return;
+    const [x, y] = at;
     const n = spec.nodes.find((v) => v.id === flyTo.id);
-    const w = pillWidth(n?.label ?? "");
+    const w = n ? pillWidth(n.label) : PROPOSAL_W;
     const { width, height } = wrap.current.getBoundingClientRect();
     const a = rf.flowToScreenPosition({ x, y });
     const b = rf.flowToScreenPosition({ x: x + w, y: y + PILL_H });
@@ -545,7 +749,8 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
     };
     spec.nodes.forEach((n) => {
       const found = isVisible(n);
-      if (spec.archetype === "flowTrace") {
+      if (byCrate(spec)) add(groupOf(spec, n.id), swatchFor(spec, n.id), found, !!n.meta?.context);
+      else if (spec.archetype === "flowTrace") {
         if (n.meta?.context) add("Context call", swatchFor(spec, n.id), found, true);
         else add(String(n.meta?.phase), swatchFor(spec, n.id), found);
       } else if (spec.archetype === "algoStepper") add(String(n.meta?.tag), swatchFor(spec, n.id), found);
@@ -581,7 +786,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
     >
       <Background variant={BackgroundVariant.Dots} gap={18} size={1.2} color="#c5cdd4" />
       <Panel position="top-left" className="toolstrip">
-        <Tool icon="target" label="Fit" onClick={() => rf.fitView({ ...FIT, duration: 400 })} />
+        <Tool icon="target" label="Fit" onClick={() => fitAll(400)} />
         <Tool icon="radar" label="Follow" on={follow} onClick={() => setFollow((f) => !f)} />
         <Tool icon="flow" label="Flow" on={flowOn} onClick={() => setFlowOn((f) => !f)} />
         {spec.archetype === "flowTrace" && <Tool icon="layers" label="Context" on={showCtx} onClick={() => setShowCtx((c) => !c)} />}

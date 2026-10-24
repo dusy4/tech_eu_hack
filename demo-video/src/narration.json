@@ -1,0 +1,20 @@
+{
+  "voice_id": "cjVigY5qzO86Huf0OWal",
+  "voice_name": "Eric (ElevenLabs premade)",
+  "model": "eleven_v3",
+  "stability": 0.5,
+  "beats": [
+    {"id": "problem", "say": "Coding agents read code like text. Ask Claude Code who uses Approval Required Tool, and it searches, opens a thousand-line file, searches again, and it's still reading."},
+    {"id": "core", "say": "repo-analysis fixes this underneath the agent. It parses the codebase once into a code graph, with Rust in depth through rust analyzer, and serves it to any agent as sixteen MCP tools."},
+    {"id": "mcp", "say": "Same question, with the tools. Find symbol locates the struct. Symbol relations returns its exact callers, across crates. The answer comes from the graph, not from guessing."},
+    {"id": "spelunk", "say": "Spelunk puts that same graph in front of the whole team."},
+    {"id": "listen", "say": "When the room talks about code, Spelunk listens. Resonate transcribes the conversation live, and tells the speakers apart."},
+    {"id": "extract", "say": "Claude Haiku reads each new sentence and grounds it in the real code, calling the same MCP tools."},
+    {"id": "propose", "say": "Then it acts. A change someone suggests becomes a proposal, pinned to the node it touches. A question asked in the room gets an answer, straight from the code."},
+    {"id": "decide", "say": "Nothing moves without a yes. The team accepts one proposal, and declines the other."},
+    {"id": "handoff", "say": "Accepted decisions become a handoff document, saved on the MCP server, where any connected coding agent can pick it up."},
+    {"id": "skill", "say": "The repo ships a Claude Code skill for exactly this: spelunk handoff."},
+    {"id": "build", "say": "Claude Code pulls the handoff: what was decided, who said it, and where it lives in the code. It makes the change, asks before it runs the tests, and marks the handoff done."},
+    {"id": "close", "say": "Talk it through. Decide together. Let the agent build it. That's Spelunk."}
+  ]
+}

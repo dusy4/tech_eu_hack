@@ -8,9 +8,17 @@ import { AnimatedBadge } from "@/components/motion/animated-badge";
 import { Button, StatefulButton, type ButtonState } from "@/components/motion/button";
 import type { Suggestion, Utterance } from "../engine/suggest";
 import type { LiveMode } from "../engine/useLiveTranscript";
+import type { RoomItem } from "../engine/roomTypes";
+import type { HandoffState } from "../engine/live";
 import { Icon } from "./Icon";
 
 export type SuggestionState = "pending" | "approved" | "rejected" | "sent";
+
+/** An answer the listener gave to a question asked in the room. */
+export type RoomAnswer = Extract<RoomItem, { type: "answer" }> & { at: number };
+
+/** The listener's state, for the status line: on (Haiku reading the room) or off (keyword matcher). */
+export type ListenerInfo = { on: boolean; busy?: boolean; error?: string; calls?: number; ms?: number; grounded?: boolean };
 
 export type LiveProps = {
   mode: LiveMode;
@@ -34,7 +42,35 @@ export type LiveProps = {
   agentName?: string | null;
   sendState: ButtonState;
   onSend: (accepted: Suggestion[]) => void;
+  answers?: RoomAnswer[];
+  listener?: ListenerInfo;
+  /** What the agent has done with each sent proposal, by proposal id. */
+  progress?: Record<string, HandoffState>;
 };
+
+const PROGRESS_TEXT: Record<HandoffState["status"], string> = {
+  open: "Waiting for the agent to pick it up",
+  in_progress: "The agent is building it",
+  done: "Built by the agent",
+  dismissed: "The agent set it aside",
+};
+
+function ListenerLine({ l }: { l?: ListenerInfo }) {
+  if (!l) return null;
+  if (!l.on) return <p className="listener-line off">{l.error ?? "Proposals from keyword matching. The listener (Haiku 5.5) runs on views of the real repo."}</p>;
+  return (
+    <p className={`listener-line${l.busy ? " busy" : ""}${l.error ? " err" : ""}`} role="status" aria-live="polite">
+      <Icon name="claude" size={13} />
+      {l.error
+        ? l.error
+        : l.busy
+          ? "Haiku 5.5 is reading the conversation…"
+          : l.ms !== undefined
+            ? `Haiku 5.5 · ${l.calls} MCP ${l.calls === 1 ? "call" : "calls"} · ${(l.ms / 1000).toFixed(1)} s${l.grounded === false ? " · code index offline" : ""}`
+            : "Haiku 5.5 listens. Decisions become proposals, questions get answers."}
+    </p>
+  );
+}
 
 // One pigment set per speaker, matching their avatar colour: base, highlight, shadow.
 const ORB: Record<string, readonly [string, string, string]> = {
@@ -81,7 +117,8 @@ export function ConversationPanel(p: LiveProps) {
         )}
         {p.utterances.map((u) => {
           const n = p.suggestions.filter((s) => s.from === u.id && p.states[s.id] !== "rejected").length;
-          return (
+          const replies = (p.answers ?? []).filter((a) => a.from === u.id);
+          return [
             <Message key={u.id} from={u.speaker === "You" ? "user" : "assistant"} {...CALM} data-speaker={u.speaker}>
               <MessageAvatar>{u.speaker.slice(0, 1)}</MessageAvatar>
               <MessageContent>
@@ -93,8 +130,34 @@ export function ConversationPanel(p: LiveProps) {
                   <MessageBubbleContent>{u.text}</MessageBubbleContent>
                 </MessageBubble>
               </MessageContent>
-            </Message>
-          );
+            </Message>,
+            ...replies.map((a) => (
+              <Message key={a.id} from="assistant" {...CALM} data-speaker="Spelunk" className="live-answer">
+                <MessageAvatar>
+                  <Icon name="claude" size={14} />
+                </MessageAvatar>
+                <MessageContent>
+                  <MessageHeader>
+                    Spelunk <span className="live-tag">answer</span>
+                  </MessageHeader>
+                  <MessageBubble variant="outline">
+                    <MessageBubbleContent>
+                      {a.answer}
+                      {a.sources.length > 0 && (
+                        <span className="answer-sources">
+                          {a.sources.map((src) => (
+                            <code key={src.symbol} title={src.file}>
+                              {src.symbol.split("::").slice(-2).join("::")}
+                            </code>
+                          ))}
+                        </span>
+                      )}
+                    </MessageBubbleContent>
+                  </MessageBubble>
+                </MessageContent>
+              </Message>
+            )),
+          ];
         })}
         {/* The voice row: an orb that moves with the speaker's voice, and their words filling a bubble as they're recognised. */}
         <AnimatePresence>
@@ -124,6 +187,7 @@ export function ConversationPanel(p: LiveProps) {
       </MessageScroller>
 
       {p.error && <p className="live-error">{p.error}</p>}
+      <ListenerLine l={p.listener} />
       <footer className="pane-foot">
         <Button size="sm" variant={p.mode === "mic" ? "primary" : "secondary"} onClick={() => (p.mode === "mic" ? p.onStop() : p.onMode("mic"))}>
           <Icon name={p.mode === "mic" ? "stop" : "mic"} size={14} /> {p.mode === "mic" ? "Stop listening" : "Listen to the room"}
@@ -138,18 +202,25 @@ export function ConversationPanel(p: LiveProps) {
 
 /** Right pane, first tab: what the conversation proposes, and the batch that goes to the agent. */
 export function ProposalsPanel(p: LiveProps) {
-  const accepted = p.suggestions.filter((s) => p.states[s.id] === "approved");
+  // Views only change what the room looks at; everything else accepted is work for the agent.
+  const accepted = p.suggestions.filter((s) => p.states[s.id] === "approved" && s.kind !== "view");
   const sent = p.suggestions.filter((s) => p.states[s.id] === "sent").length;
   const shown = p.suggestions.filter((s) => p.states[s.id] !== "rejected");
   const said = (s: Suggestion) => p.utterances.find((u) => u.id === s.from);
   return (
     <div className="pane">
       <MessageScroller className="pane-scroll" contentClassName="prop-feed" viewportClassName="overflow-x-hidden" followOutput label="Proposals">
-        {shown.length === 0 && <p className="live-empty">Nothing proposed yet. When the conversation names a symbol on the graph, it lands here for an accept or a dismiss — nothing moves without a yes.</p>}
+        {shown.length === 0 && (
+          <p className="live-empty">
+            Nothing proposed yet. When the room decides something about the code, it lands here and on the graph for an accept or a decline. Nothing moves without a yes.
+          </p>
+        )}
         <AnimatePresence initial={false}>
           {shown.map((s) => {
             const u = said(s);
             const st = p.states[s.id];
+            const prog = p.progress?.[s.id];
+            const anchors = s.kind === "change" || s.kind === "view" ? s.anchors : [];
             return (
               <motion.div key={s.id} {...CALM}>
                 {u && (
@@ -160,13 +231,34 @@ export function ProposalsPanel(p: LiveProps) {
                 <ApprovalCard
                   className="live-card"
                   title={s.title}
-                  description={s.why}
+                  description={s.kind === "change" ? `${s.change} ${s.why ? `(${s.why})` : ""}`.trim() : s.why}
                   status={st === "approved" || st === "sent" ? "approved" : "pending"}
-                  approveLabel={s.kind === "ask" ? "Ask it" : "Accept"}
-                  result={st === "sent" ? `Sent to ${p.agentName ?? "the agent"}` : s.kind === "ask" ? "Accepted · building the answer" : "Accepted · highlighted on the graph"}
+                  approveLabel={s.kind === "ask" ? "Ask it" : s.kind === "view" ? "Show it" : "Accept"}
+                  result={
+                    st === "sent"
+                      ? prog
+                        ? `${PROGRESS_TEXT[prog.status]}${prog.note && prog.status !== "open" ? `: ${prog.note}` : ""}`
+                        : `Sent to ${p.agentName ?? "the agent"}`
+                      : s.kind === "ask"
+                        ? "Accepted · building the answer"
+                        : s.kind === "view"
+                          ? "Accepted · drawn on the graph"
+                          : s.kind === "change"
+                            ? "Accepted · ready for the agent"
+                            : "Accepted · highlighted on the graph"
+                  }
                   onApprove={() => p.onApply(s)}
                   onDismiss={() => p.onDismiss(s)}
                 />
+                {anchors.length > 0 && (
+                  <p className="prop-anchors">
+                    {anchors.map((a) => (
+                      <code key={a.symbol} title={a.file} className={a.nodeId ? "on" : ""}>
+                        {a.symbol.split("::").slice(-2).join("::")}
+                      </code>
+                    ))}
+                  </p>
+                )}
               </motion.div>
             );
           })}

@@ -1,0 +1,510 @@
+<!doctype html>
+<!--
+  ChatGPT skin: canonical snippets (Oct 2026).
+  Open this file in a browser to see every piece in light and dark.
+  Copy the markup inside each <template> into a component.
+
+  In a component:
+    <link rel="stylesheet" href="assets/fonts/fonts.css">
+    <link rel="stylesheet" href="assets/skins/chatgpt/skin.css">
+    <script src="assets/skins/chatgpt/icons.js"></script>
+    ... markup inside <div class="sk-chatgpt" data-theme="light|dark" [data-accent="green|blue"]> ...
+    <script> SKIN_ICONS_CHATGPT.mount(document); </script>   // fills every <i class="cg-i" data-i="…">
+
+  Every size is the real product's CSS px. Present it with `zoom` on a wrapper:
+  ~1.1 for chatgpt.com (24px answer prose), ~1.5 for the desktop app (16px prose), ~1.6 for iOS.
+  Pieces marked [EXTRAPOLATED] have no official frame; see DECISIONS.md.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ChatGPT skin snippets</title>
+<link rel="stylesheet" href="../../_shared/fonts/fonts.css" />
+<link rel="stylesheet" href="../../fonts/fonts.css" />
+<link rel="stylesheet" href="skin.css" />
+<script src="icons.js"></script>
+<style>
+  body { margin: 0; background: #e9e9e7; font-family: Inter, sans-serif; }
+  .gallery { display: grid; grid-template-columns: 1fr 1fr; }
+  .cell { padding: 28px; position: relative; overflow: hidden; }
+  .cell.light { background: #f5f5f4; }
+  .cell.dark { background: #0e0e0f; }
+  .label { font: 500 12px Inter, sans-serif; color: #888; margin: 0 0 14px; letter-spacing: .02em; text-transform: uppercase; }
+  .surface { background: var(--cg-page); border-radius: 14px; padding: 28px; position: relative; }
+  .stack { display: flex; flex-direction: column; gap: 18px; align-items: center; }
+  .static { position: static !important; }
+</style>
+</head>
+<body>
+<div class="gallery" id="gallery"></div>
+
+<!-- ======================================================================
+     1. chatgpt.com WINDOW: icon rail · top bar (Chat | Work) · home greeting · idle composer
+        Root: .sk-chatgpt.cg-web (fills its box; give the box a size). .cg-window adds the
+        floating-window radius, hairline and shadow for a stage.
+        Rail order (official GDP demo): knot · new chat · search · library · pinned · chats; avatar at the foot.
+        A Work/Business account rail is: home (filled + green dot) · Space · clock · @ · ⋯  (Monty Hall demo).
+     ====================================================================== -->
+<template data-label="chatgpt.com home" data-zoom="0.55">
+  <div class="sk-chatgpt cg-window cg-web" style="width:1274px;height:718px">
+    <nav class="cg-rail">
+      <div class="cg-rail-btn is-logo"><i class="cg-i" data-i="knot"></i></div>
+      <div class="cg-rail-btn"><i class="cg-i" data-i="edit"></i></div>
+      <div class="cg-rail-btn"><i class="cg-i" data-i="search"></i></div>
+      <div class="cg-rail-btn"><i class="cg-i" data-i="library"></i></div>
+      <div class="cg-rail-btn"><i class="cg-i" data-i="pin"></i></div>
+      <div class="cg-rail-btn"><i class="cg-i" data-i="chat"></i></div>
+      <div class="cg-rail-foot"><div class="cg-avatar"><i class="cg-i" data-i="knot"></i></div></div>
+    </nav>
+    <div class="cg-top">
+      <div class="cg-top-left"></div>
+      <div class="cg-top-center"><div class="cg-toggle"><span class="is-on">Chat</span><span>Work</span></div></div>
+      <div class="cg-top-right"><div class="cg-top-btn"><i class="cg-i" data-i="chat-dashed"></i></div></div>
+    </div>
+    <div class="cg-home">
+      <h1 class="cg-home-title">What’s on your mind today?</h1>
+      <div class="cg-composer cg-composer--pill">
+        <div class="cg-c-plus"><i class="cg-i" data-i="plus"></i></div>
+        <div class="cg-c-input"><span class="cg-c-ph">Ask ChatGPT</span></div>
+        <div class="cg-c-right">
+          <div class="cg-c-model">Instant<i class="cg-i" data-i="chevron-down"></i></div>
+          <div class="cg-c-mic"><i class="cg-i" data-i="mic"></i></div>
+          <div class="cg-c-btn" data-state="voice"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     1b. chatgpt.com IN CHROME (macOS) — how every official web frame shows it
+        .cg-browser > .cg-browser-tabs (traffic lights · tab search · active tab with favicon + title + × · +)
+                    > .cg-browser-bar  (← · → .is-off · reload · home · omnibox [site info · URL · ☆] · extensions · | · profile chip · ⋮)
+                    > .cg-browser-page > .cg-web (rail · top bar · thread · dock)
+        Light values sampled from the GPT-6 launch demos (tab strip #d6e4fc, omnibox #eef3f9); dark is EXTRAPOLATED.
+        Account colour green (the demos' Work account): pale-green user pill, green-tinted streaming, green ■.
+        Title: Chrome fades a long tab title at its right edge (mask on .cg-browser-title); keep titles short enough
+        to fit 173px (the HyperFrames layout check flags clipped text).
+     ====================================================================== -->
+<template data-label="chatgpt.com in Chrome · green account · generating" data-zoom="0.47">
+  <div class="sk-chatgpt cg-window cg-browser" data-accent="green" style="width:1564px;height:912px">
+    <div class="cg-browser-tabs">
+      <div class="cg-traffic"><i></i><i></i><i></i></div>
+      <div class="cg-browser-tsearch"><i class="cg-i" data-i="tab-search"></i></div>
+      <div class="cg-browser-tab"><span class="cg-browser-fav"><i class="cg-i" data-i="knot"></i></span><span class="cg-browser-title">Compound interest basics</span><i class="cg-i cg-browser-x" data-i="close"></i></div>
+      <div class="cg-browser-new"><i class="cg-i" data-i="plus"></i></div>
+    </div>
+    <div class="cg-browser-bar">
+      <div class="cg-browser-btn"><i class="cg-i" data-i="arrow-left"></i></div>
+      <div class="cg-browser-btn is-off"><i class="cg-i" data-i="arrow-right"></i></div>
+      <div class="cg-browser-btn"><i class="cg-i" data-i="reload"></i></div>
+      <div class="cg-browser-btn"><i class="cg-i" data-i="home"></i></div>
+      <div class="cg-omni"><span class="cg-omni-info"><i class="cg-i" data-i="tune"></i></span><span class="cg-omni-url">chatgpt.com/c/68f1c2a4-5b1e-8008-9d3f-2e7a1c94b6d0</span><i class="cg-i cg-omni-star" data-i="star"></i></div>
+      <div class="cg-browser-btn"><i class="cg-i" data-i="puzzle"></i></div>
+      <div class="cg-browser-sep"></div>
+      <div class="cg-browser-profile"><span class="cg-browser-avatar"></span>Work</div>
+      <div class="cg-browser-btn"><i class="cg-i" data-i="more-vert"></i></div>
+    </div>
+    <div class="cg-browser-page"><div class="cg-web">
+      <nav class="cg-rail">
+        <div class="cg-rail-btn is-logo"><i class="cg-i" data-i="knot"></i></div>
+        <div class="cg-rail-btn"><i class="cg-i" data-i="edit"></i></div>
+        <div class="cg-rail-btn"><i class="cg-i" data-i="search"></i></div>
+        <div class="cg-rail-btn"><i class="cg-i" data-i="library"></i></div>
+        <div class="cg-rail-btn"><i class="cg-i" data-i="pin"></i></div>
+        <div class="cg-rail-btn"><i class="cg-i" data-i="chat"></i></div>
+        <div class="cg-rail-foot"><div class="cg-avatar"><i class="cg-i" data-i="knot"></i></div></div>
+      </nav>
+      <div class="cg-top">
+        <div class="cg-top-left"></div>
+        <div class="cg-top-right">
+          <div class="cg-top-btn is-quiet"><i class="cg-i" data-i="share"></i>Share</div>
+          <div class="cg-top-btn"><i class="cg-i" data-i="more"></i></div>
+          <div class="cg-top-btn is-tile"><i class="cg-i" data-i="checklist"></i></div>
+        </div>
+      </div>
+      <div class="cg-main"><div class="cg-scroll"><div class="cg-col cg-thread" style="padding-top:80px">
+        <div class="cg-turn cg-turn--user"><div class="cg-user">How does compound interest actually work?</div></div>
+        <div class="cg-ai" style="margin-top:52px">
+          <h1 style="color:var(--cg-stream-tint)">Compound interest: why money grows faster over time</h1>
+        </div>
+      </div></div></div>
+      <div class="cg-dock">
+        <div class="cg-disclaimer">ChatGPT can make mistakes. Check important info.</div>
+        <div class="cg-composer cg-composer--pill">
+          <div class="cg-c-plus"><i class="cg-i" data-i="plus"></i></div>
+          <div class="cg-c-input"><span class="cg-c-ph">Ask ChatGPT</span></div>
+          <div class="cg-c-right"><div class="cg-c-model">Instant<i class="cg-i" data-i="chevron-down"></i></div><div class="cg-c-mic"><i class="cg-i" data-i="mic"></i></div>
+            <div class="cg-c-btn" data-state="stop"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i></div></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     2. COMPOSER STATES (web pill)
+        .cg-c-btn[data-state]: voice (empty field) · send (text) · stop (generating) · busy
+        One size, 808×56, in every state: the composer never resizes when a reply starts or ends.
+        Swap the button state in a single frame (the real UI does not cross-fade it).
+        .is-compact (614×43) only reproduces the Monty Hall demo, which was recorded at ~0.76 Chrome page zoom.
+        Account colour: data-accent="green|blue" on the root tints the button and the user bubble.
+     ====================================================================== -->
+<template data-label="composer: idle · typing · generating · green accent">
+  <div class="surface stack" style="width:900px">
+    <div class="cg-composer cg-composer--pill">
+      <div class="cg-c-plus"><i class="cg-i" data-i="plus"></i></div>
+      <div class="cg-c-input"><span class="cg-c-ph">Ask ChatGPT</span></div>
+      <div class="cg-c-right"><div class="cg-c-model">Instant<i class="cg-i" data-i="chevron-down"></i></div><div class="cg-c-mic"><i class="cg-i" data-i="mic"></i></div>
+        <div class="cg-c-btn" data-state="voice"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i></div></div>
+    </div>
+    <div class="cg-composer cg-composer--pill">
+      <div class="cg-c-plus"><i class="cg-i" data-i="plus"></i></div>
+      <div class="cg-c-input"><span class="cg-c-text">Plan a 3-day trip to Kyoto in early April</span><span class="cg-caret"></span></div>
+      <div class="cg-c-right"><div class="cg-c-model">Instant<i class="cg-i" data-i="chevron-down"></i></div><div class="cg-c-mic"><i class="cg-i" data-i="mic"></i></div>
+        <div class="cg-c-btn" data-state="send"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i></div></div>
+    </div>
+    <div class="cg-disclaimer">ChatGPT can make mistakes. Check important info.</div>
+    <div class="cg-composer cg-composer--pill" style="margin-top:-10px">
+      <div class="cg-c-plus"><i class="cg-i" data-i="plus"></i></div>
+      <div class="cg-c-input"><span class="cg-c-ph">Ask ChatGPT</span></div>
+      <div class="cg-c-right"><div class="cg-c-model">Instant<i class="cg-i" data-i="chevron-down"></i></div><div class="cg-c-mic"><i class="cg-i" data-i="mic"></i></div>
+        <div class="cg-c-btn" data-state="stop"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i></div></div>
+    </div>
+    <div class="sk-chatgpt" data-accent="green" style="background:none;width:856px;display:flex;justify-content:center">
+      <div class="cg-composer cg-composer--pill">
+        <div class="cg-c-plus"><i class="cg-i" data-i="plus"></i></div>
+        <div class="cg-c-input"><span class="cg-c-ph">Ask ChatGPT</span></div>
+        <div class="cg-c-right"><div class="cg-c-model">Instant<i class="cg-i" data-i="chevron-down"></i></div><div class="cg-c-mic"><i class="cg-i" data-i="mic"></i></div>
+          <div class="cg-c-btn" data-state="stop"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i></div></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     3. MODEL PICKER — chatgpt.com Chat, opened from "Instant ⌄"  [EXTRAPOLATED: no official open frame]
+        Levels per OpenAI Help Center: Instant · Medium · High · Extra High (GPT-6 Sol on paid plans) and Pro
+        (GPT-6 Astra). Menu style follows the official Codex "Work in" menu (radius 18, grey label, ✓ right).
+        Chip open state: .cg-c-model.is-open. Anchor the menu above the composer, right-aligned to the chip.
+     ====================================================================== -->
+<template data-label="Chat model picker open [extrapolated]">
+  <div class="surface" style="width:560px;height:430px">
+    <div class="cg-menu" style="right:28px;bottom:84px;width:300px">
+      <div class="cg-menu-label">GPT-6</div>
+      <div class="cg-menu-item is-selected"><div class="cg-menu-text"><span>Instant</span><span class="cg-menu-desc">Answers right away</span></div><i class="cg-i cg-menu-check" data-i="check"></i></div>
+      <div class="cg-menu-item is-hover"><div class="cg-menu-text"><span>Medium</span><span class="cg-menu-desc">Thinks before it answers</span></div><i class="cg-i cg-menu-check" data-i="check"></i></div>
+      <div class="cg-menu-item"><div class="cg-menu-text"><span>High</span><span class="cg-menu-desc">Thinks longer for harder questions</span></div><i class="cg-i cg-menu-check" data-i="check"></i></div>
+      <div class="cg-menu-item"><div class="cg-menu-text"><span>Extra High</span><span class="cg-menu-desc">Thinks longest</span></div><i class="cg-i cg-menu-check" data-i="check"></i></div>
+      <div class="cg-menu-sep"></div>
+      <div class="cg-menu-item"><div class="cg-menu-text"><span>Pro</span><span class="cg-menu-desc">GPT-6 Astra, research-grade</span></div><i class="cg-i cg-menu-check" data-i="check"></i></div>
+    </div>
+    <div style="position:absolute;right:28px;bottom:28px;display:flex;align-items:center">
+      <div class="cg-c-model is-open">Instant<i class="cg-i" data-i="chevron-down"></i></div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     4. WORK COMPOSER (desktop / Work): text area on top, controls row below
+        Row: + · permission chip (Approve for me | .is-auto Auto-review | Custom) · spacer ·
+             model chip (name ink + effort grey; optional outline bolt) · mic · round button
+        Optional context tray above it: .cg-tray (Choose project · This computer).
+        .is-line = single-line Space-view pill.
+     ====================================================================== -->
+<template data-label="Work composer: empty · typing with Auto-review + tray" data-desk="1">
+  <div class="cg-desk" style="height:auto;background:none">
+    <div class="surface stack" style="width:900px;align-items:stretch">
+      <div class="cg-composer cg-composer--work">
+        <div class="cg-c-input"><span class="cg-c-text"></span></div>
+        <div class="cg-c-row">
+          <div class="cg-c-plus"><i class="cg-i" data-i="plus"></i></div>
+          <div class="cg-perm"><i class="cg-i" data-i="approve"></i>Approve for me</div>
+          <div class="cg-c-spacer"></div>
+          <div class="cg-c-model"><span class="cg-m-name">GPT-6 Astra</span><span class="cg-m-effort">Light</span><i class="cg-i" data-i="chevron-down"></i></div>
+          <div class="cg-c-mic"><i class="cg-i" data-i="mic"></i></div>
+          <div class="cg-c-btn" data-state="voice"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i></div>
+        </div>
+      </div>
+      <div>
+        <div class="cg-tray"><span><i class="cg-i" data-i="folder"></i>Choose project</span><span class="is-on"><i class="cg-i" data-i="laptop"></i>This computer</span></div>
+        <div class="cg-composer cg-composer--work">
+          <div class="cg-c-input"><span class="cg-c-text">Help me implement the selected Figma frames</span><span class="cg-caret"></span></div>
+          <div class="cg-c-row">
+            <div class="cg-c-plus"><i class="cg-i" data-i="plus"></i></div>
+            <div class="cg-perm is-auto"><i class="cg-i" data-i="shield-check"></i>Auto-review<i class="cg-i cg-perm-chev" data-i="chevron-down"></i></div>
+            <div class="cg-c-spacer"></div>
+            <div class="cg-c-model"><i class="cg-i cg-m-bolt" data-i="bolt"></i><span class="cg-m-name">GPT-6 Astra</span><span class="cg-m-effort">Medium</span><i class="cg-i" data-i="chevron-down"></i></div>
+            <div class="cg-c-mic"><i class="cg-i" data-i="mic"></i></div>
+            <div class="cg-c-btn" data-state="send"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="cg-composer cg-composer--work is-line">
+        <div class="cg-c-plus"><i class="cg-i" data-i="plus"></i></div>
+        <div class="cg-c-input"><span class="cg-c-ph">Starting your task…</span></div>
+        <div class="cg-c-model"><i class="cg-i cg-m-bolt" data-i="bolt-fill"></i><span class="cg-m-name">GPT-6 Astra</span><span class="cg-m-effort">High</span><i class="cg-i" data-i="chevron-down"></i></div>
+        <div class="cg-c-mic"><i class="cg-i" data-i="gear"></i></div>
+        <div class="cg-c-mic"><i class="cg-i" data-i="mic"></i></div>
+        <div class="cg-c-btn" data-state="busy"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i><span class="cg-b-busy"></span></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     5. WORK MODEL PICKER open (Model + Reasoning)  [EXTRAPOLATED content; style from the official Codex menu]
+        Chip labels are official: "GPT-6 Astra Light / Medium / High / Extra High", "GPT-6.1 Sol Medium".
+     ====================================================================== -->
+<template data-label="Work model picker open [extrapolated]" data-desk="1">
+  <div class="cg-desk" style="height:auto;background:none">
+    <div class="surface" style="width:560px;height:470px">
+      <div class="cg-menu" style="right:24px;bottom:76px;width:272px">
+        <div class="cg-menu-label">Model</div>
+        <div class="cg-menu-item is-selected"><div class="cg-menu-text"><span>GPT-6 Astra</span><span class="cg-menu-desc">Most capable, for complex work</span></div><i class="cg-i cg-menu-check" data-i="check"></i></div>
+        <div class="cg-menu-item"><div class="cg-menu-text"><span>GPT-6.1 Sol</span><span class="cg-menu-desc">Fast for everyday work</span></div><i class="cg-i cg-menu-check" data-i="check"></i></div>
+        <div class="cg-menu-sep"></div>
+        <div class="cg-menu-label">Reasoning</div>
+        <div class="cg-menu-item is-selected"><span>Light</span><i class="cg-i cg-menu-check" data-i="check"></i></div>
+        <div class="cg-menu-item"><span>Medium</span><i class="cg-i cg-menu-check" data-i="check"></i></div>
+        <div class="cg-menu-item is-hover"><span>High</span><i class="cg-i cg-menu-check" data-i="check"></i></div>
+        <div class="cg-menu-item"><span>Extra High</span><i class="cg-i cg-menu-check" data-i="check"></i></div>
+      </div>
+      <div style="position:absolute;right:24px;bottom:24px;display:flex;align-items:center">
+        <div class="cg-c-model is-open"><span class="cg-m-name">GPT-6 Astra</span><span class="cg-m-effort">Light</span><i class="cg-i" data-i="chevron-down"></i></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     6. + MENU (web)  [EXTRAPOLATED]
+     ====================================================================== -->
+<template data-label="+ menu [extrapolated]">
+  <div class="surface" style="width:420px;height:330px">
+    <div class="cg-menu" style="left:24px;bottom:24px;width:260px">
+      <div class="cg-menu-item"><i class="cg-i" data-i="attach"></i>Add photos &amp; files</div>
+      <div class="cg-menu-item is-hover"><i class="cg-i" data-i="image"></i>Create image</div>
+      <div class="cg-menu-item"><i class="cg-i" data-i="telescope"></i>Deep research</div>
+      <div class="cg-menu-item"><i class="cg-i" data-i="globe"></i>Web search</div>
+      <div class="cg-menu-sep"></div>
+      <div class="cg-menu-item"><i class="cg-i" data-i="sites"></i>Plugins<i class="cg-i cg-menu-sub" data-i="chevron-right"></i></div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     7. THREAD (web): user pill (right) · thinking dot · streamed answer (no bubble) · action row
+        Stream: wrap words in <span class="cg-w"> and fade each in from var(--cg-stream-tint) to ink.
+     ====================================================================== -->
+<template data-label="web thread: user · thinking · answer · actions" data-zoom="0.6">
+  <div class="sk-chatgpt cg-web" style="width:1100px;height:560px;--cg-rail-w:0px">
+    <div class="cg-col cg-thread" style="padding-top:30px;width:960px">
+      <div class="cg-turn cg-turn--user"><div class="cg-user">Help me understand the monty hall problem</div></div>
+      <div class="cg-ai" style="margin-top:40px"><span class="cg-thinking"></span></div>
+      <div class="cg-ai" style="margin-top:24px">
+        <h1>The Monty Hall problem: why switching doubles your chances</h1>
+        <p>Imagine you’re on a game show. There are three doors. Behind one is a <span class="cg-w" style="color:var(--cg-stream-tint)">brand-new car, and behind the other two are goats.</span></p>
+      </div>
+      <div class="cg-actions">
+        <div class="cg-act"><i class="cg-i" data-i="copy"></i></div><div class="cg-act"><i class="cg-i" data-i="thumb-up"></i></div><div class="cg-act"><i class="cg-i" data-i="thumb-down"></i></div>
+        <div class="cg-act"><i class="cg-i" data-i="share"></i></div><div class="cg-act is-hover"><i class="cg-i" data-i="regenerate"></i></div><div class="cg-act"><i class="cg-i" data-i="more"></i></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     8. STATUS (desktop/Work): "Worked for 40s ›" with a hairline · "Thinking" shimmer (animate --cg-shimmer-x 100%→0%)
+        · inline Page link · artifact card with Open
+     ====================================================================== -->
+<template data-label="Work status · link · artifact card" data-desk="1">
+  <div class="cg-desk" style="height:auto;background:none">
+    <div class="surface cg-thread" style="width:900px">
+      <div class="cg-status"><span class="cg-shimmer" style="--cg-shimmer-x:40%">Thinking</span></div>
+      <div class="cg-status" style="margin-top:18px">Worked for 40s<i class="cg-i" data-i="chevron-right"></i></div>
+      <div class="cg-ai" style="margin-top:14px"><p><span class="cg-link"><i class="cg-i" data-i="page"></i>ChatGPT Space Launch</span> is saved and organized by priority.</p></div>
+      <div class="cg-artifact" style="margin-top:16px">
+        <div class="cg-artifact-icon"><i class="cg-i" data-i="page"></i></div>
+        <div class="cg-artifact-text"><div class="cg-artifact-title">ChatGPT Space Launch</div><div class="cg-artifact-kind">Page</div></div>
+        <div class="cg-btn-ghost">Open</div>
+      </div>
+      <div class="cg-artifact" style="margin-top:12px">
+        <div class="cg-artifact-icon"><i class="cg-i" data-i="globe"></i></div>
+        <div class="cg-artifact-text"><div class="cg-artifact-title">MOSF Virtual Tour</div><div class="cg-artifact-kind">Website</div></div>
+        <div class="cg-btn-ghost">Open in<i class="cg-i" data-i="chevron-down"></i></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     9. INTELLIGENT UI (GPT-6, web scale): calculator card and choice card.
+        .cg-iui > eyebrow · big number · green delta · labelled sliders (--k 0–1; .cg-slider-knob.is-active while dragged)
+        To show the card being used: move the pointer onto a knob, press (pointer scale 0.9), tween --k with the
+        pointer, step the value by whole units and recompute the figures on each step (see demo variant 1).
+        .cg-iui > title · sub · .cg-radios · .cg-tiles (blue/green/red) · .cg-iui-result
+     ====================================================================== -->
+<template data-label="Intelligent UI cards" data-zoom="0.5">
+  <div class="cg-web" style="height:auto;background:none">
+    <div class="surface cg-thread" style="width:1300px;display:flex;flex-direction:column;gap:28px">
+      <div class="cg-iui">
+        <div class="cg-iui-eyebrow">Your economy’s GDP</div>
+        <div class="cg-iui-big">$1.00 trillion</div>
+        <div class="cg-iui-delta"><i class="cg-i" data-i="trend-up"></i>Unchanged vs. the starting economy</div>
+        <div class="cg-iui-row"><span>Consumer spending</span><b>$600B</b></div>
+        <div class="cg-slider" style="--k:0.5"><div class="cg-slider-knob"></div></div>
+      </div>
+      <div class="cg-iui">
+        <div class="cg-iui-title">Try all three possibilities</div>
+        <div class="cg-iui-sub">Suppose you always choose Door 1. Select where the car actually is.</div>
+        <div class="cg-radios">
+          <div class="cg-radio is-on"><span class="cg-radio-dot"></span>The car is behind Door 1</div>
+          <div class="cg-radio"><span class="cg-radio-dot"></span>The car is behind Door 2</div>
+        </div>
+        <div class="cg-tiles">
+          <div class="cg-tile cg-tile--blue"><div class="cg-tile-big">Door 1</div><div class="cg-tile-label">Your pick</div></div>
+          <div class="cg-tile cg-tile--green"><div class="cg-tile-big">Door 2</div><div class="cg-tile-label">Stays closed</div></div>
+          <div class="cg-tile cg-tile--red"><div class="cg-tile-big">Door 3</div><div class="cg-tile-label">Host opens</div></div>
+        </div>
+        <div class="cg-iui-result"><b>Staying wins this time.</b>You picked the car on your first try, so switching loses.</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     10. DESKTOP APP WINDOW (macOS): flat chrome (title bar + rail) with the content card inset
+         Title bar: traffic lights · ← · → (.is-dim) · sidebar · new chat · | · title … ⋯ · gauge · checklist · | · new tab
+         Rail: home (filled when active, blue badge) · Space · clock · plugins (hooked "@" ring with a plug: data-i="plug") · ⋯ · — · PR · knot · calendar · avatar
+         Optional panel: .cg-panel + .cg-dcard.has-panel (Space panel below).
+     ====================================================================== -->
+<template data-label="desktop app window + Space panel" data-zoom="0.62">
+  <div class="sk-chatgpt cg-window cg-desk" style="width:1148px;height:560px;--cg-panel-w:240px">
+    <div class="cg-tb">
+      <div class="cg-traffic"><i></i><i></i><i></i></div>
+      <div class="cg-tb-btn"><i class="cg-i" data-i="arrow-left"></i></div>
+      <div class="cg-tb-btn is-dim"><i class="cg-i" data-i="arrow-right"></i></div>
+      <div class="cg-tb-btn"><i class="cg-i" data-i="sidebar"></i></div>
+      <div class="cg-tab"><i class="cg-i" data-i="page"></i>Harbor onboarding launch review</div>
+      <div class="cg-tab is-on"><i class="cg-i" data-i="chat"></i>Draft a concise setup guide</div>
+      <div class="cg-tb-btn"><i class="cg-i" data-i="plus"></i></div>
+      <div class="cg-tb-right"><div class="cg-tb-btn"><i class="cg-i" data-i="checklist"></i></div><div class="cg-tb-btn"><i class="cg-i" data-i="panel-right"></i></div></div>
+    </div>
+    <nav class="cg-drail">
+      <div class="cg-drail-btn"><i class="cg-i" data-i="home"></i><span class="cg-badge"></span></div>
+      <div class="cg-drail-btn is-active"><i class="cg-i" data-i="space-fill"></i></div>
+      <div class="cg-drail-btn"><i class="cg-i" data-i="clock"></i></div>
+      <div class="cg-drail-btn"><i class="cg-i" data-i="plug"></i></div>
+      <div class="cg-drail-btn"><i class="cg-i" data-i="more"></i></div>
+      <div class="cg-drail-sep"></div>
+      <div class="cg-drail-btn"><i class="cg-i" data-i="pr"></i></div>
+      <div class="cg-drail-btn"><i class="cg-i" data-i="knot"></i></div>
+      <div class="cg-drail-btn"><i class="cg-i" data-i="calendar"></i></div>
+      <div class="cg-avatar"><i class="cg-i" data-i="knot"></i></div>
+    </nav>
+    <div class="cg-panel">
+      <div class="cg-panel-head"><span class="cg-panel-title">Space</span><span style="display:flex;gap:12px"><i class="cg-i" data-i="bell"></i><i class="cg-i" data-i="search"></i></span></div>
+      <div class="cg-panel-row"><i class="cg-i" data-i="edit"></i><span>New page</span></div>
+      <div class="cg-panel-row"><i class="cg-i" data-i="all"></i><span>All</span></div>
+      <div class="cg-panel-row"><i class="cg-i" data-i="page"></i><span>Pages</span></div>
+      <div class="cg-panel-row"><i class="cg-i" data-i="sites"></i><span>Sites</span></div>
+      <div class="cg-panel-row"><i class="cg-i" data-i="image"></i><span>Images</span></div>
+      <div class="cg-panel-label">Recents</div>
+      <div class="cg-panel-row is-active"><i class="cg-i" data-i="page"></i><span>Harbor onboarding launch review</span></div>
+      <div class="cg-panel-label">Spaces</div>
+      <div class="cg-panel-row"><i class="cg-i" data-i="stack"></i><span>Meetings</span></div>
+      <div class="cg-panel-row"><i class="cg-i" data-i="stack"></i><span>Developer Experience</span></div>
+    </div>
+    <div class="cg-dcard has-panel">
+      <div class="cg-col cg-thread" style="padding-top:28px">
+        <div class="cg-turn cg-turn--user"><div class="cg-user">Draft a concise setup guide for the Harbor onboarding pilot using these meeting notes.</div></div>
+        <div class="cg-status is-plain" style="margin-top:28px"><span class="cg-shimmer" style="--cg-shimmer-x:30%">Starting your task</span></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     11. iOS (393×852 pt): header · user bubble · Intelligent UI title + caps subtitle · composer
+     ====================================================================== -->
+<template data-label="iOS chat" data-zoom="0.62">
+  <div class="cg-ios">
+    <div class="cg-ios-status"><span>9:41</span><span style="display:flex;gap:6px;align-items:center"><i class="cg-i" data-i="signal" style="width:18px"></i><i class="cg-i" data-i="wifi" style="width:17px"></i><i class="cg-i" data-i="battery" style="width:26px"></i></span></div>
+    <div class="cg-ios-head">
+      <div class="cg-ios-round"><i class="cg-i" data-i="menu"></i></div>
+      <div class="cg-ios-round"><i class="cg-i" data-i="edit"></i><i class="cg-i" data-i="more"></i></div>
+    </div>
+    <div class="cg-ios-body">
+      <div class="cg-turn cg-turn--user" style="margin-top:40px"><div class="cg-user">How do I find the North Star?</div></div>
+      <div style="margin-top:34px"><div class="cg-ios-h">Find the North Star</div><div class="cg-ios-caps">An interactive guide to the northern night sky</div></div>
+    </div>
+    <div class="cg-composer cg-composer--ios">
+      <div class="cg-ios-circ"><i class="cg-i" data-i="plus"></i></div>
+      <div class="cg-c-input"><span class="cg-c-ph">Ask anything</span></div>
+      <div class="cg-ios-circ"><i class="cg-i" data-i="mic"></i></div>
+      <div class="cg-c-btn" data-state="voice"><i class="cg-i cg-b-voice" data-i="voice"></i><i class="cg-i cg-b-send" data-i="send"></i><i class="cg-i cg-b-stop" data-i="stop"></i></div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     12. VOICE MODE (iOS): cloud orb · ☰ / sliders · bottom bar (+ Ask ChatGPT · gauge · muted mic · end ✕)
+     ====================================================================== -->
+<template data-label="voice mode" data-zoom="0.62">
+  <div class="cg-voice">
+    <div class="cg-ios-head" style="top:54px"><div class="cg-ios-round"><i class="cg-i" data-i="menu"></i></div><div class="cg-ios-round"><i class="cg-i" data-i="sliders"></i></div></div>
+    <div class="cg-orb"><div class="cg-orb-clouds"></div></div>
+    <div class="cg-voice-bar">
+      <div class="cg-voice-ask"><i class="cg-i" data-i="plus"></i>Ask ChatGPT</div>
+      <div class="cg-voice-circ"><i class="cg-i" data-i="gauge"></i></div>
+      <div class="cg-voice-circ"><i class="cg-i" data-i="mic-off"></i></div>
+      <div class="cg-voice-circ is-end"><i class="cg-i" data-i="close"></i></div>
+    </div>
+  </div>
+</template>
+
+<!-- ======================================================================
+     13. dots: chat bubbles (the official graphic is dark) + call screen
+     ====================================================================== -->
+<template data-label="dots chat + call">
+  <div style="display:flex;gap:24px;align-items:flex-start">
+    <div class="cg-dots" style="width:420px;border-radius:18px">
+      <div class="cg-dot-msg">Hey! I’m your dot.</div>
+      <div class="cg-dot-msg">Message or call me anytime. I’ll keep things moving, even when we’re not talking, and check in with updates or questions.</div>
+      <div class="cg-dot-msg">Want to give me a name?</div>
+      <div class="cg-dot-action"><i class="cg-i" data-i="person-circle"></i>Customize your dot<i class="cg-i cg-chev" data-i="chevron-right"></i></div>
+      <div class="cg-dot-typing"><i></i><i></i><i></i></div>
+    </div>
+    <div class="cg-call" style="zoom:0.5;border-radius:48px">
+      <div class="cg-call-top"><span class="cg-dot-avatar"><i class="cg-i" data-i="dot-avatar" style="width:64px;height:64px"></i></span><div class="cg-call-name">Blossie</div><div class="cg-call-time">0:06</div></div>
+      <div class="cg-call-row">
+        <div class="cg-call-btn is-light"><span><i class="cg-i" data-i="speaker-fill"></i></span>Speaker</div>
+        <div class="cg-call-btn is-end"><span><i class="cg-i" data-i="phone-end"></i></span>End</div>
+        <div class="cg-call-btn"><span><i class="cg-i" data-i="mic-off"></i></span>Mute</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  // Gallery: render every template in light and dark.
+  const g = document.getElementById('gallery');
+  document.querySelectorAll('template').forEach((t) => {
+    ['light', 'dark'].forEach((theme) => {
+      const cell = document.createElement('div');
+      cell.className = 'cell ' + theme;
+      cell.innerHTML = '<div class="label">' + t.dataset.label + ' · ' + theme + '</div>';
+      const root = document.createElement('div');
+      root.className = 'sk-chatgpt';
+      root.setAttribute('data-theme', theme);
+      if (t.dataset.zoom) root.style.zoom = t.dataset.zoom;
+      root.appendChild(t.content.cloneNode(true));
+      cell.appendChild(root);
+      g.appendChild(cell);
+    });
+  });
+  SKIN_ICONS_CHATGPT.mount(document);
+</script>
+</body>
+</html>

@@ -1,0 +1,808 @@
+/* ==========================================================================
+   ChatGPT skin — Oct 2026 (GPT-6 / Intelligent UI era)
+   Surfaces: chatgpt.com (.cg-web, optionally inside the Chrome frame .cg-browser),
+             ChatGPT desktop app for macOS (.cg-desk),
+             iOS (.cg-ios), voice mode (.cg-voice), dots chat + call (.cg-dots, .cg-call)
+
+   Root     .sk-chatgpt
+   Theme    data-theme="light" | "dark"   (on the root or on any ancestor)
+   Accent   data-accent="green" | "blue"  (optional account colour; default is monochrome)
+
+   SCALE. Every size is the real product's CSS px at 1x, measured from the official
+   frames in research/ui-references/chatgpt (see DECISIONS.md). Present it on a 1080p
+   frame with `zoom` on a wrapper (never by editing sizes):
+     .cg-web  ~1.1  (answer prose is 24px in the GPT-6 web demos -> ~26px on frame)
+     .cg-desk ~1.5  (desktop prose is 16px -> 24px on frame)
+     .cg-ios  ~1.6  (17pt -> 27px)
+   Fonts: Inter stands in for OpenAI Sans, JetBrains Mono for mono. Link
+   assets/fonts/fonts.css in the component; the skin never loads fonts.
+   ========================================================================== */
+
+/* ---------- tokens: light ---------- */
+.sk-chatgpt {
+  --cg-font: "Inter", sans-serif;
+  --cg-mono: "JetBrains Mono", monospace;
+
+  --cg-page: #ffffff;              /* chat surface: web page, desktop content card */
+  --cg-rail: #fbfbfb;              /* chatgpt.com icon rail (reads as the page + a hairline) */
+  --cg-chrome: #f2f2f2;            /* desktop title bar + rail: one flat surface */
+  --cg-panel: #f9f9f9;             /* slide-out panel (Chats / Space) */
+  --cg-row-active: #ececec;        /* selected panel row */
+  --cg-rail-active: #e5e5e5;       /* active desktop rail tile */
+  --cg-hairline: rgba(0, 0, 0, 0.075);
+  --cg-hairline-2: rgba(0, 0, 0, 0.12);
+  --cg-text: #0d0d0d;
+  --cg-text-2: #5d5d5d;
+  --cg-text-3: #737373;            /* measured ~#8f8f8f; darkened to pass WCAG AA (render check) */
+  --cg-text-4: #c4c4c4;
+  --cg-icon: #0d0d0d;              /* web rail + composer glyphs */
+  --cg-icon-2: #6b6b6b;            /* desktop chrome glyphs */
+  --cg-placeholder: #767676;
+  --cg-user-bubble: #f3f3f3;
+  --cg-user-text: #0d0d0d;
+  --cg-composer: #ffffff;
+  --cg-composer-edge: rgba(0, 0, 0, 0.07);
+  --cg-composer-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 6px 22px rgba(0, 0, 0, 0.06);
+  --cg-tray: #f2f2f2;              /* context tray attached above the Work composer */
+  --cg-tray-chip: #e3e3e3;
+  --cg-btn: #0d0d0d;               /* primary round button: voice / send / stop */
+  --cg-btn-ink: #ffffff;
+  --cg-btn-busy: #5d5d5d;
+  --cg-btn-off: #e5e5e5;
+  --cg-soft: #f3f3f3;              /* chips, icon circles, hover */
+  --cg-soft-2: #e8e8e8;            /* pressed */
+  --cg-menu: #ffffff;
+  --cg-menu-edge: rgba(0, 0, 0, 0.08);
+  --cg-menu-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 16px 40px -6px rgba(0, 0, 0, 0.14);
+  --cg-menu-hover: #f3f3f3;
+  --cg-link: #1d5b94;              /* inline Page link: deep muted blue */
+  --cg-blue: #3477d6;              /* Auto-review permission chip */
+  --cg-notify: #136acc;            /* rail notification dot */
+  --cg-online: #3fbf5f;            /* small green status dot */
+  --cg-stream-tint: #8a8a8a;       /* freshly streamed words settle from this colour */
+  --cg-card: #ffffff;              /* Intelligent UI card */
+  --cg-card-edge: #ececec;
+  --cg-card-inner: #f9f9f9;
+  --cg-tile-blue: #dceafc;
+  --cg-tile-green: #dcf9e7;
+  --cg-tile-red: #fce5e2;
+  --cg-positive: #3d7a52;
+  --cg-track: #f2f2f2;
+  --cg-code-bg: #f3f3f3;
+  --cg-window-edge: rgba(0, 0, 0, 0.10);
+  --cg-traffic-r: #ff5f57;
+  --cg-traffic-y: #febc2e;
+  --cg-traffic-g: #28c840;
+
+  font-family: var(--cg-font);
+  color: var(--cg-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "calt" 1;
+}
+
+/* ---------- tokens: dark ---------- */
+.sk-chatgpt[data-theme="dark"],
+[data-theme="dark"] .sk-chatgpt {
+  --cg-page: #181818;              /* sampled: desktop content area */
+  --cg-rail: #181818;
+  --cg-chrome: #262626;            /* sampled: desktop title bar + rail */
+  --cg-panel: #1d1d1d;             /* sampled: Space panel */
+  --cg-row-active: #2f2f2f;
+  --cg-rail-active: #383838;
+  --cg-hairline: rgba(255, 255, 255, 0.08);
+  --cg-hairline-2: rgba(255, 255, 255, 0.13);
+  --cg-text: #f2f2f2;
+  --cg-text-2: #b4b4b4;
+  --cg-text-3: #939393;
+  --cg-text-4: #5c5c5c;
+  --cg-icon: #f2f2f2;
+  --cg-icon-2: #ababab;
+  --cg-placeholder: #9a9a9a;
+  --cg-user-bubble: #303030;
+  --cg-user-text: #f2f2f2;
+  --cg-composer: #2f2f2f;
+  --cg-composer-edge: rgba(255, 255, 255, 0.06);
+  --cg-composer-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 26px rgba(0, 0, 0, 0.32);
+  --cg-tray: #2d2d2d;              /* sampled: Codex/Work tray */
+  --cg-tray-chip: #3a3a3a;
+  --cg-btn: #f2f2f2;
+  --cg-btn-ink: #0d0d0d;
+  --cg-btn-busy: #9a9a9a;
+  --cg-btn-off: #3a3a3a;
+  --cg-soft: #2c2c2c;
+  --cg-soft-2: #393939;
+  --cg-menu: #2a2a2a;
+  --cg-menu-edge: rgba(255, 255, 255, 0.09);
+  --cg-menu-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 18px 44px -6px rgba(0, 0, 0, 0.6);
+  --cg-menu-hover: #363636;
+  --cg-link: #8ab8f0;
+  --cg-blue: #6ea4ee;
+  --cg-notify: #3d8ff0;
+  --cg-stream-tint: #7a7a7a;
+  --cg-card: #1e1e1e;
+  --cg-card-edge: #2e2e2e;
+  --cg-card-inner: #262626;
+  --cg-tile-blue: #1c2c44;
+  --cg-tile-green: #183424;
+  --cg-tile-red: #3b2220;
+  --cg-positive: #7cc493;
+  --cg-track: #2b2b2b;
+  --cg-code-bg: #2a2a2a;
+  --cg-window-edge: rgba(255, 255, 255, 0.10);
+}
+/* the desktop Work composer is a raised #3d3d3d in dark (sampled, Codex home + Space) */
+.sk-chatgpt[data-theme="dark"] .cg-desk, [data-theme="dark"] .sk-chatgpt .cg-desk,
+.sk-chatgpt.cg-desk[data-theme="dark"] { --cg-composer: #3d3d3d; --cg-composer-edge: rgba(255, 255, 255, 0.05); }
+/* chips inside the raised #3d3d3d composer hover lighter than it, never darker */
+.sk-chatgpt[data-theme="dark"] .cg-desk .cg-composer, [data-theme="dark"] .sk-chatgpt .cg-desk .cg-composer,
+.sk-chatgpt.cg-desk[data-theme="dark"] .cg-composer { --cg-soft: #474747; --cg-soft-2: #525252; }
+.sk-chatgpt[data-theme="dark"] .cg-desk .cg-c-model .cg-m-effort, [data-theme="dark"] .sk-chatgpt .cg-desk .cg-c-model .cg-m-effort,
+.sk-chatgpt.cg-desk[data-theme="dark"] .cg-c-model .cg-m-effort { color: #b8b8b8; }   /* keeps 4.5:1 on the hover plate */
+/* grey text inside raised dark surfaces is lifted so it keeps 4.5:1 */
+.sk-chatgpt[data-theme="dark"] .cg-composer, [data-theme="dark"] .sk-chatgpt .cg-composer { --cg-text-3: #9c9c9c; --cg-placeholder: #9c9c9c; }
+.sk-chatgpt[data-theme="dark"] .cg-desk .cg-composer, [data-theme="dark"] .sk-chatgpt .cg-desk .cg-composer,
+.sk-chatgpt.cg-desk[data-theme="dark"] .cg-composer { --cg-text-3: #a9a9a9; --cg-placeholder: #a9a9a9; }
+
+/* ---------- accent colours (the account colour; OpenAI's GPT-6 web demos use green and blue) ---------- */
+.sk-chatgpt[data-accent="green"] {
+  --cg-btn: #5dbb65; --cg-btn-ink: #ffffff; --cg-btn-busy: #5dbb65;
+  --cg-user-bubble: #e2f3e6; --cg-user-text: #172a1d; --cg-stream-tint: #4e9a58;
+}
+.sk-chatgpt[data-accent="blue"] {
+  --cg-btn: #4288f5; --cg-btn-ink: #ffffff; --cg-btn-busy: #3b5788;
+  --cg-user-bubble: #e3edfd; --cg-user-text: #10223d; --cg-stream-tint: #4f86d8;
+}
+.sk-chatgpt[data-theme="dark"][data-accent="green"],
+[data-theme="dark"] .sk-chatgpt[data-accent="green"] {
+  --cg-btn: #4caf57; --cg-btn-busy: #4caf57; --cg-user-bubble: #1d4a2b; --cg-user-text: #f2f2f2; --cg-stream-tint: #74c47e;
+}
+.sk-chatgpt[data-theme="dark"][data-accent="blue"],
+[data-theme="dark"] .sk-chatgpt[data-accent="blue"] {
+  --cg-btn: #3272cc; --cg-btn-busy: #375788; --cg-user-bubble: #174581; --cg-user-text: #ffffff; --cg-stream-tint: #74a6ee;
+}
+
+.sk-chatgpt *, .sk-chatgpt *::before, .sk-chatgpt *::after { box-sizing: border-box; }
+.sk-chatgpt p, .sk-chatgpt h1, .sk-chatgpt h2, .sk-chatgpt h3, .sk-chatgpt ul, .sk-chatgpt ol { margin: 0; }
+
+/* ---------- icons: <i class="cg-i" data-i="name"></i>, filled by SKIN_ICONS_CHATGPT.mount() ---------- */
+.sk-chatgpt .cg-i { display: inline-flex; width: 20px; height: 20px; flex: none; color: inherit; }
+.sk-chatgpt .cg-i svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* ---------- floating window frame (for components that show the app on a stage) ---------- */
+.sk-chatgpt.cg-window, .sk-chatgpt .cg-window {
+  position: relative; overflow: hidden; border-radius: 14px; background: var(--cg-page);
+  box-shadow: 0 0 0 1px var(--cg-window-edge), 0 1px 2px rgba(0, 0, 0, 0.06), 0 24px 60px -20px rgba(0, 0, 0, 0.25);
+}
+.sk-chatgpt[data-theme="dark"].cg-window, [data-theme="dark"] .sk-chatgpt .cg-window, .sk-chatgpt[data-theme="dark"] .cg-window {
+  box-shadow: 0 0 0 1px var(--cg-window-edge), 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+}
+
+/* ==========================================================================
+   0. Browser frame: chatgpt.com inside Chrome for macOS (.cg-browser)
+      Every official chatgpt.com frame is a Chrome window (GPT-6 launch demos):
+      light-blue tab strip #d6e4fc, white active tab + toolbar, #eef3f9 omnibox pill,
+      a 1px rule above the page. Measured from web-light-chat-user-bubble-streaming-reply.png
+      at the same 1.03x as the page (tab strip 41, toolbar 48, omnibox 35, tab 246 wide).
+      Dark values are EXTRAPOLATED (Chrome's dark theme; no official dark web frame).
+      Markup: .cg-browser > .cg-browser-tabs + .cg-browser-bar + .cg-browser-page > .cg-web
+   ========================================================================== */
+.sk-chatgpt.cg-browser, .sk-chatgpt .cg-browser {
+  --cb-frame: #d6e4fc;            /* sampled tab strip */
+  --cb-bar: #ffffff;              /* active tab + toolbar */
+  --cb-omni: #eef3f9;             /* sampled omnibox */
+  --cb-ink: #1f1f1f;
+  --cb-icon: #474747;
+  --cb-icon-off: #b2b4b8;         /* disabled forward arrow */
+  --cb-chip: #d6e4fc;             /* profile chip */
+  --cb-tsearch: rgba(255, 255, 255, 0.42);
+  --cb-sep: rgba(0, 0, 0, 0.13);
+  --cb-rule: #f0f0f0;             /* sampled 1px rule between toolbar and page */
+  position: relative; display: flex; flex-direction: column; overflow: hidden; background: var(--cb-frame);
+}
+.sk-chatgpt[data-theme="dark"].cg-browser, [data-theme="dark"] .sk-chatgpt.cg-browser, [data-theme="dark"] .sk-chatgpt .cg-browser, .sk-chatgpt[data-theme="dark"] .cg-browser {
+  --cb-frame: #1f1f20; --cb-bar: #2b2b2d; --cb-omni: #1f1f20; --cb-ink: #e3e3e3; --cb-icon: #c4c4c6; --cb-icon-off: #6a6a6d;
+  --cb-chip: #29384d; --cb-tsearch: rgba(255, 255, 255, 0.06); --cb-sep: rgba(255, 255, 255, 0.14); --cb-rule: #333335;
+}
+.sk-chatgpt.cg-browser.cg-window, .sk-chatgpt .cg-browser.cg-window { border-radius: 12px; }
+.sk-chatgpt .cg-browser-tabs { position: relative; flex: none; height: 41px; display: flex; align-items: flex-end; padding-left: 96px; }
+.sk-chatgpt .cg-browser-tabs .cg-traffic { position: absolute; left: 14px; top: 14px; display: flex; gap: 10.5px; margin: 0; }
+.sk-chatgpt .cg-browser-tabs .cg-traffic i { width: 13px; height: 13px; }
+.sk-chatgpt .cg-browser-tsearch {
+  position: absolute; left: 96px; top: 7px; width: 28px; height: 28px; border-radius: 8px; background: var(--cb-tsearch);
+  display: flex; align-items: center; justify-content: center; color: var(--cb-icon);
+}
+.sk-chatgpt .cg-browser-tsearch .cg-i { width: 15px; height: 15px; }
+.sk-chatgpt .cg-browser-tab {
+  position: relative; height: 34px; width: 246px; margin-left: 35px; padding: 0 9px 0 16px; border-radius: 10px 10px 0 0;
+  background: var(--cb-bar); color: var(--cb-ink); display: flex; align-items: center; gap: 9px; font-size: 13px; letter-spacing: 0;
+}
+/* the tab's flared foot */
+.sk-chatgpt .cg-browser-tab::before, .sk-chatgpt .cg-browser-tab::after { content: ""; position: absolute; bottom: 0; width: 10px; height: 10px; }
+.sk-chatgpt .cg-browser-tab::before { left: -10px; background: radial-gradient(circle at 0 0, transparent 9.5px, var(--cb-bar) 10px); }
+.sk-chatgpt .cg-browser-tab::after { right: -10px; background: radial-gradient(circle at 100% 0, transparent 9.5px, var(--cb-bar) 10px); }
+.sk-chatgpt .cg-browser-fav { width: 16px; height: 16px; display: flex; flex: none; color: var(--cb-ink); }
+.sk-chatgpt .cg-browser-fav .cg-i { width: 16px; height: 16px; }
+.sk-chatgpt .cg-browser-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 22px), transparent); }
+.sk-chatgpt .cg-browser-x { width: 14px; height: 14px; color: var(--cb-icon); }
+.sk-chatgpt .cg-browser-new { width: 28px; height: 28px; margin: 0 0 3px 10px; display: flex; align-items: center; justify-content: center; color: var(--cb-icon); }
+.sk-chatgpt .cg-browser-new .cg-i { width: 17px; height: 17px; }
+.sk-chatgpt .cg-browser-bar {
+  position: relative; flex: none; height: 48px; background: var(--cb-bar); display: flex; align-items: center; gap: 4px; padding: 0 6px 0 7px;
+  box-shadow: inset 0 -1px 0 var(--cb-rule);
+}
+.sk-chatgpt .cg-browser-btn { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--cb-icon); flex: none; }
+.sk-chatgpt .cg-browser-btn .cg-i { width: 17px; height: 17px; }
+.sk-chatgpt .cg-browser-btn.is-off { color: var(--cb-icon-off); }
+.sk-chatgpt .cg-omni {
+  flex: 1; min-width: 0; height: 35px; margin: 0 8px 0 7px; border-radius: 17.5px; background: var(--cb-omni);
+  display: flex; align-items: center; padding: 0 12px 0 6px; gap: 8px; color: var(--cb-ink);
+}
+.sk-chatgpt .cg-omni-info { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--cb-icon); flex: none; }
+.sk-chatgpt .cg-omni-info .cg-i { width: 15px; height: 15px; }
+.sk-chatgpt .cg-omni-url { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; font-size: 14.5px; letter-spacing: 0.002em; }
+.sk-chatgpt .cg-omni .cg-omni-star { width: 17px; height: 17px; color: var(--cb-icon); }
+.sk-chatgpt .cg-browser-sep { width: 1px; height: 20px; background: var(--cb-sep); margin: 0 6px; flex: none; }
+.sk-chatgpt .cg-browser-profile {
+  height: 35px; padding: 0 13px 0 6px; border-radius: 17.5px; background: var(--cb-chip); color: var(--cb-ink);
+  display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; flex: none;
+}
+.sk-chatgpt .cg-browser-avatar { width: 23px; height: 23px; border-radius: 50%; flex: none; background: radial-gradient(circle at 50% 36%, #f1d2b8 0 28%, transparent 29%), radial-gradient(ellipse 60% 44% at 50% 100%, #2a2a2a 0 98%, transparent 100%), linear-gradient(160deg, #d9c8b8, #b9a28f); }
+.sk-chatgpt .cg-browser-page { position: relative; flex: 1; min-height: 0; background: var(--cg-page); }
+
+/* ==========================================================================
+   1. chatgpt.com  (.cg-web) — icon rail, top bar, centred reading column,
+      bottom dock (disclaimer ABOVE the composer)
+   ========================================================================== */
+.sk-chatgpt.cg-web, .sk-chatgpt .cg-web {
+  position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--cg-page);
+  --cg-rail-w: 52px;
+  --cg-col: 1240px;
+  --cg-read: 24px;          /* GPT-6 web answer prose (official demos) */
+  --cg-read-lh: 42px;
+}
+.sk-chatgpt .cg-web.is-classic, .sk-chatgpt.cg-web.is-classic { --cg-col: 768px; --cg-read: 16px; --cg-read-lh: 28px; }
+
+/* icon rail */
+.sk-chatgpt .cg-rail {
+  position: absolute; left: 0; top: 0; bottom: 0; width: var(--cg-rail-w); z-index: 4;
+  background: var(--cg-rail); border-right: 1px solid var(--cg-hairline);
+  display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 2px;
+}
+.sk-chatgpt .cg-rail-btn {
+  width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  color: var(--cg-icon); position: relative; flex: none;
+}
+.sk-chatgpt .cg-rail-btn .cg-i { width: 20px; height: 20px; }
+.sk-chatgpt .cg-rail-btn.is-logo { margin-bottom: 12px; }
+.sk-chatgpt .cg-rail-btn.is-logo .cg-i { width: 24px; height: 24px; }
+.sk-chatgpt .cg-rail-btn.is-active { background: var(--cg-soft); }
+.sk-chatgpt .cg-rail-btn.is-hover { background: var(--cg-soft); }
+.sk-chatgpt .cg-rail-btn .cg-dot { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--cg-online); }
+.sk-chatgpt .cg-rail-foot { position: absolute; left: 0; right: 0; bottom: 14px; display: flex; justify-content: center; }
+
+/* account avatar: black disc with the knot (optional plan badge) */
+.sk-chatgpt .cg-avatar {
+  width: 28px; height: 28px; border-radius: 50%; background: #0d0d0d; color: #fff; position: relative; flex: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.sk-chatgpt[data-theme="dark"] .cg-avatar, [data-theme="dark"] .sk-chatgpt .cg-avatar { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14); }
+.sk-chatgpt .cg-avatar > .cg-i { width: 65%; height: 65%; }
+.sk-chatgpt .cg-avatar.is-photo { background: linear-gradient(160deg, #e7b98f, #b9745a); }
+.sk-chatgpt .cg-avatar.is-initials { background: #c66a4a; font-size: 12px; font-weight: 600; }
+.sk-chatgpt .cg-avatar .cg-badge-p {
+  position: absolute; right: -5px; bottom: -4px; width: 15px; height: 15px; border-radius: 50%;
+  background: #e5484d; color: #fff; font-size: 9px; font-weight: 600; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 2px var(--cg-rail);
+}
+
+/* top bar */
+.sk-chatgpt .cg-top {
+  position: absolute; left: var(--cg-rail-w); right: 0; top: 0; height: 52px; z-index: 3;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 12px 0 14px;
+}
+.sk-chatgpt .cg-top-left, .sk-chatgpt .cg-top-right { display: flex; align-items: center; gap: 4px; }
+.sk-chatgpt .cg-top-center { position: absolute; left: 0; right: 0; top: 0; height: 52px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.sk-chatgpt .cg-top-btn {
+  height: 32px; min-width: 32px; padding: 0 7px; border-radius: 9px; display: flex; align-items: center; justify-content: center; gap: 6px;
+  color: var(--cg-text); font-size: 14px; font-weight: 400;
+}
+.sk-chatgpt .cg-top-btn .cg-i { width: 20px; height: 20px; }
+.sk-chatgpt .cg-top-btn.is-quiet { color: var(--cg-text-3); }
+.sk-chatgpt .cg-top-btn.is-quiet .cg-i { width: 16px; height: 16px; }
+.sk-chatgpt .cg-top-btn.is-tile { background: var(--cg-soft); }
+.sk-chatgpt .cg-top-title { font-size: 16px; font-weight: 500; padding: 0 8px; display: flex; align-items: center; gap: 4px; }
+.sk-chatgpt .cg-top-title .cg-i { width: 16px; height: 16px; color: var(--cg-text-3); }
+
+/* Chat | Work toggle (centred in the top bar) */
+.sk-chatgpt .cg-toggle {
+  display: inline-flex; padding: 3px; border-radius: 999px; background: var(--cg-soft); pointer-events: auto;
+}
+.sk-chatgpt .cg-toggle > span {
+  height: 30px; padding: 0 14px; border-radius: 999px; display: flex; align-items: center;
+  font-size: 14px; font-weight: 500; color: var(--cg-text-2); letter-spacing: -0.003em;
+}
+.sk-chatgpt .cg-toggle > span.is-on {
+  background: var(--cg-page); color: var(--cg-text);
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.sk-chatgpt[data-theme="dark"] .cg-toggle > span.is-on, [data-theme="dark"] .sk-chatgpt .cg-toggle > span.is-on { background: #3d3d3d; box-shadow: none; }
+
+/* main scroll area + centred reading column */
+.sk-chatgpt .cg-main { position: absolute; left: var(--cg-rail-w); right: 0; top: 0; bottom: 0; overflow: hidden; }
+.sk-chatgpt .cg-scroll { position: absolute; left: 0; right: 0; top: 0; }
+.sk-chatgpt .cg-col { width: min(var(--cg-col), calc(100% - 96px)); margin: 0 auto; }
+.sk-chatgpt .cg-thread { font-size: var(--cg-read); line-height: var(--cg-read-lh); letter-spacing: -0.006em; color: var(--cg-text); }
+
+/* bottom dock: disclaimer above the composer; content fades out under it */
+.sk-chatgpt .cg-dock {
+  position: absolute; left: var(--cg-rail-w, 0px); right: 0; bottom: 0; z-index: 3; padding: 34px 0 18px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--cg-page) 0%, transparent), var(--cg-page) 32px);
+}
+.sk-chatgpt .cg-disclaimer { font-size: 11.5px; line-height: 14px; color: var(--cg-text-3); letter-spacing: 0.005em; text-align: center; }
+
+/* ==========================================================================
+   2. Home / empty state (web)
+   ========================================================================== */
+.sk-chatgpt .cg-home {
+  position: absolute; left: var(--cg-rail-w, 0px); right: 0; top: 0; bottom: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 64px;
+}
+.sk-chatgpt .cg-home-title {
+  font-size: 28px; line-height: 36px; font-weight: 400; letter-spacing: -0.012em; color: var(--cg-text); text-align: center; margin: 0 0 28px;
+}
+.sk-chatgpt .cg-home-chips { display: flex; gap: 8px; margin-top: 14px; width: min(808px, calc(100% - 48px)); }
+.sk-chatgpt .cg-home-chip {
+  height: 34px; padding: 0 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; color: var(--cg-text-2); box-shadow: inset 0 0 0 1px var(--cg-hairline);
+}
+.sk-chatgpt .cg-home-chip .cg-i { width: 16px; height: 16px; }
+.sk-chatgpt .cg-home-chip.is-right { margin-left: auto; box-shadow: none; }
+
+/* ==========================================================================
+   3. Messages
+   ========================================================================== */
+.sk-chatgpt .cg-turn { position: relative; }
+.sk-chatgpt .cg-turn--user { display: flex; justify-content: flex-end; }
+/* user bubble — web: pill (one line = full radius) */
+.sk-chatgpt .cg-user {
+  max-width: 72%; background: var(--cg-user-bubble); color: var(--cg-user-text);
+  padding: 18px 24px; border-radius: 39px; font-size: var(--cg-read, 16px); line-height: var(--cg-read-lh, 28px);
+  letter-spacing: -0.006em; white-space: pre-wrap;
+}
+.sk-chatgpt .cg-user.is-multi { border-radius: 30px; }
+/* desktop app: 16px prose, softer rectangle (radius 20, measured) */
+.sk-chatgpt .cg-desk .cg-user, .sk-chatgpt.cg-desk .cg-user { max-width: 78%; padding: 12px 19px; border-radius: 20px; }
+
+/* assistant: no bubble, prose */
+.sk-chatgpt .cg-ai { color: var(--cg-text); font-size: var(--cg-read, 16px); line-height: var(--cg-read-lh, 28px); letter-spacing: -0.006em; }
+.sk-chatgpt .cg-ai > * + * { margin-top: 0.75em; }
+.sk-chatgpt .cg-ai h1 { font-size: 1.42em; line-height: 1.3; font-weight: 600; letter-spacing: -0.02em; }
+.sk-chatgpt .cg-ai h2 { font-size: 1.17em; line-height: 1.35; font-weight: 600; letter-spacing: -0.014em; margin-top: 1.1em; }
+.sk-chatgpt .cg-ai h3 { font-size: 1em; line-height: 1.4; font-weight: 600; }
+.sk-chatgpt .cg-ai h1 + p { margin-top: 0.5em; }
+.sk-chatgpt .cg-ai strong, .sk-chatgpt .cg-ai b { font-weight: 600; }
+.sk-chatgpt .cg-ai ul, .sk-chatgpt .cg-ai ol { padding-left: 1.4em; }
+.sk-chatgpt .cg-ai li + li { margin-top: 0.3em; }
+.sk-chatgpt .cg-ai code { font-family: var(--cg-mono); font-size: 0.85em; background: var(--cg-code-bg); padding: 0.12em 0.36em; border-radius: 6px; }
+.sk-chatgpt .cg-ai a, .sk-chatgpt .cg-link { color: var(--cg-link); text-decoration: none; }
+.sk-chatgpt .cg-link .cg-i { width: 0.92em; height: 0.92em; vertical-align: -0.12em; margin-right: 0.3em; }
+.sk-chatgpt .cg-ai hr { border: 0; border-top: 1px solid var(--cg-hairline); }
+
+/* streamed words: wrap words in .cg-w; animate opacity 0→1 and colour var(--cg-stream-tint) → var(--cg-text) */
+.sk-chatgpt .cg-w { display: inline; }
+
+/* action row under a finished reply */
+.sk-chatgpt .cg-actions { display: flex; align-items: center; gap: 0; margin-top: 10px; margin-left: -8px; color: var(--cg-text-2); }
+.sk-chatgpt .cg-act { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.sk-chatgpt .cg-act .cg-i { width: 18px; height: 18px; }
+.sk-chatgpt .cg-act.is-hover { background: var(--cg-soft); color: var(--cg-text); }
+.sk-chatgpt .cg-web .cg-actions, .sk-chatgpt.cg-web .cg-actions { margin-top: 14px; }
+.sk-chatgpt .cg-web .cg-act, .sk-chatgpt.cg-web .cg-act { width: 36px; height: 36px; border-radius: 9px; }
+.sk-chatgpt .cg-web .cg-act .cg-i, .sk-chatgpt.cg-web .cg-act .cg-i { width: 20px; height: 20px; }
+
+/* ==========================================================================
+   4. Status: pulsing dot, shimmer label, "Worked for 40s ›"
+   ========================================================================== */
+.sk-chatgpt .cg-thinking { display: inline-block; width: 0.6em; height: 0.6em; border-radius: 50%; background: var(--cg-text); }
+.sk-chatgpt .cg-shimmer {
+  color: var(--cg-text-3);
+  background: linear-gradient(90deg, var(--cg-text-3) 0%, var(--cg-text-3) 40%, var(--cg-text) 50%, var(--cg-text-3) 60%, var(--cg-text-3) 100%);
+  background-size: 300% 100%; background-position: var(--cg-shimmer-x, 100%) 0;
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sk-chatgpt .cg-status {
+  display: flex; align-items: center; gap: 5px; color: var(--cg-text-3);
+  font-size: 16px; line-height: 24px; padding-bottom: 9px; border-bottom: 1px solid var(--cg-hairline);
+}
+.sk-chatgpt .cg-status .cg-i { width: 16px; height: 16px; }
+.sk-chatgpt .cg-status.is-plain { border-bottom: 0; padding-bottom: 0; }
+
+/* ==========================================================================
+   5. Composer
+   ========================================================================== */
+.sk-chatgpt .cg-composer {
+  position: relative; background: var(--cg-composer); color: var(--cg-text);
+  box-shadow: 0 0 0 1px var(--cg-composer-edge), var(--cg-composer-shadow);
+}
+/* 5a. web pill: + | input | Instant ⌄ | mic | ● */
+.sk-chatgpt .cg-composer--pill {
+  width: min(808px, calc(100% - 48px)); height: 56px; border-radius: 28px;
+  display: flex; align-items: center; padding: 0 9px 0 14px;
+}
+.sk-chatgpt .cg-c-plus { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: var(--cg-icon); flex: none; border-radius: 50%; }
+.sk-chatgpt .cg-c-plus .cg-i { width: 22px; height: 22px; }
+.sk-chatgpt .cg-c-input {
+  flex: 1; min-width: 0; height: 24px; margin-left: 10px; font-size: 16px; line-height: 24px; color: var(--cg-text);
+  white-space: nowrap; overflow: hidden; position: relative; display: flex; align-items: center; letter-spacing: -0.004em;
+}
+.sk-chatgpt .cg-c-ph { color: var(--cg-placeholder); }
+.sk-chatgpt .cg-c-input .cg-c-ph { position: absolute; left: 0; top: 0; }
+.sk-chatgpt .cg-c-text { white-space: pre; }
+.sk-chatgpt .cg-caret { display: inline-block; width: 1.5px; height: 1.2em; background: var(--cg-text); margin-left: 1px; vertical-align: -0.22em; border-radius: 1px; }
+.sk-chatgpt .cg-c-right { display: flex; align-items: center; gap: 2px; flex: none; }
+.sk-chatgpt .cg-c-model {
+  height: 34px; padding: 0 9px; border-radius: 999px; display: flex; align-items: center; gap: 5px;
+  font-size: 16px; color: var(--cg-text-3); white-space: nowrap; letter-spacing: -0.004em;
+}
+.sk-chatgpt .cg-c-model > .cg-i { width: 14px; height: 14px; color: var(--cg-text-3); }
+.sk-chatgpt .cg-c-model .cg-m-name { color: var(--cg-text); }
+.sk-chatgpt .cg-c-model .cg-m-effort { color: var(--cg-text-3); }
+.sk-chatgpt[data-theme="light"] .cg-c-model .cg-m-effort, .sk-chatgpt:not([data-theme="dark"]) .cg-c-model .cg-m-effort { color: #6b6b6b; }   /* 4.8:1 on the #f3f3f3 hover plate */
+.sk-chatgpt .cg-c-model .cg-m-bolt { width: 17px; height: 17px; color: var(--cg-text-2); margin-right: 1px; }
+.sk-chatgpt .cg-c-model.is-pressed, .sk-chatgpt .cg-c-model.is-open { background: var(--cg-soft); }
+.sk-chatgpt .cg-c-mic { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: var(--cg-icon); border-radius: 50%; }
+.sk-chatgpt .cg-c-mic .cg-i { width: 20px; height: 20px; }
+/* primary round button. Stack the glyphs; data-state picks one: voice | send | stop | busy */
+.sk-chatgpt .cg-c-btn {
+  width: 38px; height: 38px; border-radius: 50%; background: var(--cg-btn); color: var(--cg-btn-ink);
+  position: relative; flex: none; margin-left: 4px;
+}
+.sk-chatgpt .cg-c-btn > .cg-i { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; opacity: 0; }
+.sk-chatgpt .cg-c-btn[data-state="voice"] > .cg-b-voice,
+.sk-chatgpt .cg-c-btn[data-state="send"] > .cg-b-send,
+.sk-chatgpt .cg-c-btn[data-state="stop"] > .cg-b-stop,
+.sk-chatgpt .cg-c-btn[data-state="busy"] > .cg-b-busy { opacity: 1; }
+.sk-chatgpt .cg-c-btn > .cg-b-send { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
+.sk-chatgpt .cg-c-btn > .cg-b-stop { width: 22px; height: 22px; margin: -11px 0 0 -11px; }
+.sk-chatgpt .cg-c-btn > .cg-b-busy { position: absolute; left: 50%; top: 50%; width: 15px; height: 15px; margin: -7.5px 0 0 -7.5px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; opacity: 0; }
+.sk-chatgpt .cg-c-btn[data-state="busy"] { background: var(--cg-btn-busy); }
+.sk-chatgpt .cg-c-btn.is-disabled { background: var(--cg-btn-off); color: var(--cg-text-3); }
+
+/* 5b. compact pill — how the pill measures in the official Monty Hall demo (618×44, a 28px button).
+   That demo was recorded at a reduced Chrome page zoom (the omnibox shows Chrome's zoom-out glyph, and the
+   rail, Share and composer all measure 0.76 of the GDP demo), so this is the same pill at 0.76, not a
+   generating state. The real composer never resizes; keep one size per component. */
+.sk-chatgpt .cg-composer--pill.is-compact { width: min(614px, calc(100% - 48px)); height: 43px; border-radius: 21.5px; padding: 0 7px 0 11px; }
+.sk-chatgpt .is-compact .cg-c-plus { width: 23px; height: 23px; }
+.sk-chatgpt .is-compact .cg-c-plus .cg-i { width: 17px; height: 17px; }
+.sk-chatgpt .is-compact .cg-c-input { font-size: 12.2px; height: 18px; line-height: 18px; margin-left: 8px; }
+.sk-chatgpt .is-compact .cg-c-model { font-size: 12.2px; height: 26px; padding: 0 7px; gap: 4px; }
+.sk-chatgpt .is-compact .cg-c-model > .cg-i { width: 11px; height: 11px; }
+.sk-chatgpt .is-compact .cg-c-mic { width: 27px; height: 27px; }
+.sk-chatgpt .is-compact .cg-c-mic .cg-i { width: 15px; height: 15px; }
+.sk-chatgpt .is-compact .cg-c-btn { width: 29px; height: 29px; margin-left: 3px; }
+.sk-chatgpt .is-compact .cg-c-btn > .cg-i { width: 17px; height: 17px; margin: -8.5px 0 0 -8.5px; }
+
+/* 5c. Work / desktop composer: text on top, controls row below */
+.sk-chatgpt .cg-composer--work {
+  width: 100%; min-height: 121px; border-radius: 25px; padding: 18px 11px 11px 20px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.sk-chatgpt .cg-composer--work .cg-c-input { margin-left: 0; height: auto; min-height: 48px; align-items: flex-start; white-space: normal; padding-right: 12px; }
+.sk-chatgpt .cg-composer--work .cg-c-text { white-space: pre-wrap; }
+.sk-chatgpt .cg-c-row { display: flex; align-items: center; height: 38px; }
+.sk-chatgpt .cg-composer--work .cg-c-plus { margin-left: -6px; }
+.sk-chatgpt .cg-composer--work .cg-c-model { font-size: 16px; height: 34px; padding: 0 9px; gap: 6px; }
+.sk-chatgpt .cg-composer--work .cg-c-mic { width: 34px; height: 34px; }
+.sk-chatgpt .cg-composer--work .cg-c-mic .cg-i { width: 19px; height: 19px; }
+.sk-chatgpt .cg-composer--work .cg-c-btn { width: 34px; height: 34px; margin-left: 6px; }
+.sk-chatgpt .cg-composer--work .cg-c-btn > .cg-i { width: 20px; height: 20px; margin: -10px 0 0 -10px; }
+.sk-chatgpt .cg-composer--work .cg-c-btn > .cg-b-send { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
+/* single-line Work pill (Space view): + | input | model | gear | mic | ● */
+.sk-chatgpt .cg-composer--work.is-line { min-height: 0; height: 44px; border-radius: 22px; flex-direction: row; align-items: center; padding: 0 6px 0 12px; }
+.sk-chatgpt .cg-composer--work.is-line .cg-c-input { min-height: 0; height: 24px; align-items: center; white-space: nowrap; margin-left: 8px; }
+/* permission control: Approve for me / Auto-review / Custom */
+.sk-chatgpt .cg-perm {
+  height: 32px; padding: 0 8px; margin-left: 8px; border-radius: 999px; display: flex; align-items: center; gap: 6px;
+  font-size: 16px; color: var(--cg-text-3); letter-spacing: -0.004em;
+}
+.sk-chatgpt .cg-perm .cg-i { width: 17px; height: 17px; }
+.sk-chatgpt .cg-perm.is-auto { color: var(--cg-blue); }
+.sk-chatgpt .cg-perm .cg-perm-chev { width: 14px; height: 14px; }
+.sk-chatgpt .cg-c-spacer { flex: 1; }
+/* context tray attached above the Work/Codex composer */
+.sk-chatgpt .cg-tray {
+  margin: 0 22px -22px; padding: 7px 8px 29px; border-radius: 20px 20px 0 0;
+  background: var(--cg-tray); display: flex; gap: 4px; font-size: 15px; color: var(--cg-text-3);
+}
+.sk-chatgpt .cg-tray > span { display: flex; align-items: center; gap: 7px; height: 32px; padding: 0 10px; border-radius: 999px; }
+.sk-chatgpt .cg-tray > span .cg-i { width: 17px; height: 17px; }
+.sk-chatgpt .cg-tray > span.is-on { color: var(--cg-text); }
+.sk-chatgpt .cg-tray > span.is-open { color: var(--cg-text); background: var(--cg-tray-chip); }
+
+/* 5d. dictation (web): live waveform between + and the ×/✓ buttons */
+.sk-chatgpt .cg-dictation { flex: 1; display: flex; align-items: center; gap: 3px; height: 22px; margin: 0 12px; }
+.sk-chatgpt .cg-dictation i { flex: 1; height: 2px; border-radius: 1px; background: var(--cg-text-3); display: block; }
+
+/* ==========================================================================
+   6. Menus — model / effort picker, + menu, Work-in menu
+   ========================================================================== */
+.sk-chatgpt .cg-menu {
+  position: absolute; z-index: 20; min-width: 240px; padding: 6px; border-radius: 18px;
+  background: var(--cg-menu); box-shadow: 0 0 0 1px var(--cg-menu-edge), var(--cg-menu-shadow);
+  font-size: 15px; line-height: 20px; color: var(--cg-text); letter-spacing: -0.004em;
+}
+.sk-chatgpt .cg-menu-label { padding: 9px 12px 5px; font-size: 13.5px; line-height: 18px; color: var(--cg-text-3); }
+.sk-chatgpt .cg-menu-item {
+  min-height: 38px; padding: 8px 12px; border-radius: 11px; display: flex; align-items: center; gap: 10px; position: relative;
+}
+.sk-chatgpt .cg-menu-item > .cg-i { width: 19px; height: 19px; color: var(--cg-text); }
+.sk-chatgpt .cg-menu-item.is-hover { background: var(--cg-menu-hover); }
+.sk-chatgpt .cg-menu-item.is-pressed { background: var(--cg-soft-2); }
+.sk-chatgpt .cg-menu-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.sk-chatgpt .cg-menu-desc { font-size: 13px; line-height: 17px; color: var(--cg-text-3); }
+.sk-chatgpt .cg-menu-item > .cg-menu-check { margin-left: auto; width: 17px; height: 17px; opacity: 0; color: var(--cg-text); }
+.sk-chatgpt .cg-menu-item.is-selected > .cg-menu-check { opacity: 1; }
+.sk-chatgpt .cg-menu-item > .cg-menu-sub { margin-left: auto; width: 15px; height: 15px; color: var(--cg-text-3); }
+.sk-chatgpt .cg-menu-kbd { margin-left: auto; font-size: 13px; color: var(--cg-text-3); }
+.sk-chatgpt .cg-menu-sep { height: 1px; background: var(--cg-hairline); margin: 5px 10px; }
+
+/* ==========================================================================
+   7. Artifact card (Page / Website / Sheet) with Open button
+   ========================================================================== */
+.sk-chatgpt .cg-artifact {
+  display: flex; align-items: center; gap: 14px; padding: 18px 16px 18px 17px; border-radius: 15px;
+  box-shadow: 0 0 0 1px var(--cg-hairline); background: var(--cg-page);
+}
+.sk-chatgpt .cg-artifact-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--cg-soft); display: flex; align-items: center; justify-content: center; color: var(--cg-text); flex: none; }
+.sk-chatgpt .cg-artifact-icon .cg-i { width: 20px; height: 20px; }
+.sk-chatgpt .cg-artifact-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.sk-chatgpt .cg-artifact-title { font-size: 16px; line-height: 22px; font-weight: 500; letter-spacing: -0.006em; }
+.sk-chatgpt .cg-artifact-kind { font-size: 14.5px; line-height: 20px; color: var(--cg-text-3); }
+.sk-chatgpt .cg-btn-ghost {
+  height: 34px; padding: 0 11px; border-radius: 11px; display: inline-flex; align-items: center; gap: 5px;
+  font-size: 16px; color: var(--cg-text); box-shadow: inset 0 0 0 1px var(--cg-hairline-2); background: var(--cg-page); flex: none;
+}
+.sk-chatgpt .cg-btn-ghost .cg-i { width: 14px; height: 14px; color: var(--cg-text-2); }
+.sk-chatgpt .cg-btn-solid {
+  height: 34px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;
+  font-size: 14px; font-weight: 500; color: var(--cg-btn-ink); background: var(--cg-btn); flex: none;
+}
+
+/* ==========================================================================
+   8. Intelligent UI (GPT-6): interactive cards inside the thread
+   Sizes follow the web prose scale (they sit in a .cg-thread)
+   ========================================================================== */
+.sk-chatgpt .cg-iui {
+  background: var(--cg-card); border-radius: 18px; padding: 24px 28px 26px;
+  box-shadow: 0 0 0 1px var(--cg-card-edge), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+.sk-chatgpt .cg-iui-title { font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.016em; }
+.sk-chatgpt .cg-iui-sub { font-size: 21px; line-height: 30px; color: var(--cg-text-2); margin-top: 10px; letter-spacing: -0.004em; }
+.sk-chatgpt .cg-iui-eyebrow { font-size: 18px; line-height: 24px; letter-spacing: 0.02em; text-transform: uppercase; color: var(--cg-text-2); }
+.sk-chatgpt .cg-iui-big { font-size: 40px; line-height: 50px; font-weight: 600; letter-spacing: -0.022em; margin-top: 12px; font-variant-numeric: tabular-nums; }
+.sk-chatgpt .cg-iui-delta { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 24px; line-height: 32px; color: var(--cg-positive); }
+.sk-chatgpt .cg-iui-delta .cg-i { width: 26px; height: 26px; }
+.sk-chatgpt .cg-iui-row { display: flex; align-items: baseline; justify-content: space-between; margin-top: 24px; font-size: 22px; line-height: 30px; }
+.sk-chatgpt .cg-iui-row b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.sk-chatgpt .cg-radios { display: flex; flex-direction: column; margin-top: 12px; }
+.sk-chatgpt .cg-radio { height: 56px; display: flex; align-items: center; gap: 16px; }
+.sk-chatgpt .cg-radio-dot { width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--cg-hairline-2); position: relative; flex: none; background: var(--cg-card); }
+.sk-chatgpt .cg-radio.is-on .cg-radio-dot { background: var(--cg-text); box-shadow: none; }
+.sk-chatgpt .cg-radio.is-on .cg-radio-dot::after { content: ""; position: absolute; left: 10px; top: 10px; width: 10px; height: 10px; border-radius: 50%; background: var(--cg-card); }
+.sk-chatgpt .cg-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; margin-top: 16px; }
+.sk-chatgpt .cg-tile { border-radius: 12px; padding: 22px 16px 20px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.sk-chatgpt .cg-tile--blue { background: var(--cg-tile-blue); }
+.sk-chatgpt .cg-tile--green { background: var(--cg-tile-green); }
+.sk-chatgpt .cg-tile--red { background: var(--cg-tile-red); }
+.sk-chatgpt .cg-tile--grey { background: var(--cg-card-inner); }
+.sk-chatgpt .cg-tile-big { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.01em; }
+.sk-chatgpt .cg-tile-label { font-size: 22px; line-height: 28px; color: var(--cg-text-2); }
+.sk-chatgpt .cg-iui-result { margin-top: 16px; padding: 18px 20px; border-radius: 12px; background: var(--cg-card-inner); }
+.sk-chatgpt .cg-iui-result b { font-weight: 600; display: block; }
+/* slider (GDP calculator demo): a thick soft track with an inset white knob and no dark fill.
+   Set --k (0–1) on .cg-slider. .cg-slider-fill is optional (a tinted run up to the knob; transparent by default). */
+.sk-chatgpt .cg-slider { position: relative; height: 26px; margin-top: 12px; border-radius: 13px; background: var(--cg-track); }
+.sk-chatgpt .cg-slider-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 13px; width: calc(26px + (100% - 26px) * var(--k, 0.5)); background: var(--cg-slider-fill, transparent); }
+.sk-chatgpt .cg-slider-knob {
+  position: absolute; top: 3px; left: calc(3px + (100% - 26px) * var(--k, 0.5)); width: 20px; height: 20px; border-radius: 50%;
+  background: #ffffff; box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.10), 0 1px 2px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.sk-chatgpt[data-theme="dark"] .cg-slider-knob, [data-theme="dark"] .sk-chatgpt .cg-slider-knob { background: #e9e9e9; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
+/* knob while dragged: a soft ring (EXTRAPOLATED: the GDP demo shows the knob only at rest) */
+.sk-chatgpt .cg-slider-knob.is-active { box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.10), 0 1px 2px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08), 0 0 0 5px rgba(0, 0, 0, 0.06); }
+.sk-chatgpt[data-theme="dark"] .cg-slider-knob.is-active, [data-theme="dark"] .sk-chatgpt .cg-slider-knob.is-active { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 5px rgba(255, 255, 255, 0.10); }
+/* plain answer table */
+.sk-chatgpt .cg-table { width: 100%; border-collapse: collapse; }
+.sk-chatgpt .cg-table th { text-align: left; font-weight: 600; padding: 12px 0; border-bottom: 1px solid var(--cg-hairline); }
+.sk-chatgpt .cg-table td { padding: 12px 0; border-bottom: 1px solid var(--cg-hairline); font-variant-numeric: tabular-nums; }
+/* inline source chip (extrapolated) */
+.sk-chatgpt .cg-cite {
+  display: inline-flex; align-items: center; height: 1.15em; padding: 0 0.5em; margin-left: 0.25em; border-radius: 999px;
+  background: var(--cg-soft); color: var(--cg-text-2); font-size: 0.6em; font-weight: 500; vertical-align: 0.14em; line-height: 1;
+}
+
+/* ==========================================================================
+   9. Desktop app (macOS)  (.cg-desk) — one flat chrome surface (title bar +
+      rail) with the content card inset into it
+   ========================================================================== */
+.sk-chatgpt.cg-desk, .sk-chatgpt .cg-desk {
+  position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--cg-chrome);
+  --cg-tb-h: 54px; --cg-drail-w: 64px;
+  --cg-col: 912px; --cg-read: 16px; --cg-read-lh: 28px;
+}
+.sk-chatgpt .cg-tb {
+  position: absolute; left: 0; right: 0; top: 0; height: var(--cg-tb-h);
+  display: flex; align-items: center; padding: 0 12px 0 18px; gap: 10px; color: var(--cg-icon-2);
+}
+.sk-chatgpt .cg-traffic { display: flex; gap: 8px; margin-right: 8px; }
+.sk-chatgpt .cg-traffic i { width: 12px; height: 12px; border-radius: 50%; display: block; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.14); }
+.sk-chatgpt .cg-traffic i:nth-child(1) { background: var(--cg-traffic-r); }
+.sk-chatgpt .cg-traffic i:nth-child(2) { background: var(--cg-traffic-y); }
+.sk-chatgpt .cg-traffic i:nth-child(3) { background: var(--cg-traffic-g); }
+.sk-chatgpt .cg-tb-btn { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--cg-icon-2); flex: none; }
+.sk-chatgpt .cg-tb-btn .cg-i { width: 20px; height: 20px; }
+.sk-chatgpt .cg-tb-btn.is-dim { opacity: 0.4; }
+.sk-chatgpt .cg-tb-sep { width: 1px; height: 20px; background: var(--cg-hairline-2); margin: 0 -2px; flex: none; }
+.sk-chatgpt .cg-tb-title { font-size: 17px; font-weight: 500; color: var(--cg-text); letter-spacing: -0.006em; white-space: nowrap; }
+.sk-chatgpt .cg-tb-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+/* title-bar tabs (Space pages) */
+.sk-chatgpt .cg-tab {
+  height: 34px; padding: 0 12px; border-radius: 10px; display: flex; align-items: center; gap: 8px;
+  font-size: 14px; color: var(--cg-text-2); max-width: 260px; white-space: nowrap; overflow: hidden;
+}
+.sk-chatgpt .cg-tab.is-on { background: var(--cg-page); color: var(--cg-text); box-shadow: 0 0 0 1px var(--cg-hairline); }
+.sk-chatgpt[data-theme="dark"] .cg-tab.is-on, [data-theme="dark"] .sk-chatgpt .cg-tab.is-on { background: #3d3d3d; box-shadow: none; }
+.sk-chatgpt .cg-tab .cg-i { width: 16px; height: 16px; }
+
+/* desktop rail */
+.sk-chatgpt .cg-drail {
+  position: absolute; left: 0; top: var(--cg-tb-h); bottom: 0; width: var(--cg-drail-w);
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 6px; color: var(--cg-icon-2);
+}
+.sk-chatgpt .cg-drail-btn { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; position: relative; flex: none; }
+.sk-chatgpt .cg-drail-btn .cg-i { width: 23px; height: 23px; }
+.sk-chatgpt .cg-drail-btn.is-active { background: var(--cg-rail-active); color: var(--cg-text); }
+.sk-chatgpt .cg-drail-btn .cg-badge { position: absolute; top: 7px; right: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--cg-notify); box-shadow: 0 0 0 2px var(--cg-rail-active); }
+.sk-chatgpt .cg-drail-btn:not(.is-active) .cg-badge { box-shadow: 0 0 0 2px var(--cg-chrome); }
+.sk-chatgpt .cg-drail-sep { width: 28px; height: 1px; background: var(--cg-hairline-2); margin: 2px 0; flex: none; }
+.sk-chatgpt .cg-drail .cg-avatar { position: absolute; bottom: 14px; width: 32px; height: 32px; }
+
+/* inset content card */
+.sk-chatgpt .cg-dcard {
+  position: absolute; left: var(--cg-drail-w); top: var(--cg-tb-h); right: 6px; bottom: 6px;
+  background: var(--cg-page); border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 1px var(--cg-hairline);
+}
+.sk-chatgpt .cg-dcard.has-panel { left: calc(var(--cg-drail-w) + var(--cg-panel-w, 240px)); }
+.sk-chatgpt .cg-dcard .cg-col { width: min(var(--cg-col), calc(100% - 120px)); }
+/* conversation minimap: a tick per turn down the card's left edge */
+.sk-chatgpt .cg-minimap { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 9px; }
+.sk-chatgpt .cg-minimap i { display: block; width: 9px; height: 1.5px; border-radius: 1px; background: var(--cg-text-4); }
+.sk-chatgpt .cg-minimap i.is-on { background: var(--cg-text); width: 11px; }
+/* desktop dock: composer pinned to the bottom of the card */
+.sk-chatgpt .cg-ddock {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 0 16px; z-index: 3;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--cg-page) 0%, transparent), var(--cg-page) 16px);
+}
+
+/* expanded side panel: classic chat list or Space */
+.sk-chatgpt .cg-panel {
+  position: absolute; left: var(--cg-drail-w); top: var(--cg-tb-h); bottom: 6px; width: var(--cg-panel-w, 240px);
+  padding: 8px 8px; color: var(--cg-text); font-size: 14.5px; line-height: 20px;
+}
+.sk-chatgpt .cg-web .cg-panel, .sk-chatgpt.cg-web .cg-panel { left: var(--cg-rail-w); top: 0; bottom: 0; background: var(--cg-panel); border-right: 1px solid var(--cg-hairline); padding-top: 10px; }
+.sk-chatgpt .cg-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px 10px; }
+.sk-chatgpt .cg-panel-title { font-size: 18px; font-weight: 600; letter-spacing: -0.012em; }
+.sk-chatgpt .cg-panel-head .cg-i { width: 18px; height: 18px; color: var(--cg-text-2); }
+.sk-chatgpt .cg-panel-row {
+  height: 34px; border-radius: 9px; padding: 0 10px; display: flex; align-items: center; gap: 10px;
+  white-space: nowrap; overflow: hidden;
+}
+.sk-chatgpt .cg-panel-row > span { overflow: hidden; text-overflow: ellipsis; }
+.sk-chatgpt .cg-panel-row .cg-i { width: 18px; height: 18px; color: var(--cg-text); }
+.sk-chatgpt .cg-panel-row.is-active { background: var(--cg-row-active); }
+.sk-chatgpt .cg-panel-row.is-muted { color: var(--cg-text-3); }
+.sk-chatgpt .cg-panel-label { font-size: 14px; color: var(--cg-text-3); padding: 18px 10px 6px; }
+
+/* ==========================================================================
+   10. iOS (.cg-ios) — 393×852 pt screen; zoom it into a device frame
+   ========================================================================== */
+.sk-chatgpt.cg-ios, .sk-chatgpt .cg-ios {
+  position: relative; width: 393px; height: 852px; overflow: hidden; background: #fafafa;
+  --cg-read: 17px; --cg-read-lh: 26px; --cg-ios-bubble: #e9e9e9; --cg-ios-circ: #f2f2f2;
+}
+.sk-chatgpt[data-theme="dark"].cg-ios, [data-theme="dark"] .sk-chatgpt .cg-ios, .sk-chatgpt[data-theme="dark"] .cg-ios {
+  background: #121212; --cg-ios-bubble: #2f2f2f; --cg-ios-circ: #2a2a2a; --cg-composer: #1f1f1f;
+}
+.sk-chatgpt .cg-ios-status { position: absolute; left: 0; right: 0; top: 0; height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 6px 30px 0 46px; font-size: 16px; font-weight: 600; }
+.sk-chatgpt .cg-ios-status .cg-i { height: 13px; width: auto; }
+.sk-chatgpt .cg-ios-head { position: absolute; left: 0; right: 0; top: 54px; height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+.sk-chatgpt .cg-ios-round {
+  height: 42px; min-width: 42px; padding: 0 11px; border-radius: 21px; background: var(--cg-composer); display: flex; align-items: center; justify-content: center; gap: 14px;
+  color: var(--cg-text); box-shadow: 0 0 0 0.5px var(--cg-composer-edge), 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+.sk-chatgpt .cg-ios-round .cg-i { width: 21px; height: 21px; }
+.sk-chatgpt .cg-ios-title { font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.sk-chatgpt .cg-ios-body { position: absolute; left: 0; right: 0; top: 110px; bottom: 100px; padding: 0 20px; overflow: hidden; }
+.sk-chatgpt .cg-ios .cg-user { font-size: 17px; line-height: 23px; padding: 9px 16px; border-radius: 21px; max-width: 82%; background: var(--cg-ios-bubble); }
+.sk-chatgpt .cg-ios-h { font-size: 22px; line-height: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.sk-chatgpt .cg-ios-caps { font-size: 13.5px; line-height: 18px; text-transform: uppercase; letter-spacing: 0.01em; color: var(--cg-text-3); margin-top: 4px; }
+.sk-chatgpt .cg-composer--ios {
+  position: absolute; left: 12px; right: 12px; bottom: 26px; height: 56px; border-radius: 28px;
+  display: flex; align-items: center; padding: 0 7px; gap: 6px;
+}
+.sk-chatgpt .cg-ios-circ { width: 38px; height: 38px; border-radius: 50%; background: var(--cg-ios-circ); display: flex; align-items: center; justify-content: center; color: var(--cg-text); flex: none; }
+.sk-chatgpt .cg-ios-circ .cg-i { width: 20px; height: 20px; }
+.sk-chatgpt .cg-composer--ios .cg-c-input { margin-left: 6px; font-size: 17px; }
+.sk-chatgpt .cg-composer--ios .cg-c-btn { width: 40px; height: 40px; margin: 0; }
+.sk-chatgpt .cg-composer--ios .cg-c-btn > .cg-i { width: 22px; height: 22px; margin: -11px 0 0 -11px; }
+
+/* ==========================================================================
+   11. Voice mode (iOS): white screen, cloud orb, bottom bar
+   ========================================================================== */
+.sk-chatgpt .cg-voice { position: relative; width: 393px; height: 852px; background: #ffffff; overflow: hidden; }
+.sk-chatgpt[data-theme="dark"] .cg-voice, [data-theme="dark"] .sk-chatgpt .cg-voice { background: #0d0d0d; }
+.sk-chatgpt .cg-orb {
+  position: absolute; left: 50%; top: 50%; width: 176px; height: 176px; margin: -108px 0 0 -88px; border-radius: 50%; overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 36% at 36% 32%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0) 70%),
+    radial-gradient(ellipse 60% 28% at 70% 70%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 70%),
+    radial-gradient(ellipse 80% 50% at 30% 86%, rgba(176, 184, 236, 0.9), rgba(176, 184, 236, 0) 70%),
+    radial-gradient(circle at 50% 40%, #b9bdf0 0%, #8f98da 55%, #7d86cf 100%);
+}
+.sk-chatgpt .cg-orb-clouds {
+  position: absolute; inset: -20%;
+  background:
+    radial-gradient(ellipse 45% 18% at 30% 45%, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 70%),
+    radial-gradient(ellipse 40% 16% at 72% 38%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 70%),
+    radial-gradient(ellipse 50% 20% at 55% 62%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 70%);
+}
+.sk-chatgpt .cg-voice-bar { position: absolute; left: 14px; right: 14px; bottom: 34px; display: flex; align-items: center; gap: 8px; }
+.sk-chatgpt .cg-voice-ask { flex: 1; height: 50px; border-radius: 25px; background: var(--cg-soft); display: flex; align-items: center; gap: 10px; padding: 0 16px; color: var(--cg-text-3); font-size: 16px; }
+.sk-chatgpt .cg-voice-ask .cg-i { color: var(--cg-text); width: 20px; height: 20px; }
+.sk-chatgpt .cg-voice-circ { width: 50px; height: 50px; border-radius: 50%; background: var(--cg-soft); display: flex; align-items: center; justify-content: center; color: var(--cg-text); flex: none; }
+.sk-chatgpt .cg-voice-circ .cg-i { width: 21px; height: 21px; }
+.sk-chatgpt .cg-voice-circ.is-end { background: #1a1a1a; color: #ffffff; }
+.sk-chatgpt[data-theme="dark"] .cg-voice-circ.is-end, [data-theme="dark"] .sk-chatgpt .cg-voice-circ.is-end { background: #f2f2f2; color: #0d0d0d; }
+
+/* ==========================================================================
+   12. dots — chat bubbles (official graphic is dark) + call screen
+   ========================================================================== */
+.sk-chatgpt .cg-dots { background: #000000; color: #f2f2f2; padding: 16px; display: flex; flex-direction: column; gap: 7px; font-size: 17px; line-height: 23px; }
+.sk-chatgpt[data-theme="light"] .cg-dots, [data-theme="light"] .sk-chatgpt .cg-dots { background: #ffffff; color: #0d0d0d; }
+.sk-chatgpt .cg-dot-msg { align-self: flex-start; max-width: 80%; background: #1e1e1e; padding: 9px 15px; border-radius: 20px; }
+.sk-chatgpt .cg-dot-msg.is-me { align-self: flex-end; background: #303030; }
+.sk-chatgpt[data-theme="light"] .cg-dot-msg, [data-theme="light"] .sk-chatgpt .cg-dot-msg { background: #f0f0f0; }
+.sk-chatgpt[data-theme="light"] .cg-dot-msg.is-me, [data-theme="light"] .sk-chatgpt .cg-dot-msg.is-me { background: #e3e3e3; }
+.sk-chatgpt .cg-dot-action { align-self: flex-start; display: inline-flex; align-items: center; gap: 11px; height: 46px; padding: 0 16px 0 14px; border-radius: 23px; background: #18202e; color: #a9c9f5; font-size: 17px; }
+.sk-chatgpt[data-theme="light"] .cg-dot-action, [data-theme="light"] .sk-chatgpt .cg-dot-action { background: #e8f0fc; color: #2d63b3; }
+.sk-chatgpt .cg-dot-action .cg-i { width: 22px; height: 22px; }
+.sk-chatgpt .cg-dot-action .cg-chev { width: 14px; height: 14px; margin-left: 10px; opacity: 0.8; }
+.sk-chatgpt .cg-dot-typing { align-self: flex-start; display: inline-flex; gap: 5px; padding: 14px 16px; border-radius: 20px; background: #1e1e1e; }
+.sk-chatgpt[data-theme="light"] .cg-dot-typing, [data-theme="light"] .sk-chatgpt .cg-dot-typing { background: #f0f0f0; }
+.sk-chatgpt .cg-dot-typing i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.45; display: block; }
+.sk-chatgpt .cg-dot-avatar { width: 64px; height: 64px; display: inline-flex; }
+.sk-chatgpt .cg-dot-avatar svg { width: 100%; height: 100%; }
+
+.sk-chatgpt .cg-call {
+  position: relative; width: 393px; height: 852px; overflow: hidden; color: #ffffff; text-align: center;
+  background: linear-gradient(180deg, #5db4df 0%, #63b9e2 45%, #8fd0ec 75%, #b3e6f3 100%);
+}
+.sk-chatgpt[data-theme="dark"] .cg-call, [data-theme="dark"] .sk-chatgpt .cg-call { background: linear-gradient(180deg, #123a55 0%, #18496a 50%, #1f5b7d 100%); }
+.sk-chatgpt .cg-call-top { position: absolute; left: 0; right: 0; top: 70px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.sk-chatgpt .cg-call-name { font-size: 17px; font-weight: 600; }
+.sk-chatgpt .cg-call-time { font-size: 30px; font-weight: 500; letter-spacing: 0.01em; opacity: 0.92; font-variant-numeric: tabular-nums; margin-top: 10px; }
+.sk-chatgpt .cg-call-row { position: absolute; left: 34px; right: 34px; bottom: 70px; display: flex; justify-content: space-between; }
+.sk-chatgpt .cg-call-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; }
+.sk-chatgpt .cg-call-btn > span { width: 76px; height: 76px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.28); color: #ffffff; }
+.sk-chatgpt .cg-call-btn > span .cg-i { width: 30px; height: 30px; }
+.sk-chatgpt .cg-call-btn.is-light > span { background: rgba(255, 255, 255, 0.88); color: #2c5c7a; }
+.sk-chatgpt .cg-call-btn.is-end > span { background: #f0624d; color: #ffffff; }
+
+/* ==========================================================================
+   13. macOS pointer (hotspot = top-left of the box)
+   ========================================================================== */
+.sk-chatgpt .cg-cursor { position: absolute; left: 0; top: 0; width: 22px; height: 30px; z-index: 50; pointer-events: none; transform-origin: 3px 2px; }
+.sk-chatgpt .cg-cursor svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.32)); }

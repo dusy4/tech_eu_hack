@@ -1,0 +1,854 @@
+/* =====================================================================
+   Grok + Grok Bot skin  (grok.com web · Grok iOS · Grok Bot desktop)
+   Root: .sk-grok   Theme: data-theme="dark" on .sk-grok or any ancestor.
+   Fonts: link assets/fonts/fonts.css yourself (Inter stands in for universalSans).
+   Prefixes:  gk-  grok.com web     gi-  Grok iOS     gb-  Grok Bot desktop
+   All sizes are px at the reference scale:
+     - grok.com: 1:1 with a 1920×1080 browser viewport (live DOM measurements).
+     - Grok Bot: 1:1 with the 1585 px-wide official stream crop. A full-frame 1920×1080 app is
+       a 1585×892 .gb-app with `zoom: 1.2114`.
+     - iOS: logical points (393×852 screen).
+   ===================================================================== */
+
+.sk-grok {
+  /* ---- grok.com light (exact: live DOM + production CSS, 2026-10-15) ---- */
+  --gk-bg: #f9f8f7;
+  --gk-fg: #050505;
+  --gk-fg-2: #636363;
+  --gk-fg-3: #858585;
+  --gk-surface: #ffffff;          /* composer card */
+  --gk-border: #e6e5e3;           /* composer 1px border */
+  --gk-hairline: rgba(0, 0, 0, 0.06);
+  --gk-chip-open: #f0f0f0;
+  --gk-hover: #f0eeed;            /* --surface-l1-hover */
+  --gk-l2: #eae8e6;               /* --surface-l2 */
+  --gk-accent: #0890ff;           /* send */
+  --gk-on-accent: #ffffff;
+  --gk-bubble: #f0efed;           /* --surface-user-bubble */
+  --gk-card: #f5f3f2;             /* logged-out gate card */
+  --gk-card-border: #eceae8;
+  --gk-menu: #ffffff;
+  --gk-menu-border: #f4f3f2;
+  --gk-menu-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03);
+  --gk-upsell: #e8e8e8;
+  --gk-solid: #050505;            /* "Sign up" pill */
+  --gk-solid-fg: #fcfcfc;
+  --gk-solid-hover: #2b2a29;      /* hover on a solid pill (extrapolated) */
+  --gk-outline: rgba(0, 0, 0, 0.08);  /* "Sign in" outline pill */
+  --gk-code: #f2f1ef;
+  --gk-table-line: rgba(0, 0, 0, 0.08);
+  --gk-diff-add: #2f7448;
+  --gk-diff-del: #a7444b;
+  --gk-avatar: #e4e2df;
+
+  /* ---- Grok Bot light (sampled from @grok streams, approx.) ---- */
+  --gb-list: #f7f7f7;
+  --gb-bg: #fdfdfd;
+  --gb-fg: #141414;
+  --gb-fg-2: #5e5e5e;
+  --gb-fg-3: #9a9a9a;
+  --gb-row-sel: #e2e2e2;
+  --gb-row-hover: #ececec;
+  --gb-tag: #ececec;
+  --gb-tag-sel: #d9d9d9;
+  --gb-tag-fg: #727272;
+  --gb-bubble: #eeeeee;
+  --gb-bubble-fg: #141414;
+  --gb-bubble-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 6px -2px rgba(0, 0, 0, 0.06);
+  --gb-card: #ffffff;
+  --gb-card-border: #efefef;
+  --gb-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --gb-composer: #ffffff;
+  --gb-composer-border: #efefef;
+  --gb-composer-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  --gb-circle: #f0f0f0;           /* "+" circle (sampled #efefef–#f2f2f2) */
+  --gb-mic: #f6f6f6;              /* mic: a barely-there circle around a grey glyph */
+  --gb-mic-fg: #626262;
+  --gb-voice: #070707;            /* voice button */
+  --gb-voice-fg: #ffffff;
+  --gb-pill: #f1f1f1;             /* generic grey pill */
+  --gb-head: #ffffff;             /* centred chat header pill (white, lifted) */
+  --gb-head-shadow: 0 1px 4px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.035);
+  --gb-tab-sel: #efefef;          /* Details | Library | Computer selected pill (sampled #ececec–#f1f1f1) */
+  --gb-tab-fg: #7a7a7a;
+  --gb-divider: #f0f0f0;          /* chat | profile-panel hairline */
+  --gb-p-card: #fdfdfd;           /* Routines / Meetings cards */
+  --gb-p-card-border: #ececec;
+  --gb-p-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --gb-role: #8a8a8a;             /* role under the panel name */
+  --gb-more: #2d5fc0;             /* "↓ More unreads" pill */
+  --gb-unread: #2e61bb;
+  --gb-online: #65c980;
+  --gb-eye: #ffffff;              /* avatar eyes read as cut-outs */
+  --gb-solid: #141414;            /* primary pill (light; dark uses white) */
+  --gb-solid-fg: #ffffff;
+  --gb-ghost: #ffffff;
+  --gb-ghost-fg: #141414;
+  --gb-ghost-border: #e6e6e6;
+  --gb-screen: #f2f2f2;           /* Computer tab preview */
+  --gb-app-tile: #ffffff;
+  --gb-rec-bar: #2f2f2f;
+  --gb-rec-red: #e3687b;
+
+  /* ---- Grok iOS (dark from the App Store frame; light extrapolated) ---- */
+  --gi-bg: #ffffff;
+  --gi-fg: #0a0a0a;
+  --gi-fg-2: #6e6e6e;
+  --gi-btn: #f2f2f2;
+  --gi-btn-rim: rgba(0, 0, 0, 0.04);
+  --gi-seg-sel: #ebebeb;
+  --gi-bubble-stroke: #e2e2e2;
+  --gi-card-stroke: #e6e6e6;
+  --gi-composer: #f5f5f5;
+  --gi-composer-border: #ececec;
+  --gi-chip: #e8e8e8;
+  --gi-placeholder: #8a8a8a;
+  --gi-speak: #0a0a0a;
+  --gi-speak-fg: #ffffff;
+  --gi-media: #ececec;
+
+  font-family: Inter, sans-serif;
+  color: var(--gk-fg);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11" 0;
+}
+
+.sk-grok[data-theme="dark"],
+[data-theme="dark"] .sk-grok {
+  /* grok.com dark (exact where read from the DOM) */
+  --gk-bg: #131211;
+  --gk-fg: #fcfcfc;
+  --gk-fg-2: #9e9e9e;
+  --gk-fg-3: #7b7a79;
+  --gk-surface: #201f1d;
+  --gk-border: #2d2c2a;           /* white 6% over #201f1d */
+  --gk-hairline: rgba(255, 255, 255, 0.06);
+  --gk-chip-open: #373634;
+  --gk-hover: #2b2a28;           /* menu row hover over --surface-elevated */
+  --gk-l2: #201f1d;
+  --gk-accent: #299fff;
+  --gk-on-accent: #050505;
+  --gk-bubble: #272624;
+  --gk-card: #1b1a18;
+  --gk-card-border: #2a2927;
+  --gk-menu: #23211f;             /* --surface-elevated */
+  --gk-menu-border: #2f2e2c;
+  --gk-menu-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.5);
+  --gk-upsell: #363636;
+  --gk-solid: #fcfcfc;
+  --gk-solid-fg: #050505;
+  --gk-solid-hover: #e0dfde;
+  --gk-outline: rgba(255, 255, 255, 0.1);
+  --gk-code: #1c1b19;
+  --gk-table-line: rgba(255, 255, 255, 0.09);
+  --gk-diff-add: #63b67c;
+  --gk-diff-del: #cd8489;
+  --gk-avatar: #34322f;
+
+  /* Grok Bot dark (@grok Oct 8 stream) */
+  --gb-list: #111111;
+  --gb-bg: #070707;
+  --gb-fg: #f1f1f1;
+  --gb-fg-2: #9c9c9c;
+  --gb-fg-3: #6f6f6f;
+  --gb-row-sel: #313131;
+  --gb-row-hover: #232323;
+  --gb-tag: #262626;
+  --gb-tag-sel: #3d3d3d;
+  --gb-tag-fg: #9c9c9c;
+  --gb-bubble: #262626;
+  --gb-bubble-fg: #f1f1f1;
+  --gb-bubble-shadow: none;
+  --gb-card: #141414;
+  --gb-card-border: #222222;
+  --gb-card-shadow: none;
+  --gb-composer: #2f2f2f;
+  --gb-composer-border: #353535;
+  --gb-composer-shadow: none;
+  --gb-circle: transparent;       /* Oct 8 frame: "+" and mic are bare glyphs on the #2f2f2f pill */
+  --gb-mic: transparent;
+  --gb-mic-fg: #a1a1a1;
+  --gb-voice: #fcfcfc;
+  --gb-voice-fg: #070707;
+  --gb-pill: #1a1a1a;
+  --gb-head: #1a1a1a;             /* sampled #1a1a1a */
+  --gb-head-shadow: none;
+  --gb-tab-sel: #2a2a2a;
+  --gb-tab-fg: #8d8d8d;
+  --gb-divider: #161616;
+  --gb-p-card: #0e0e0e;
+  --gb-p-card-border: #222222;
+  --gb-p-card-shadow: none;
+  --gb-role: #8d8d8d;
+  --gb-more: #3567cc;
+  --gb-unread: #3a72d6;
+  --gb-online: #5cc27a;
+  --gb-eye: #0b0b0b;
+  --gb-solid: #f4f1f4;            /* "Copy link" */
+  --gb-solid-fg: #111111;
+  --gb-ghost: #383539;            /* "View details" */
+  --gb-ghost-fg: #f1f1f1;
+  --gb-ghost-border: #383539;
+  --gb-screen: #161616;
+  --gb-app-tile: #2a2a2a;
+
+  /* Grok iOS dark (App Store frame, near-exact) */
+  --gi-bg: #000000;
+  --gi-fg: #fcfcfc;
+  --gi-fg-2: #8f8f8f;
+  --gi-btn: #141414;
+  --gi-btn-rim: rgba(255, 255, 255, 0.08);
+  --gi-seg-sel: #1e1e1e;
+  --gi-bubble-stroke: #2a2a2a;
+  --gi-card-stroke: #1f1f1f;
+  --gi-composer: #1b1b1b;
+  --gi-composer-border: #181818;
+  --gi-chip: #272727;
+  --gi-placeholder: #757575;
+  --gi-speak: #fcfcfc;
+  --gi-speak-fg: #0a0a0a;
+  --gi-media: #1c1c1c;
+}
+
+.sk-grok *, .sk-grok *::before, .sk-grok *::after { box-sizing: border-box; }
+.sk-grok svg { display: block; flex: none; }
+
+/* =====================================================================
+   1. grok.com — page, header, footer
+   ===================================================================== */
+.gk-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--gk-bg);
+  color: var(--gk-fg);
+  font-size: 15px;
+  line-height: 22.5px;
+}
+.gk-header {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 61px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 0 20px;
+  z-index: 3;
+}
+.gk-logo { width: 32px; height: 32px; color: var(--gk-fg); }
+.gk-logo svg { width: 32px; height: 32px; }
+.gk-header-right { display: flex; align-items: center; gap: 8px; }
+/* ghost text button ("Imagine") */
+.gk-ghost {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gk-fg-2);
+  margin-right: 3px;
+}
+.gk-ghost svg { width: 18px; height: 18px; color: var(--gk-fg); }
+/* round icon button (40px) */
+.gk-iconbtn {
+  width: 40px; height: 40px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9999px;
+  color: var(--gk-fg);
+}
+.gk-iconbtn svg { width: 20px; height: 20px; }
+.gk-iconbtn.is-sm { width: 32px; height: 32px; }
+.gk-iconbtn.is-sm svg { width: 18px; height: 18px; }
+/* pills */
+.gk-pill {
+  height: 40px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.gk-pill svg { width: 18px; height: 18px; }
+.gk-pill.is-outline { box-shadow: inset 0 0 0 1px var(--gk-outline); color: var(--gk-fg); }
+.gk-pill.is-solid { background: var(--gk-solid); color: var(--gk-solid-fg); }
+.gk-pill.is-sm { height: 32px; padding: 0 11px; }
+.gk-pill.is-solid.is-hover { background: var(--gk-solid-hover); }
+
+.gk-footer {
+  position: absolute;
+  left: 0; right: 0; bottom: 23px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 22px;
+  letter-spacing: -0.13px;
+  color: var(--gk-fg-2);
+}
+.gk-footer b { font-weight: 400; color: var(--gk-fg); }
+.gk-footer span { display: block; }
+
+/* =====================================================================
+   2. grok.com — empty-state home
+   ===================================================================== */
+.gk-home {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* 278 px at a 1080-tall viewport (live DOM). For a smaller browser window keep the same share of
+     the height: --gk-home-top ≈ 25.7% of the viewport height (167 px at 1152×648). */
+  padding-top: var(--gk-home-top, 278px);
+}
+.gk-heading {
+  font-size: 24px;
+  font-weight: 600;               /* live: universalSansDisplay 550 / -0.48px; Inter needs 600 / -0.3px to match its width and colour */
+  line-height: 32.4px;
+  letter-spacing: -0.12px;
+  color: var(--gk-fg);
+  margin: 0 0 32.6px;
+}
+
+/* =====================================================================
+   3. grok.com — composer (idle · typing · generating)
+   ===================================================================== */
+.gk-composer {
+  position: relative;
+  width: 752px;
+  background: var(--gk-surface);
+  border: 1px solid var(--gk-border);
+  border-radius: 24px;
+  padding: 13px 10px 11px;
+}
+.gk-input {
+  position: relative;
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 16px;
+  line-height: 28px;
+  color: var(--gk-fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.gk-placeholder { position: absolute; left: 8px; top: 0; color: var(--gk-fg-2); white-space: nowrap; }
+.gk-composer.is-typing .gk-placeholder { display: none; }
+/* text caret: an inline bar after the typed text (hide it when the composer is not focused) */
+.gk-caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 20px;
+  margin: 0 0 -4px 0;
+  background: var(--gk-fg);
+}
+.gk-row {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  margin-top: 8px;
+}
+.gk-row .gk-spacer { flex: 1; }
+/* mode chip: "Fast ⌄" */
+.gk-chip {
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gk-fg-2);
+  margin-right: 5px;
+}
+.gk-chip svg { width: 16px; height: 16px; }
+.gk-chip .gk-chev-up { display: none; }
+.gk-chip.is-hover { background: var(--gk-chip-open); }
+.gk-chip.is-open { background: var(--gk-chip-open); color: var(--gk-fg); font-weight: 600; }
+.gk-chip.is-open .gk-chev-down { display: none; }
+.gk-chip.is-open .gk-chev-up { display: block; }
+/* send button: disabled (empty) → active (text) → stop (generating) */
+.gk-send {
+  position: relative;
+  width: 40px; height: 40px;
+  border-radius: 9999px;
+  background: var(--gk-accent);
+  color: var(--gk-on-accent);
+  display: inline-flex; align-items: center; justify-content: center;
+  opacity: 0.4;
+}
+.gk-send svg { width: 20px; height: 20px; }
+.gk-send .gk-ico-stop { display: none; }
+.gk-composer.is-typing .gk-send,
+.gk-send.is-active { opacity: 1; }
+.gk-composer.is-generating .gk-send { opacity: 1; }
+.gk-send.is-hover { filter: brightness(0.92); }
+.sk-grok[data-theme="dark"] .gk-send.is-hover, [data-theme="dark"] .sk-grok .gk-send.is-hover { filter: brightness(1.1); }
+.gk-composer.is-generating .gk-send .gk-ico-send { display: none; }
+.gk-composer.is-generating .gk-send .gk-ico-stop { display: block; }
+
+/* =====================================================================
+   4. grok.com — mode menu (Fast / Auto / Expert / Heavy + Premium upsell)
+   ===================================================================== */
+.gk-menu {
+  position: absolute;
+  width: 277px;
+  padding: 6px;
+  background: var(--gk-menu);
+  border: 1px solid var(--gk-menu-border);
+  border-radius: 18px;
+  box-shadow: var(--gk-menu-shadow);
+  z-index: 5;
+}
+/* anchor the menu under the composer's mode chip (menu is a child of .gk-composer) */
+.gk-menu.is-under-chip { top: calc(100% - 5px); right: 55px; transform-origin: 100% 0; }
+.gk-menu-item {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 8px 0 8px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--gk-fg);
+}
+.gk-menu-item > svg { width: 20px; height: 20px; margin-left: -1px; color: var(--gk-fg-2); }
+.gk-menu-item .gk-label { flex: 1; }
+.gk-menu-item .gk-check { width: 16px; height: 16px; color: var(--gk-fg-2); }
+.gk-menu-item.is-hover { background: var(--gk-hover); }
+.gk-upsell {
+  margin-top: 4px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 12px;
+  background: var(--gk-upsell);
+}
+.gk-upsell .gk-up-text { flex: 1; }
+.gk-upsell .gk-up-title { font-size: 14px; font-weight: 600; line-height: 18px; color: var(--gk-fg); }
+.gk-upsell .gk-up-sub { font-size: 13px; line-height: 17px; letter-spacing: -0.15px; color: var(--gk-fg-2); }
+.gk-upsell .gk-pill { height: 32px; padding: 0 10px; }
+
+/* =====================================================================
+   5. grok.com — logged-in app (sidebar extrapolated; see DECISIONS.md)
+   ===================================================================== */
+.gk-app { position: absolute; inset: 0; display: flex; }
+.gk-sidebar {
+  width: 248px;               /* --sidebar-width: 15.5rem */
+  flex: none;
+  height: 100%;
+  border-right: 1px solid var(--gk-hairline);
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px;
+}
+.gk-side-top { height: 61px; display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 12px; }
+.gk-nav { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.gk-nav-item {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gk-fg);
+}
+.gk-nav-item svg { width: 18px; height: 18px; }
+.gk-nav-item .gk-kbd { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--gk-fg-3); }
+.gk-nav-item.is-search { box-shadow: inset 0 0 0 1px var(--gk-border); color: var(--gk-fg-2); font-weight: 400; margin-bottom: 6px; }
+.gk-nav-item.is-active { background: var(--gk-hover); }
+.gk-side-label { font-size: 12px; font-weight: 500; color: var(--gk-fg-3); padding: 18px 10px 6px; }
+.gk-hist-item {
+  height: 34px;
+  display: block;
+  line-height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--gk-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gk-hist-item.is-active { background: var(--gk-hover); }
+.gk-side-foot { margin-top: auto; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px 0 6px; }
+.gk-avatar {
+  width: 32px; height: 32px; border-radius: 9999px;
+  background: var(--gk-avatar);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 500; color: var(--gk-fg);
+}
+.gk-main { position: relative; flex: 1; height: 100%; }
+.gk-main-top { position: absolute; top: 0; right: 0; height: 61px; display: flex; align-items: center; gap: 8px; padding-right: 16px; z-index: 2; }
+
+/* conversation column: 752 wide like the composer; messages inset 13px */
+.gb-thread.is-scrolled { -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px); mask-image: linear-gradient(to bottom, transparent 0, #000 56px); }
+.gk-thread {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  width: 752px;
+  margin-left: -376px;
+  padding: 0 13px;
+}
+.gk-msg-user { display: flex; justify-content: flex-end; padding-right: 12px; margin-bottom: 24px; }
+.gk-bubble {
+  max-width: 633px;
+  background: var(--gk-bubble);
+  border-radius: 24px;
+  padding: 16px 17px 15px;
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--gk-fg);
+}
+/* assistant reply: no bubble, markdown */
+.gk-msg-ai { font-size: 16px; line-height: 26px; color: var(--gk-fg); }
+.gk-msg-ai p { margin: 0 0 14px; }
+.gk-msg-ai h3 { font-size: 18px; font-weight: 600; line-height: 28px; margin: 18px 0 8px; letter-spacing: -0.2px; }
+.gk-msg-ai ul, .gk-msg-ai ol { margin: 0 0 14px; padding-left: 22px; }
+.gk-msg-ai li { margin: 4px 0; }
+.gk-msg-ai strong { font-weight: 600; }
+.gk-msg-ai code { font-family: "JetBrains Mono", monospace; font-size: 13.5px; background: var(--gk-code); border-radius: 6px; padding: 2px 5px; }
+.gk-msg-ai pre { background: var(--gk-code); border-radius: 14px; padding: 14px 16px; margin: 0 0 14px; font-family: "JetBrains Mono", monospace; font-size: 13.5px; line-height: 21px; }
+.gk-msg-ai pre code { background: none; padding: 0; }
+/* separate borders (not collapse) so each rule belongs to its cell: a row hidden while streaming hides its rule too */
+.gk-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 4px 0 16px; font-size: 15px; line-height: 22px; }
+.gk-table th { text-align: left; font-weight: 600; padding: 10px 16px 10px 0; border-bottom: 1px solid var(--gk-fg-3); }
+.gk-table td { padding: 11px 16px 11px 0; border-bottom: 1px solid var(--gk-table-line); }
+.gk-table tr:last-child td { border-bottom: 0; }
+.gk-table .num { font-variant-numeric: tabular-nums; }
+/* thinking indicator */
+.gk-thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gk-fg-2);
+  margin-bottom: 10px;
+}
+.gk-thinking svg { width: 16px; height: 16px; }
+.gk-shimmer {
+  color: transparent;
+  background-image: linear-gradient(90deg, var(--gk-fg-2) 0%, var(--gk-fg-2) 38%, var(--gk-fg) 50%, var(--gk-fg-2) 62%, var(--gk-fg-2) 100%);
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+/* action row under a finished reply */
+.gk-actions { display: flex; align-items: center; gap: 2px; margin: -4px 0 0 -7px; color: var(--gk-fg-2); }
+.gk-actions .gk-iconbtn { width: 32px; height: 32px; color: var(--gk-fg-2); }
+.gk-actions .gk-iconbtn svg { width: 17px; height: 17px; }
+/* bottom-docked composer in a conversation */
+.gk-dock { position: absolute; left: 50%; bottom: 24px; margin-left: -376px; }
+
+/* streamed-token fade (word spans) */
+.gk-tok { opacity: 0; }
+
+/* height-grow helper for messages that arrive at the bottom of a bottom-anchored thread.
+   Animate grid-template-rows from 0fr to 1fr (no measuring needed). */
+.sk-grow { display: grid; grid-template-rows: 0fr; }
+.sk-grow > div { min-height: 0; overflow: hidden; }
+
+/* =====================================================================
+   6. grok.com — logged-out "Continue your conversation" gate
+   ===================================================================== */
+.gk-gate {
+  width: 726px;
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 20px 27px;
+  background: var(--gk-card);
+  border: 1px solid var(--gk-card-border);
+  border-radius: 24px;
+}
+.gk-gate-title { font-size: 15px; font-weight: 600; line-height: 22px; }
+.gk-gate-sub { font-size: 14px; line-height: 20px; color: var(--gk-fg-3); margin-top: 2px; }
+.gk-gate .gk-pill { margin-top: 31px; height: 32px; padding: 0 11px; }
+.gk-gate-list { display: flex; flex-direction: column; gap: 11.6px; padding-top: 1px; }
+.gk-gate-list div { display: flex; align-items: center; gap: 10px; font-size: 13px; line-height: 20px; }
+.gk-gate-list svg { width: 16px; height: 16px; color: var(--gk-fg); }
+
+/* =====================================================================
+   7. Grok iOS (393×852 pt screen)
+   ===================================================================== */
+.gi-screen {
+  position: relative;
+  width: 393px; height: 852px;
+  overflow: hidden;
+  background: var(--gi-bg);
+  color: var(--gi-fg);
+  font-size: 17px;
+  line-height: 25px;
+}
+.gi-top { position: absolute; top: 59px; left: 16px; right: 16px; height: 50px; display: flex; align-items: center; justify-content: space-between; }
+.gi-round {
+  width: 50px; height: 50px; border-radius: 9999px;
+  background: var(--gi-btn);
+  box-shadow: inset 0 1px 0 var(--gi-btn-rim), 0 0 0 1px var(--gi-btn-rim);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--gi-fg);
+}
+.gi-round svg { width: 24px; height: 24px; }
+.gi-seg { display: flex; align-items: center; gap: 2px; font-size: 17px; font-weight: 500; }
+.gi-seg span { height: 37px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 9999px; }
+.gi-seg span.is-active { background: var(--gi-seg-sel); box-shadow: inset 0 1px 0 var(--gi-btn-rim), 0 0 0 1px var(--gi-btn-rim); }
+.gi-thread { position: absolute; top: 128px; left: 0; right: 0; padding: 0 20px; }
+.gi-user { display: flex; justify-content: flex-end; margin-bottom: 26px; }
+.gi-user div { border: 1.5px solid var(--gi-bubble-stroke); border-radius: 9999px; padding: 11px 20px; }
+.gi-ai { font-size: 17px; line-height: 28.5px; }
+.gi-ai p { margin: 0 0 16px; }
+.gi-post { border: 1px solid var(--gi-card-stroke); border-radius: 20px; padding: 14px; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
+.gi-post-av { width: 40px; height: 40px; border-radius: 9999px; background: var(--gi-btn); flex: none; overflow: hidden; }
+.gi-post-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gi-post-body { flex: 1; min-width: 0; }
+.gi-post-head { display: flex; align-items: center; gap: 5px; font-size: 15px; line-height: 20px; white-space: nowrap; overflow: hidden; }
+.gi-post-head b { font-weight: 600; }
+.gi-post-head svg { width: 16px; height: 16px; color: #1d9bf0; }
+.gi-post-head span { color: var(--gi-fg-2); }
+.gi-post-media { margin-top: 8px; height: 168px; border-radius: 14px; background: var(--gi-media); overflow: hidden; }
+.gi-post-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gi-post-stats { display: flex; justify-content: space-between; margin-top: 10px; padding: 0 6px; font-size: 13px; line-height: 18px; color: var(--gi-fg-2); font-variant-numeric: tabular-nums; }
+.gi-post-stats span { display: inline-flex; align-items: center; gap: 4px; }
+.gi-post-stats svg { width: 16px; height: 16px; }
+.gi-composer {
+  position: absolute; left: 10px; right: 10px; bottom: 34px;
+  background: var(--gi-composer);
+  border: 1px solid var(--gi-composer-border);
+  border-radius: 30px;
+  padding: 14px 10px 10px;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+}
+.gi-composer .gi-ph { padding: 0 10px; color: var(--gi-placeholder); font-size: 18px; line-height: 26px; }
+.gi-composer .gi-row { display: flex; align-items: center; gap: 6px; margin-top: 14px; }
+.gi-composer .gi-plus { width: 42px; height: 42px; border-radius: 9999px; background: var(--gi-chip); display: inline-flex; align-items: center; justify-content: center; }
+.gi-composer .gi-plus svg { width: 22px; height: 22px; }
+.gi-composer .gi-chip { height: 42px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border-radius: 9999px; background: var(--gi-chip); font-size: 17px; font-weight: 600; }
+.gi-composer .gi-chip svg { width: 18px; height: 18px; }
+.gi-composer .gi-speak { margin-left: auto; height: 42px; display: inline-flex; align-items: center; gap: 7px; padding: 0 15px 0 14px; border-radius: 9999px; background: var(--gi-speak); color: var(--gi-speak-fg); font-size: 17px; font-weight: 600; }
+.gi-composer .gi-speak svg { width: 20px; height: 20px; }
+
+/* =====================================================================
+   8. Grok Bot desktop app (1585 px reference scale)
+   ===================================================================== */
+.gb-app {
+  position: relative;
+  display: flex;
+  width: 1585px;
+  height: 892px;
+  overflow: hidden;
+  background: var(--gb-bg);
+  color: var(--gb-fg);
+  font-size: 16px;
+  line-height: 24px;
+}
+/* --- avatars --- */
+.gb-av { position: relative; display: inline-block; flex: none; }
+.gb-av .gb-av-svg { width: 100%; height: 100%; overflow: visible; }
+.gb-av .eye { stroke: var(--gb-eye); }
+.gb-av .eye-dot { fill: var(--gb-eye); stroke: none; }
+.gb-av .gb-online { position: absolute; right: -1px; bottom: 1px; width: 11px; height: 11px; border-radius: 9999px; background: var(--gb-online); box-shadow: 0 0 0 2px var(--gb-list); }
+.gb-av .gb-badge { position: absolute; right: -3px; bottom: -2px; width: 16px; height: 16px; border-radius: 9999px; background: #f0a336; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 2px var(--gb-list); }
+.gb-av .gb-badge svg { width: 10px; height: 10px; }
+
+/* --- left list --- */
+.gb-list {
+  position: relative;
+  width: 350px;
+  flex: none;
+  height: 100%;
+  background: var(--gb-list);
+  padding: 0 16px;
+}
+.gb-list-tools { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 2px 0; }
+.gb-tool { width: 38px; height: 38px; border-radius: 9999px; display: inline-flex; align-items: center; justify-content: center; color: var(--gb-fg); box-shadow: inset 0 0 0 1px var(--gb-card-border); }
+.gb-tool svg { width: 18px; height: 18px; }
+.gb-primary { display: flex; flex-direction: column; align-items: center; margin-top: 20px; }
+.gb-primary .gb-name { font-size: 14px; font-weight: 500; margin-top: 8px; line-height: 20px; }
+.gb-primary .gb-tag { margin: 6px 0 0; }
+.gb-group { font-size: 14px; line-height: 20px; color: var(--gb-fg-2); padding: 0 9px; margin: 40px 0 10px; }
+.gb-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 66px;
+  padding: 0 11px;
+  border-radius: 10px;
+  margin-bottom: 7px;
+}
+.gb-row.is-selected { background: var(--gb-row-sel); }
+.gb-row.is-hover { background: var(--gb-row-hover); }
+.gb-row-text { flex: 1; min-width: 0; }
+.gb-row-line1 { display: flex; align-items: center; gap: 8px; height: 24px; }
+.gb-row .gb-name { font-size: 16px; font-weight: 500; color: var(--gb-fg); white-space: nowrap; }
+.gb-row .gb-preview { font-size: 16px; line-height: 24px; color: var(--gb-fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gb-row .gb-team { width: 15px; height: 15px; color: var(--gb-fg-3); }
+.gb-row .gb-unread-dot { position: absolute; right: 12px; top: 50%; width: 9px; height: 9px; margin-top: -4px; border-radius: 9999px; background: var(--gb-unread); }
+.gb-tag {
+  display: inline-flex; align-items: center;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--gb-tag);
+  font-size: 13px;
+  color: var(--gb-tag-fg);
+  white-space: nowrap;
+}
+.gb-row.is-selected .gb-tag { background: var(--gb-tag-sel); }
+.gb-fold { display: flex; justify-content: space-between; height: 50px; align-items: center; padding: 0 9px; font-size: 14px; color: var(--gb-fg-2); }
+/* an expanded group ("Unassigned") shows no count; its rows follow directly */
+.gb-fold.is-open { height: 50px; }
+.gb-fold.is-open + .gb-row { margin-top: 0; }
+/* bottom of a list that scrolls on behind the footer: rows fade out above "Connect apps" */
+.gb-list-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 132px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent 0, var(--gb-list) 46%, var(--gb-list) 100%); }
+.gb-list { overflow: hidden; }
+.gb-list-foot { position: absolute; left: 20px; right: 24px; bottom: 20px; display: flex; align-items: center; gap: 12px; z-index: 2; }
+.gb-me { width: 46px; height: 46px; border-radius: 9999px; background: #e9e9e9; color: #6b6b6b; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; flex: none; }
+[data-theme="dark"] .gb-me, .sk-grok[data-theme="dark"] .gb-me { background: #2a2a2a; color: #bdbdbd; }
+.gb-connect {
+  flex: 1;
+  height: 42px;
+  border-radius: 9999px;
+  background: var(--gb-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), inset 0 0 0 1px var(--gb-card-border);
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 17px; font-weight: 500;
+}
+/* stacked app marks: <span class="gb-applogos"><i data-ic="appDrive"></i>…</span> → each mark sits on a small round tile */
+.gb-applogos { display: flex; align-items: center; }
+.gb-applogos > svg, .gb-applogos > span { width: 22px; height: 22px; padding: 4px; border-radius: 9999px; margin-left: -6px; background: var(--gb-app-tile); box-shadow: 0 0 0 1.5px var(--gb-card), inset 0 0 0 1px var(--gb-card-border); color: var(--gb-fg); display: block; }
+.gb-applogos > svg:first-child, .gb-applogos > span:first-child { margin-left: 0; }
+.gb-more-unreads {
+  position: absolute; left: 100px; bottom: 75px; z-index: 2;
+  height: 35px; padding: 0 14px 0 12px;
+  border-radius: 9999px; background: var(--gb-more); color: #fff;
+  display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500;
+}
+.gb-more-unreads svg { width: 15px; height: 15px; }
+
+/* --- chat column --- */
+.gb-chat { position: relative; flex: 1; height: 100%; background: var(--gb-bg); }
+.gb-chat-head { position: absolute; top: 12px; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; z-index: 2; }
+.gb-head-pill { height: 34px; display: inline-flex; align-items: center; gap: 8px; padding: 0 14px 0 7px; border-radius: 9999px; background: var(--gb-head); box-shadow: var(--gb-head-shadow); font-size: 15px; font-weight: 500; }
+.gb-thread {
+  position: absolute; left: 22px; right: 20px; bottom: 98px;
+  display: flex; flex-direction: column;
+}
+/* profile panel closed (two-column window, Oct 8 stream): thread and composer share one centred column */
+.gb-chat.is-solo .gb-thread,
+.gb-chat.is-solo .gb-composer { left: max(48px, calc((100% - 960px) / 2)); right: max(48px, calc((100% - 960px) / 2)); }
+.gb-time { align-self: center; font-size: 14px; line-height: 20px; color: var(--gb-fg-3); margin: 14px 0 22px; }
+.gb-relay { align-self: center; display: inline-flex; align-items: center; gap: 6px; font-size: 15px; color: var(--gb-fg-2); margin: 0 0 16px; }
+.gb-msg { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-bottom: 20px; }
+.gb-msg.is-user { align-items: flex-end; }
+.gb-bubble {
+  position: relative;
+  max-width: 530px;               /* 530 with the profile panel open; ~555 in the two-column window */
+  padding: 7px 15px;
+  border-radius: 18px;
+  background: var(--gb-bubble);
+  color: var(--gb-bubble-fg);
+  box-shadow: var(--gb-bubble-shadow);
+  font-size: 17.5px;              /* measured on the Oct 6 stream: 8.0px per glyph, 27.6px lines */
+  line-height: 27.6px;
+}
+.gb-bubble p + p { margin-top: 12px; }
+.gb-msg.is-user .gb-bubble { background: var(--gb-bot, #b87829); color: #ffffff; }
+.gb-bubble a { color: inherit; text-decoration: underline; }
+.gb-hover-actions { position: absolute; left: 100%; top: 50%; margin: -14px 0 0 14px; display: flex; gap: 6px; color: var(--gb-fg-3); }
+.gb-hover-actions svg { width: 20px; height: 20px; }
+.gb-dismissed { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px; border-radius: 6px; background: var(--gb-row-hover); font-size: 15px; color: var(--gb-fg-2); margin-left: 24px; }
+.gb-dismissed::before { content: ""; width: 6px; height: 6px; border-radius: 9999px; background: var(--gb-fg-2); }
+.gb-status { display: flex; align-items: center; gap: 12px; height: 36px; padding-left: 10px; font-size: 17px; color: var(--gb-fg-3); }
+.gb-status .gb-shimmer {
+  color: transparent;
+  background-image: linear-gradient(90deg, var(--gb-fg-3) 0%, var(--gb-fg-3) 38%, var(--gb-fg) 50%, var(--gb-fg-3) 62%, var(--gb-fg-3) 100%);
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+/* question card (A/B/C/D) */
+.gb-q { width: 530px; padding: 8px; border-radius: 20px; background: var(--gb-bubble); }
+.gb-q-opts { background: var(--gb-card); border-radius: 14px; padding: 6px 14px; box-shadow: var(--gb-card-shadow); }
+.gb-q-opt { display: flex; align-items: center; gap: 12px; height: 47px; font-size: 17px; }
+.gb-q-opt b { width: 22px; height: 24px; border-radius: 4px; background: var(--gb-row-hover); font-size: 13px; font-weight: 400; color: var(--gb-fg-2); display: inline-flex; align-items: center; justify-content: center; }
+.gb-q-own { margin-top: 8px; height: 38px; border-radius: 10px; background: var(--gb-card); box-shadow: inset 0 0 0 1px var(--gb-card-border); display: flex; align-items: center; padding: 0 13px; font-size: 17px; color: var(--gb-fg-3); }
+/* team-bot setup rows */
+.gb-setup { width: 556px; display: flex; align-items: center; padding: 8px 12px; border-radius: 12px; background: var(--gb-bubble); }
+.gb-setup-t { flex: 1; }
+.gb-setup-title { font-size: 15px; line-height: 22px; }
+.gb-setup-sub { display: flex; align-items: center; gap: 7px; font-size: 15px; line-height: 22px; color: var(--gb-fg-2); }
+.gb-setup-sub svg { width: 15px; height: 15px; }
+.gb-setup > svg { width: 18px; height: 18px; color: var(--gb-fg-2); }
+/* "<Bot> is published" card */
+.gb-pub { position: relative; width: 446px; height: 148px; border-radius: 14px; background: var(--gb-bubble); overflow: hidden; padding: 20px 16px 0 140px; }
+.gb-pub .gb-pub-blob { position: absolute; left: -2px; top: 16px; width: 118px; height: 140px; }
+.gb-pub-title { font-size: 15px; font-weight: 500; line-height: 22px; }
+.gb-pub-sub { font-size: 15px; line-height: 22px; color: var(--gb-fg-2); margin-top: 6px; }
+.gb-pub-btns { display: flex; gap: 9px; margin-top: 14px; }
+.gb-btn { height: 32px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 14px; border-radius: 9999px; font-size: 15px; min-width: 140px; }
+.gb-btn svg { width: 14px; height: 14px; }
+.gb-btn.is-solid { background: var(--gb-solid); color: var(--gb-solid-fg); }
+.gb-btn.is-ghost { background: var(--gb-ghost); color: var(--gb-ghost-fg); box-shadow: inset 0 0 0 1px var(--gb-ghost-border); }
+/* composer */
+.gb-composer {
+  position: absolute; left: 22px; right: 20px; bottom: 20px;
+  height: 56px;
+  display: flex; align-items: center; gap: 11px;
+  padding: 0 9px;
+  border-radius: 9999px;
+  background: var(--gb-composer);
+  box-shadow: inset 0 0 0 1px var(--gb-composer-border), var(--gb-composer-shadow);
+}
+.gb-circle { width: 34px; height: 34px; border-radius: 9999px; background: var(--gb-circle); display: inline-flex; align-items: center; justify-content: center; color: var(--gb-fg); flex: none; }
+.gb-circle svg { width: 18px; height: 18px; }
+.gb-circle.is-mic { background: var(--gb-mic); color: var(--gb-mic-fg); }
+.gb-composer .gb-ph { flex: 1; font-size: 17px; color: var(--gb-fg-3); white-space: nowrap; }
+.gb-composer .gb-typed { flex: 1; font-size: 17px; color: var(--gb-fg); white-space: nowrap; }
+.gb-voice { width: 36px; height: 36px; border-radius: 9999px; background: var(--gb-voice); color: var(--gb-voice-fg); display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: -1px; }
+.gb-voice svg { width: 20px; height: 20px; }
+
+/* --- right profile panel (measured on the Oct 6 maya frame) --- */
+.gb-panel {
+  position: relative; width: 530px; flex: none; height: 100%;
+  background: var(--gb-bg);
+  box-shadow: inset 1px 0 0 var(--gb-divider);
+  padding: 62px 22px 0 22px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.gb-panel .gb-p-name { font-size: 20px; font-weight: 600; line-height: 28px; margin-top: 22px; color: var(--gb-fg); }
+.gb-panel .gb-p-role { font-size: 14px; line-height: 20px; color: var(--gb-role); margin-top: 8px; }
+.gb-tabs { display: flex; gap: 3px; margin-top: 21px; }
+.gb-tabs span { height: 34px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 8px; font-size: 16px; color: var(--gb-tab-fg); }
+.gb-tabs span.is-active { background: var(--gb-tab-sel); color: var(--gb-fg); }
+.gb-p-section { align-self: stretch; }
+.gb-p-label { display: flex; align-items: center; gap: 8px; height: 22px; font-size: 16px; color: var(--gb-fg-2); padding: 0 14px; margin: 25px 0 15px; }
+.gb-p-card + .gb-p-label { margin-top: 30px; }
+.gb-p-label .gb-dev { font-size: 12px; font-weight: 600; letter-spacing: 0.3px; color: var(--gb-fg-2); background: var(--gb-row-hover); border-radius: 4px; padding: 0 5px; line-height: 20px; }
+.gb-p-card {
+  height: 60px; display: flex; align-items: center; padding: 0 14px;
+  border-radius: 14px; background: var(--gb-p-card);
+  box-shadow: inset 0 0 0 1px var(--gb-p-card-border), var(--gb-p-card-shadow);
+  font-size: 16px; color: var(--gb-fg-2);
+}
+.gb-p-screen { align-self: stretch; height: 254px; margin-top: 26px; border-radius: 14px; background: var(--gb-screen); display: flex; align-items: center; justify-content: center; color: var(--gb-fg-2); }
+.gb-p-screen svg { width: 18px; height: 18px; }
+.gb-p-caption { font-size: 15px; color: var(--gb-fg-2); margin-top: 16px; }
+
+/* --- "<bot> is watching and learning" recording bar --- */
+.gb-rec { height: 40px; display: flex; align-items: center; gap: 12px; padding: 0 14px 0 15px; border-radius: 12px; background: var(--gb-rec-bar); color: #f1f1f1; font-size: 17px; }
+.gb-rec .gb-rec-label { flex: 1; }
+.gb-rec .gb-rec-time { display: inline-flex; align-items: center; gap: 8px; color: var(--gb-rec-red); font-variant-numeric: tabular-nums; }
+.gb-rec .gb-rec-time svg { width: 14px; height: 14px; }
+.gb-rec > svg { width: 18px; height: 18px; color: var(--gb-rec-red); margin-left: 34px; }

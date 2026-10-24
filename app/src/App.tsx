@@ -4,6 +4,8 @@ import type { Recording } from "./data/types";
 import { REPO } from "./data/repo";
 import { route } from "./engine/router";
 import { useVoice } from "./engine/useVoice";
+import { LIVE_REPO, liveView, roomStatus } from "./engine/live";
+import type { RoomStatus, ViewRequest } from "./engine/roomTypes";
 import ConnectScreen from "./screens/ConnectScreen";
 import AnswerScreen from "./screens/AnswerScreen";
 import ChatScreen from "./screens/ChatScreen";
@@ -14,9 +16,16 @@ import { Icon } from "./ui/Icon";
 import ErrorBoundary from "./ui/ErrorBoundary";
 import { Button } from "@/components/motion/button";
 
-export type Pin = { id: string; recId: string; question: string; view: string; symbols: number; files: number; when: string };
+/** `live` pins re-draw from the index when opened; recorded ones replay. */
+export type Pin = { id: string; recId: string; question: string; view: string; symbols: number; files: number; when: string; live?: ViewRequest };
 
-const VIEW_NAME: Record<string, string> = { flowTrace: "Flow trace", algoStepper: "Algorithm stepper", blastRadius: "Blast radius" };
+const VIEW_NAME: Record<string, string> = { flowTrace: "Flow trace", algoStepper: "Algorithm stepper", blastRadius: "Blast radius", swimlane: "Call tree" };
+
+// With the index connected, the room opens on the demo's subject: who depends on tool approval.
+const FIRST_LIVE: { view: ViewRequest; question: string } = {
+  view: { view: "blast-radius", symbol: "ApprovalRequiredTool" },
+  question: "What breaks if we change ApprovalRequiredTool?",
+};
 
 const store = {
   get<T>(k: string, fallback: T): T {
@@ -70,6 +79,34 @@ export default function App() {
   const [agentOpen, setAgentOpen] = useState(false);
   const [repoOpen, setRepoOpen] = useState(false);
   const [claudeOpen, setClaudeOpen] = useState(false);
+  // What the dev server has connected; undefined until it answers, and the room waits for it.
+  const [status, setStatus] = useState<RoomStatus>();
+  const [liveReq, setLiveReq] = useState<ViewRequest>();
+  const [askRequest, setAskRequest] = useState<{ text: string; n: number }>();
+  const [loadingView, setLoadingView] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const st = await roomStatus();
+      if (!alive) return;
+      if (st.graph) {
+        try {
+          const r = await liveView(FIRST_LIVE.view, FIRST_LIVE.question);
+          if (!alive) return;
+          setRec(r);
+          setAsked(FIRST_LIVE.question);
+          setLiveReq(FIRST_LIVE.view);
+        } catch {
+          // The index is up but this view failed: the recorded sample keeps the room usable.
+        }
+      }
+      if (alive) setStatus(st);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -84,8 +121,32 @@ export default function App() {
     setRunKey((k) => k + 1);
   };
 
+  const live = !!rec.live;
+  const repoSlug = live ? LIVE_REPO : REPO.slug;
+
+  /** Draws a view of the real index; the previous one stays up until the new one arrives. */
+  const openView = async (view: ViewRequest, question: string, replay = true) => {
+    if (loadingView) return;
+    setLoadingView(true);
+    try {
+      const r = await liveView(view, question);
+      setLiveReq(view);
+      show(r, question, replay);
+    } catch (e) {
+      setToast(`Couldn't draw that view: ${(e as Error).message}`);
+    } finally {
+      setLoadingView(false);
+    }
+  };
+
   const ask = (text: string) => {
     const r = route(text, focusRequest?.id);
+    // Playback commands stay local; with the index live, every question goes to the listener.
+    if (live && r.kind !== "speed") {
+      if (status?.haiku) setAskRequest({ text, n: Date.now() });
+      else setToast("The listener is off (no Anthropic key on the dev server), so questions can't be answered live.");
+      return;
+    }
     if (r.kind === "answer") show(r.recording, text);
     else if (r.kind === "speed") {
       setSpeed(r.value);
@@ -108,6 +169,7 @@ export default function App() {
             id: `${rec.spec.id}-${Date.now()}`,
             recId: rec.spec.id,
             question: asked,
+            live: live ? liveReq : undefined,
             view: VIEW_NAME[rec.spec.archetype] ?? rec.spec.archetype,
             symbols: rec.spec.nodes.length,
             files: new Set(rec.spec.sources.map((s) => s.file)).size,
@@ -129,12 +191,12 @@ export default function App() {
   const pinList = (
     <div className="pins">
       {pins.length === 0 ? (
-        <p className="live-empty">Pin an answer with the pin button under the graph and it stays here as living documentation for {REPO.slug}.</p>
+        <p className="live-empty">Pin an answer with the pin button under the graph and it stays here as living documentation for {repoSlug}.</p>
       ) : (
         <ul>
           {pins.map((p) => (
             <li key={p.id}>
-              <button className="pin-row" onClick={() => show(recById(p.recId), p.question, false)}>
+              <button className="pin-row" onClick={() => (p.live ? openView(p.live, p.question, false) : show(recById(p.recId), p.question, false))}>
                 <b>{p.question}</b>
                 <span>
                   {p.view} · {p.symbols} symbols · {p.when}
@@ -154,10 +216,10 @@ export default function App() {
           <Mark />
           <b>Spelunk</b>
           <button className="one-repo" onClick={() => setRepoOpen(true)} title="Add or switch repository">
-            <Icon name="github" size={14} /> {REPO.slug} <Icon name="arrow" size={12} />
+            <Icon name="github" size={14} /> {repoSlug} <Icon name="arrow" size={12} />
           </button>
         </div>
-        <AskBox onAsk={ask} onMic={() => (voice.status === "listening" ? voice.stop() : voice.start())} listening={voice.status === "listening"} inAnswer repo={REPO.slug} />
+        <AskBox onAsk={ask} onMic={() => (voice.status === "listening" ? voice.stop() : voice.start())} listening={voice.status === "listening"} inAnswer repo={repoSlug} />
         <div className="one-right">
           <Button size="sm" variant={agent ? "secondary" : "primary"} onClick={() => setAgentOpen(true)}>
             {agent ? <HarnessLogo name={agent} size={16} /> : <Icon name="plug" size={14} />}
@@ -167,6 +229,11 @@ export default function App() {
       </header>
 
       <main className="one-room">
+        {!status ? (
+          <div className="booting" role="status">
+            <i className="ar-spin" /> Connecting to the code index…
+          </div>
+        ) : (
         <ErrorBoundary resetKey={`${rec.spec.id}:${runKey}`}>
           <AnswerScreen
             rec={rec}
@@ -179,7 +246,10 @@ export default function App() {
             pinned={pinned}
             onPin={togglePin}
             onOpenInClaude={() => setClaudeOpen(true)}
-            onAskBlast={(sym) => ask(`What breaks if I change ${sym}?`)}
+            onAskBlast={(sym) => (live ? openView({ view: "blast-radius", symbol: sym }, `What breaks if we change ${rec.spec.nodes.find((n) => n.id === sym)?.label ?? sym}?`) : ask(`What breaks if I change ${sym}?`))}
+            status={status}
+            onOpenView={(view, question) => openView(view, question)}
+            askRequest={askRequest}
             onAsk={ask}
             agentName={agent}
             chat={
@@ -194,6 +264,12 @@ export default function App() {
             pinCount={pins.length}
           />
         </ErrorBoundary>
+        )}
+        {loadingView && (
+          <div className="toast" role="status">
+            <i className="ar-spin" /> Drawing the view from the index…
+          </div>
+        )}
       </main>
 
       {(voice.status === "listening" || voice.status === "denied" || voice.status === "unsupported") && (
@@ -240,14 +316,14 @@ export default function App() {
         <p className="lead">The same view ships as an MCP App. In Claude Desktop, ChatGPT or VS Code it renders inside the chat, with play and step still working.</p>
         <div className="panel-body" style={{ paddingTop: 0 }}>
           <label className="field-label">Ask Claude</label>
-          <pre className="snippet"><code>{`Use spelunk to show the answer "${rec.spec.title}" for ${REPO.slug}`}</code></pre>
+          <pre className="snippet"><code>{`Use spelunk to show the answer "${rec.spec.title}" for ${repoSlug}`}</code></pre>
           <p className="muted" style={{ fontSize: 12, margin: "10px 0 0" }}>
             Resource: <span className="mono">ui://spelunk/answer/{rec.spec.id}</span>
           </p>
           <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
             <button className="btn primary" onClick={async () => {
               try {
-                await navigator.clipboard.writeText(`Use spelunk to show the answer "${rec.spec.title}" for ${REPO.slug}`);
+                await navigator.clipboard.writeText(`Use spelunk to show the answer "${rec.spec.title}" for ${repoSlug}`);
                 setToast("Prompt copied");
               } catch {
                 setToast("Copy failed. Select the prompt and copy it by hand.");

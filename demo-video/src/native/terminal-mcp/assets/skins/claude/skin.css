@@ -1,0 +1,660 @@
+/* ==========================================================================
+   Claude skin (claude.ai web + desktop app, "one Claude" merged UI, Oct 2026)
+   --------------------------------------------------------------------------
+   Root:   <div class="sk-claude" data-theme="light|dark"> ... </div>
+   Fonts:  load assets/fonts/fonts.css in the component (Inter, Source Serif 4,
+           JetBrains Mono). Stand-ins for Anthropic Sans / Serif / Mono.
+   Scale:  every size is the real app's CSS px. Scale the whole window with
+           CSS `zoom` on a wrapper (the demo uses 2.0: UI text ~29-32px and
+           prose ~33px on a 1080p frame, like Anthropic's own zoomed launch
+           renders); never edit sizes here.
+   Type:   Anthropic Sans renders heavier and tighter than Inter's text cut, so
+           the UI runs Inter at weight 430 in #000 with the display optical size
+           ("opsz" 32), which matches the official renders' widths and x-height.
+           Serif pieces pin a sturdier optical size (see .cl-greeting/.cl-prose).
+   Truth:  research/ui-references/claude/ (see DECISIONS.md for the mapping).
+   ========================================================================== */
+
+/* ---------- tokens: light (default) ------------------------------------- */
+.sk-claude {
+  /* surfaces (sampled from the official frames) */
+  --ck-page: #fcfcf9;            /* main canvas, desktop app (session, dash)  */
+  --ck-page-home: #fbf9f6;       /* home canvas, a touch warmer (home)        */
+  --ck-sidebar: #f9f9f7;
+  --ck-divider: #ebebe8;         /* sidebar edge, footer rule                 */
+  --ck-hairline: #ececea;
+  --ck-border: #dfdfdc;          /* composer idle hairline (home #e3e0de, dash #e0e0e0) */
+  --ck-border-focus: #c8c8c6;    /* composer while typing (closeup #c7c7c7)   */
+  --ck-border-hover: #b3b3b1;    /* composer under the pointer (session #afafaf) */
+  --ck-attach-border: #cacac8;   /* attachment card (closeup #c9c9c9)         */
+  --ck-composer: #ffffff;
+  --ck-composer-shadow: 0 1px 2px rgba(20, 20, 19, 0.035), 0 6px 24px -8px rgba(20, 20, 19, 0.09);
+  --ck-bubble: #efefec;          /* user message (#eeeeeb on page, #f0f0ed on white) */
+  --ck-row-selected: #ececea;
+  --ck-row-hover: #f1f1ef;
+  --ck-pill: #e9e7e3;            /* open control: Output #e8e6e2, model #ebebeb */
+  --ck-newchat-circle: #e9e9e6;
+  --ck-avatar: #e6e6e3;
+  --ck-code-bg: #f0f0ed;
+  --ck-card: #f3f3f1;            /* in-chat artifact card                     */
+  --ck-card-border: #e6e6e3;
+  --ck-btn: #ffffff;             /* small white buttons (Hide, share)         */
+  --ck-btn-border: #e2e2df;
+  --ck-menu: #ffffff;
+  --ck-menu-border: #ededeb;     /* Output menu: shadow, almost no edge (home) */
+  --ck-picker-border: #d9d9d7;   /* model picker: crisp hairline (#d9d9d9 sampled) */
+  --ck-picker-shadow: 0 1px 2px rgba(20, 20, 19, 0.04), 0 10px 26px -10px rgba(20, 20, 19, 0.16);
+  --ck-menu-shadow: 0 1px 2px rgba(20, 20, 19, 0.04), 0 12px 32px -8px rgba(20, 20, 19, 0.16);
+  --ck-menu-hover: #f1f1f0;      /* #f1f1f1 sampled                           */
+  --ck-beta-bg: #f1f1f0;
+  --ck-beta-ink: #3d3d3b;        /* #3d3d3d sampled                           */
+  --ck-beta-hover: #e5e5e4;      /* Beta pill on a hovered row                */
+  --ck-panel: #ffffff;           /* artifact panel                            */
+  --ck-panel-border: #d6d6d3;
+  --ck-panel-band: #f9f9f7;
+  --ck-window-edge: rgba(0, 0, 0, 0.07);
+  --ck-window-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 24px 60px -20px rgba(0, 0, 0, 0.25);
+  --ck-track: #ececea;           /* usage bar track                           */
+  --ck-toggle-off: #c9c9c5;
+
+  /* ink */
+  --ck-ink: #000000;             /* primary text: every official frame samples #000 */
+  --ck-ink-prose: #000000;       /* serif assistant prose (dash #000)         */
+  --ck-ink-2: #2a2926;           /* control row labels (#292723 sampled)      */
+  --ck-muted: #5f5e5a;           /* steps line, meta, org                     */
+  --ck-faint: #6a6865;           /* effort label, digits (#6a6864 sampled)    */
+  --ck-faintest: #b0afaa;
+  --ck-icon: #111110;            /* composer + sidebar icons (#000 sampled)   */
+  --ck-icon-muted: #61615f;      /* message action icons (#616160 sampled)    */
+  --ck-return: #8f8f8d;          /* ⏎ glyph in the reply box (#929292)        */
+  --ck-placeholder: #6e6e6c;     /* #70706f sampled                           */
+  --ck-shimmer-lo: #8b8a85;
+  --ck-shimmer-hi: #dcdbd6;
+
+  /* brand + accents */
+  --ck-clay: #d97757;            /* spark (claude.com --color-clay)           */
+  --ck-send: #c6613f;            /* send button (clay-hover token)            */
+  --ck-send-ink: #ffffff;
+  --ck-send-disabled: #8a8a87;
+  --ck-blue: #2264c8;            /* picker check core (#1e6cca–#226bd1), Search the web */
+  --ck-ring-track: #e2e2df;      /* control-row progress ring (picker-sep)    */
+  --ck-ring-arc: #1d6fd2;        /* its blue arc (#1c72d5 sampled)            */
+  --ck-link: #284d8f;
+  --ck-usage: #2e60b7;
+  --ck-chip-output-bg: #f6e9da;  /* "Slides ×" chip                           */
+  --ck-chip-output-ink: #6c4610;
+  /* an Output chip takes its menu tile's colour ("Slides ×" = Slides tile #f6e9da) */
+  --ck-chip-docs-bg: #deeaf9;    --ck-chip-docs-ink: #1f4f94;
+  --ck-chip-design-bg: #ebe7f7;  --ck-chip-design-ink: #4b3f9c;
+  --ck-tile-docs-bg: #deeaf9;    --ck-tile-docs: #1f6ac4;
+  --ck-tile-slides-bg: #f6e8d6;  --ck-tile-slides: #b8720f;
+  --ck-tile-design-bg: #ebe7f7;  --ck-tile-design: #5b4fb0;
+  --ck-tile-dash-bg: #f4f2fe;    --ck-tile-dash: #2f2a8a;  --ck-tile-dash-edge: #d8d3f6;
+  --ck-tile-slides-edge: #f0dcc0;
+  --ck-tile-docs-edge: #c9dcf3;
+  --ck-comment-bg: #d6e4fb;      --ck-comment-ink: #224f9e;
+  --ck-share-bg: #0e0e0d;        --ck-share-ink: #ffffff;
+  --ck-cursor-claude: #d97757;   /* Docs co-editing cursor + name tag         */
+  --ck-traffic-red: #ff5f57;     --ck-traffic-yellow: #febc2e;  --ck-traffic-green: #28c840;
+  --ck-traffic-edge: rgba(0, 0, 0, 0.12);
+  --ck-pointer-fill: #ffffff;    --ck-pointer-edge: #000000;
+
+  /* type (stand-ins: Anthropic Sans -> Inter, Anthropic Serif -> Source Serif 4) */
+  --ck-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --ck-serif: "Source Serif 4", ui-serif, serif;
+  --ck-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* weights: with #000 ink, Inter 400-430 at opsz 32 matches the official ink coverage
+     (closeup 0.188, working 0.191, picker-sep 0.193 vs Inter 430: 0.207). 430 errs heavy. */
+  --ck-w-ui: 430;
+  --ck-w-strong: 550;
+
+  /* layout */
+  --ck-sidebar-w: 288px;
+  --ck-thread-w: 720px;
+  --ck-home-w: 560px;            /* home composer: ~34x body text (home frame) */
+
+  font-family: var(--ck-sans);
+  color: var(--ck-ink);
+  font-size: 16px;
+  font-weight: var(--ck-w-ui);
+  font-variation-settings: "opsz" 32;
+  line-height: 1.5;
+  letter-spacing: -0.005em;      /* with opsz 32 this matches the official widths */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- tokens: dark ------------------------------------------------- */
+/* Official dark evidence = desktop app (desktop-dark-projects-page.png):
+   neutral near-black, not warm brown. Chat-tab specifics are extrapolated. */
+.sk-claude[data-theme="dark"],
+[data-theme="dark"] .sk-claude {
+  --ck-page: #151515;            /* sampled                                   */
+  --ck-page-home: #151515;
+  --ck-sidebar: #111111;         /* sampled                                   */
+  --ck-divider: #222222;
+  --ck-hairline: #262626;
+  --ck-border: #3a3a3a;          /* field border #383838–#3e3e3e sampled      */
+  --ck-border-focus: #4c4c4c;
+  --ck-border-hover: #5a5a5a;
+  --ck-attach-border: #444444;
+  --ck-composer: #212121;        /* field fill #212121 sampled                */
+  --ck-composer-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -10px rgba(0, 0, 0, 0.6);
+  --ck-bubble: #262626;          /* filled tab pill #262626 sampled           */
+  --ck-row-selected: #292929;    /* sampled                                   */
+  --ck-row-hover: #1f1f1f;
+  --ck-pill: #2b2b2b;
+  --ck-newchat-circle: #2a2a2a;
+  --ck-avatar: #2e2e2e;
+  --ck-code-bg: #262626;
+  --ck-card: #1c1c1c;
+  --ck-card-border: #323232;     /* sampled card border                       */
+  --ck-btn: #232323;
+  --ck-btn-border: #363636;
+  --ck-menu: #202020;
+  --ck-menu-border: #2e2e2e;
+  --ck-picker-border: #323232;   /* card border #323232 sampled               */
+  --ck-picker-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 12px 30px -10px rgba(0, 0, 0, 0.7);
+  --ck-menu-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 36px -10px rgba(0, 0, 0, 0.75);
+  --ck-menu-hover: #2a2a2a;
+  --ck-beta-bg: #2e2e2e;
+  --ck-beta-ink: #c9c9c6;
+  --ck-beta-hover: #3a3a3a;
+  --ck-panel: #181818;
+  --ck-panel-border: #323232;
+  --ck-panel-band: #1b1b1b;
+  --ck-window-edge: rgba(255, 255, 255, 0.07);
+  --ck-window-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+  --ck-track: #2c2c2c;
+  --ck-toggle-off: #4a4a4a;
+
+  --ck-ink: #ffffff;             /* titles + rows sample #fff                 */
+  --ck-ink-prose: #f7f7f5;
+  --ck-ink-2: #e4e4e1;
+  --ck-muted: #b5b5b3;           /* meta (#b4b4b4–#bebebe sampled)            */
+  --ck-faint: #999998;           /* section labels (#999999 sampled)          */
+  --ck-faintest: #5c5c5a;
+  --ck-icon: #ececea;
+  --ck-icon-muted: #a3a3a0;
+  --ck-return: #8a8a88;
+  --ck-placeholder: #9d9d9b;     /* "Search projects…" #bfbfbf peak sampled   */
+  --ck-shimmer-lo: #8a8a87;
+  --ck-shimmer-hi: #e6e6e3;
+
+  --ck-blue: #6ea2f2;
+  --ck-ring-track: #3a3a3a;
+  --ck-ring-arc: #62a0f2;
+  --ck-link: #8db4f4;
+  --ck-usage: #5b8fe6;
+  --ck-chip-output-bg: #3a2b1c;
+  --ck-chip-output-ink: #f0c995;
+  --ck-chip-docs-bg: #1b2a40;    --ck-chip-docs-ink: #9cc2f6;
+  --ck-chip-design-bg: #29243f;  --ck-chip-design-ink: #bdb3f6;
+  --ck-tile-docs-bg: #1b2a40;    --ck-tile-docs: #78aaf0;
+  --ck-tile-slides-bg: #3a2c19;  --ck-tile-slides: #e7a548;
+  --ck-tile-design-bg: #29243f;  --ck-tile-design: #a99df0;
+  --ck-tile-dash-bg: #232038;    --ck-tile-dash: #aaa2f5;  --ck-tile-dash-edge: #36305a;
+  --ck-tile-slides-edge: #4a3820;
+  --ck-tile-docs-edge: #26405f;
+  --ck-comment-bg: #1d3156;      --ck-comment-ink: #8db4f4;
+  --ck-share-bg: #ffffff;        --ck-share-ink: #0e0e0d;   /* inverts, like "New project" */
+  --ck-traffic-edge: rgba(0, 0, 0, 0.35);
+  --ck-pointer-fill: #ffffff;    --ck-pointer-edge: #000000;
+}
+
+.sk-claude *, .sk-claude *::before, .sk-claude *::after { box-sizing: border-box; }
+
+/* ---------- icons --------------------------------------------------------- */
+.sk-claude .cl-ic { display: inline-flex; width: 18px; height: 18px; flex: none; color: inherit; font-style: normal; }
+.sk-claude .cl-ic svg { width: 100%; height: 100%; display: block; }
+.sk-claude .cl-ic.is-sm { width: 14px; height: 14px; }
+.sk-claude .cl-ic.is-md { width: 16px; height: 16px; }
+.sk-claude .cl-ic.is-lg { width: 20px; height: 20px; }
+
+/* The spark (official Claude mark). Size it with width/height. */
+.sk-claude .cl-spark { display: inline-flex; width: 20px; height: 20px; flex: none; color: var(--ck-clay); }
+.sk-claude .cl-spark svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* ---------- macOS desktop-app window ------------------------------------- */
+.sk-claude .cl-window {
+  position: relative; display: flex; overflow: hidden;
+  width: 1300px; height: 800px;
+  background: var(--ck-page);
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px var(--ck-window-edge), var(--ck-window-shadow);
+}
+.sk-claude .cl-traffic { display: flex; gap: 8px; align-items: center; flex: none; }
+.sk-claude .cl-traffic span { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 0.5px var(--ck-traffic-edge); }
+.sk-claude .cl-traffic span:nth-child(1) { background: var(--ck-traffic-red); }
+.sk-claude .cl-traffic span:nth-child(2) { background: var(--ck-traffic-yellow); }
+.sk-claude .cl-traffic span:nth-child(3) { background: var(--ck-traffic-green); }
+
+.sk-claude .cl-iconbtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 7px; color: var(--ck-icon); flex: none;
+}
+.sk-claude .cl-iconbtn.is-dim { color: var(--ck-faintest); }
+.sk-claude .cl-iconbtn.is-pressed { background: var(--ck-row-selected); }
+
+/* ---------- sidebar -------------------------------------------------------- */
+.sk-claude .cl-sidebar {
+  width: var(--ck-sidebar-w); flex: none; height: 100%;
+  display: flex; flex-direction: column;
+  background: var(--ck-sidebar);
+  border-right: 1px solid var(--ck-divider);
+  padding: 0 10px;
+}
+.sk-claude .cl-sb-top { height: 48px; display: flex; align-items: center; padding-left: 6px; gap: 4px; flex: none; }
+.sk-claude .cl-sb-top .cl-traffic { margin-right: 14px; }
+.sk-claude .cl-sb-top .cl-iconbtn { width: 26px; height: 26px; }
+.sk-claude .cl-sb-top .cl-ic { width: 17px; height: 17px; }
+
+/* Optional Chat | Code switch (desktop app, seen in the Code-tab frame) */
+.sk-claude .cl-modeswitch { margin-left: auto; display: flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--ck-row-hover); box-shadow: inset 0 0 0 1px var(--ck-hairline); }
+.sk-claude .cl-modeswitch span { width: 32px; height: 24px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: var(--ck-muted); }
+.sk-claude .cl-modeswitch span.is-on { background: var(--ck-composer); color: var(--ck-ink); box-shadow: 0 1px 2px rgba(0,0,0,.08), inset 0 0 0 1px var(--ck-hairline); }
+.sk-claude[data-theme="dark"] .cl-modeswitch { background: #1a1a1a; }
+.sk-claude[data-theme="dark"] .cl-modeswitch span.is-on, [data-theme="dark"] .sk-claude .cl-modeswitch span.is-on { background: #3d3d3d; }
+.sk-claude .cl-modeswitch .cl-ic { width: 16px; height: 16px; }
+
+.sk-claude .cl-sb-nav { display: flex; flex-direction: column; gap: 1px; margin-top: 10px; }
+.sk-claude .cl-sb-item {
+  height: 29px; display: flex; align-items: center; gap: 9px;
+  padding: 0 8px; border-radius: 8px;
+  font-size: 14.5px; color: var(--ck-ink); white-space: nowrap; overflow: hidden;
+}
+.sk-claude .cl-sb-item .cl-ic { width: 17px; height: 17px; color: var(--ck-icon); }
+.sk-claude .cl-sb-item.is-muted { color: var(--ck-muted); }
+.sk-claude .cl-sb-item.is-muted .cl-ic { color: var(--ck-muted); }
+.sk-claude .cl-sb-item.is-selected { background: var(--ck-row-selected); }
+.sk-claude .cl-sb-item.is-hover { background: var(--ck-row-hover); }
+.sk-claude .cl-sb-item .cl-newcircle {
+  width: 20px; height: 20px; margin: 0 -1.5px; border-radius: 50%;
+  background: var(--ck-newchat-circle); display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.sk-claude .cl-sb-item .cl-newcircle .cl-ic { width: 13px; height: 13px; }
+.sk-claude .cl-sb-item .cl-sb-label-text { overflow: hidden; text-overflow: ellipsis; }
+.sk-claude .cl-sb-item .cl-beta { margin-left: 2px; }
+
+.sk-claude .cl-sb-section { margin-top: 30px; display: flex; flex-direction: column; gap: 1px; min-height: 0; }
+.sk-claude .cl-sb-heading {
+  height: 26px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 4px 0 8px; font-size: 13px; color: var(--ck-faint); margin-bottom: 4px;
+}
+.sk-claude .cl-sb-heading .cl-ic { width: 16px; height: 16px; color: var(--ck-faint); }
+.sk-claude .cl-sb-recent { height: 30px; gap: 10px; }
+.sk-claude .cl-sb-recent .cl-ic { width: 16px; height: 16px; color: var(--ck-muted); }
+.sk-claude .cl-sb-spacer { flex: 1; }
+
+.sk-claude .cl-sb-foot {
+  height: 54px; flex: none; margin: 0 -10px; padding: 0 16px 0 18px;
+  display: flex; align-items: center; gap: 10px;
+  border-top: 1px solid var(--ck-divider);
+  font-size: 14.5px; white-space: nowrap;
+}
+.sk-claude .cl-avatar {
+  width: 26px; height: 26px; border-radius: 50%; flex: none;
+  background: var(--ck-avatar); color: var(--ck-ink);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em;
+}
+.sk-claude .cl-sb-foot .cl-org { color: var(--ck-muted); }
+.sk-claude .cl-sb-foot .cl-ic { width: 15px; height: 15px; color: var(--ck-muted); }
+.sk-claude .cl-sb-foot .cl-sb-foot-end { margin-left: auto; color: var(--ck-muted); }
+
+/* ---------- main column ------------------------------------------------------ */
+.sk-claude .cl-main { position: relative; flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; background: var(--ck-page); }
+.sk-claude .cl-main.is-home { background: var(--ck-page-home); }
+
+.sk-claude .cl-topbar {
+  height: 52px; flex: none; display: flex; align-items: center; gap: 8px;
+  padding: 0 18px 0 40px; font-size: 14.5px; white-space: nowrap;
+}
+/* sidebar hidden: traffic lights + sidebar toggle + back/forward live in the topbar (dash frame) */
+.sk-claude .cl-topbar.is-collapsed { padding: 0 14px 0 18px; gap: 2px; }
+.sk-claude .cl-topbar.is-collapsed .cl-traffic { margin-right: 18px; }
+.sk-claude .cl-topbar.is-collapsed .cl-iconbtn { width: 28px; height: 28px; }
+.sk-claude .cl-topbar.is-collapsed .cl-iconbtn .cl-ic { width: 17px; height: 17px; }
+.sk-claude .cl-topbar.is-collapsed .cl-title { margin-left: 26px; }
+.sk-claude .cl-topbar .cl-traffic { margin-right: 14px; }
+.sk-claude .cl-topbar .cl-title { font-weight: 500; color: var(--ck-ink); display: inline-flex; align-items: center; gap: 6px; }
+.sk-claude .cl-topbar .cl-title .cl-ic { width: 15px; height: 15px; color: var(--ck-ink-2); }
+.sk-claude .cl-tag { display: inline-flex; align-items: center; height: 22px; padding: 0 6px; border-radius: 6px; background: var(--ck-row-selected); color: var(--ck-ink-2); font-size: 13.5px; }
+.sk-claude .cl-topbar-end { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.sk-claude .cl-topbar-end .cl-iconbtn { width: 30px; height: 30px; }
+
+.sk-claude .cl-scroll { flex: 1; min-height: 0; overflow: hidden; position: relative; }
+.sk-claude .cl-thread {
+  width: 100%; max-width: calc(var(--ck-thread-w) + 80px); margin: 0 auto;
+  padding: 22px 40px 24px; display: flex; flex-direction: column;
+}
+
+/* user message: right-aligned warm grey bubble, sans */
+.sk-claude .cl-msg-user { display: flex; justify-content: flex-end; margin: 0 0 28px 0; padding-left: 16%; }
+.sk-claude .cl-bubble {
+  background: var(--ck-bubble); color: var(--ck-ink);
+  border-radius: 14px; padding: 7px 13px;        /* one line = 38px tall (sep, session) */
+  font-size: 16px; line-height: 24px; max-width: 100%;
+}
+
+/* assistant message: no bubble, serif prose */
+.sk-claude .cl-msg-ai { margin: 0; }
+.sk-claude .cl-prose {
+  font-family: var(--ck-serif); color: var(--ck-ink-prose); font-size: 16.5px; line-height: 1.6;
+  /* Source Serif's display cut is thin; pin a text optical size and add weight to reach
+     Anthropic Serif's colour (ink coverage matched against the dash + home frames) */
+  font-weight: 470; font-variation-settings: "opsz" 24; letter-spacing: -0.008em;
+}
+.sk-claude .cl-prose p { margin: 0 0 13px 0; }
+.sk-claude .cl-prose p:last-child { margin-bottom: 0; }
+.sk-claude .cl-prose ul, .sk-claude .cl-prose ol { margin: 0 0 12px 0; padding-left: 22px; }
+.sk-claude .cl-prose li { margin: 2px 0; padding-left: 2px; }
+.sk-claude .cl-prose strong { font-weight: 650; }
+.sk-claude .cl-prose h3 { font-family: var(--ck-serif); font-size: 19px; font-weight: 620; margin: 18px 0 8px; }
+.sk-claude .cl-prose a, .sk-claude .cl-link { color: var(--ck-link); text-decoration: none; }
+.sk-claude .cl-prose code, .sk-claude .cl-code {
+  font-family: var(--ck-mono); font-size: 0.86em; font-weight: 450; background: var(--ck-code-bg);
+  border-radius: 5px; padding: 1px 5px; letter-spacing: 0;
+}
+/* agentic sessions render the reply in sans (desktop-light-sidebar-session.png) */
+.sk-claude .cl-prose.is-sans { font-family: var(--ck-sans); font-size: 16px; line-height: 1.55; font-weight: var(--ck-w-ui); font-variation-settings: "opsz" 32; letter-spacing: -0.005em; }
+
+/* streamed words (SKIN_CLAUDE.streamWords) */
+.sk-claude .cl-w { display: inline; }
+
+/* grey step summary: "Read q3.csv, ran a command ›" */
+.sk-claude .cl-steps {
+  display: inline-flex; align-items: center; gap: 5px; align-self: flex-start;
+  font-size: 14.5px; color: var(--ck-muted); margin: 0 0 10px 0; white-space: nowrap;
+}
+.sk-claude .cl-steps .cl-ic { width: 14px; height: 14px; color: var(--ck-faint); }
+.sk-claude .cl-steps.is-ink { color: var(--ck-ink-2); font-size: 16px; }
+
+/* working indicator: pulsing spark + status + shimmering sub-line (working frame) */
+.sk-claude .cl-working { display: grid; grid-template-columns: 14px 1fr; column-gap: 11px; row-gap: 4px; align-items: center; margin: 0; }
+.sk-claude .cl-working .cl-spark { width: 14px; height: 14px; }
+.sk-claude .cl-working-title { font-size: 16px; color: var(--ck-ink); line-height: 24px; }
+.sk-claude .cl-working-sub { grid-column: 2; display: inline-flex; align-items: center; gap: 7px; padding-left: 6px; font-size: 16px; line-height: 24px; }
+.sk-claude .cl-working-sub .cl-ic { width: 14px; height: 14px; color: var(--ck-faint); }
+.sk-claude .cl-shimmer {
+  color: transparent;
+  background-image: linear-gradient(90deg, var(--ck-shimmer-lo) 0%, var(--ck-shimmer-lo) 38%, var(--ck-shimmer-hi) 50%, var(--ck-shimmer-lo) 62%, var(--ck-shimmer-lo) 100%);
+  background-size: 260% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text; background-clip: text;
+}
+
+/* message action row (copy, read aloud, thumbs, retry, wrench) — dash frame */
+.sk-claude .cl-actions { display: flex; align-items: center; gap: 2px; margin: 10px 0 0 -6px; color: var(--ck-icon-muted); }
+.sk-claude .cl-actions .cl-iconbtn { width: 28px; height: 28px; color: var(--ck-icon-muted); }
+.sk-claude .cl-actions .cl-ic { width: 17px; height: 17px; }
+/* spark that sits alone under the latest reply (session, slides, picker frames) */
+.sk-claude .cl-tail-spark { margin: 16px 0 0 0; width: 20px; height: 20px; }
+
+/* ---------- in-chat artifact card ---------------------------------------- */
+.sk-claude .cl-artifact-card {
+  position: relative; display: flex; align-items: center; gap: 14px;
+  height: 66px; padding: 0 12px 0 16px; margin: 4px 0 16px;
+  border-radius: 12px; background: var(--ck-card); border: 1px solid var(--ck-card-border);
+  overflow: hidden; font-family: var(--ck-sans);
+}
+.sk-claude .cl-artifact-tile {
+  align-self: flex-end; width: 50px; height: 53px; flex: none;
+  border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; padding-bottom: 4px;
+  border: 1px solid var(--ck-tile-dash-edge); border-bottom: 0;
+  background: var(--ck-tile-dash-bg); color: var(--ck-tile-dash);
+}
+.sk-claude .cl-artifact-tile .cl-ic { width: 19px; height: 19px; }
+.sk-claude .cl-artifact-tile.is-slides { background: var(--ck-tile-slides-bg); color: var(--ck-tile-slides); border-color: var(--ck-tile-slides-edge); }
+.sk-claude .cl-artifact-tile.is-docs { background: var(--ck-tile-docs-bg); color: var(--ck-tile-docs); border-color: var(--ck-tile-docs-edge); }
+.sk-claude .cl-artifact-tile.is-design { background: var(--ck-tile-design-bg); color: var(--ck-tile-design); border-color: var(--ck-tile-design-bg); }
+.sk-claude .cl-artifact-meta { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.sk-claude .cl-artifact-title { font-size: 15px; font-weight: 500; color: var(--ck-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sk-claude .cl-artifact-sub { font-size: 13.5px; color: var(--ck-muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; }
+.sk-claude .cl-artifact-sub .cl-ic { width: 13px; height: 13px; }
+.sk-claude .cl-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 32px; min-width: 32px; padding: 0 12px; border-radius: 8px;
+  background: var(--ck-btn); border: 1px solid var(--ck-btn-border); color: var(--ck-ink);
+  font-size: 14.5px; font-weight: 500; white-space: nowrap; flex: none;
+}
+.sk-claude .cl-btn.is-icon { padding: 0; width: 32px; }
+.sk-claude .cl-btn .cl-ic { width: 16px; height: 16px; }
+.sk-claude .cl-btn.is-dark { background: var(--ck-share-bg); color: var(--ck-share-ink); border-color: transparent; }
+
+/* ---------- composer ----------------------------------------------------------- */
+.sk-claude .cl-composer-wrap { flex: none; width: 100%; max-width: calc(var(--ck-thread-w) + 80px); margin: 0 auto; padding: 0 40px 12px; }
+.sk-claude .cl-composer {
+  position: relative; width: 100%;
+  background: var(--ck-composer);
+  border: 1px solid var(--ck-border);
+  border-radius: 13px;                         /* ~25px at 1.9x in the home frame */
+  box-shadow: var(--ck-composer-shadow);
+  display: flex; flex-direction: column;
+}
+/* states: .is-focus while typing (closeup #c7c7c7), .is-hover under the pointer (session #afafaf) */
+.sk-claude .cl-composer.is-focus { border-color: var(--ck-border-focus); }
+.sk-claude .cl-composer.is-hover { border-color: var(--ck-border-hover); }
+/* home / new chat: + and voice controls inside the box (home, closeup). One line = 90px tall. */
+.sk-claude .cl-composer.is-home { min-height: 90px; padding: 13px 8px 6px 9px; }
+.sk-claude .cl-input {
+  font-size: 16px; line-height: 24px; color: var(--ck-ink);
+  padding: 0 8px; min-height: 24px; white-space: pre-wrap; word-break: break-word;
+}
+.sk-claude .cl-input.is-placeholder, .sk-claude .cl-input .cl-placeholder { color: var(--ck-placeholder); }
+.sk-claude .cl-caret { display: inline-block; width: 1.5px; height: 19px; margin-left: 1px; vertical-align: -4px; background: var(--ck-ink); }
+.sk-claude .cl-composer-bar { display: flex; align-items: center; gap: 2px; margin-top: auto; padding-top: 12px; height: 44px; }
+.sk-claude .cl-composer-bar .cl-iconbtn { width: 32px; height: 32px; border-radius: 8px; color: var(--ck-icon); }
+.sk-claude .cl-composer-bar .cl-ic { width: 18px; height: 18px; }
+.sk-claude .cl-composer-bar > .cl-iconbtn:first-child { margin-left: -3px; }   /* + sits 23px in (home) */
+.sk-claude .cl-composer-bar .cl-iconbtn:first-child .cl-ic { width: 19px; height: 19px; }
+.sk-claude .cl-composer-bar .cl-grow { flex: 1; }
+.sk-claude .cl-composer-bar .cl-chev { width: 20px; height: 32px; display: inline-flex; align-items: center; justify-content: center; color: var(--ck-faint); margin-right: 4px; }
+.sk-claude .cl-composer-bar .cl-chev .cl-ic { width: 14px; height: 14px; }
+.sk-claude .cl-send {
+  width: 30px; height: 30px; border-radius: 7px; flex: none;   /* closeup: 72px at 2.5x */
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--ck-send); color: var(--ck-send-ink);
+}
+.sk-claude .cl-send .cl-ic { width: 17px; height: 17px; }
+.sk-claude .cl-send.is-disabled { background: var(--ck-send-disabled); opacity: 0.85; }
+/* .is-stop: legacy stop-square modifier. No official 2026 frame shows it; the demo no longer uses it. */
+.sk-claude .cl-send.is-stop .cl-ic { width: 17px; height: 17px; }
+.sk-claude .cl-send.is-pressed { transform: scale(0.94); }
+
+/* reply (conversation) composer: single row, return-key glyph inside, controls outside (dash) */
+.sk-claude .cl-composer.is-reply { flex-direction: row; align-items: center; min-height: 46px; padding: 0 13px 0 14px; border-radius: 12px; }
+.sk-claude .cl-composer.is-reply .cl-input { flex: 1; padding: 0; }
+.sk-claude .cl-composer.is-reply .cl-return { color: var(--ck-return); display: inline-flex; }
+.sk-claude .cl-composer.is-reply .cl-return .cl-ic { width: 16px; height: 16px; }
+.sk-claude .cl-composer.is-reply .cl-send { width: 30px; height: 30px; border-radius: 8px; margin-right: -4px; }
+.sk-claude .cl-composer.is-reply .cl-send .cl-ic { width: 16px; height: 16px; }
+.sk-claude .cl-composer.is-reply .cl-send.is-stop .cl-ic { width: 16px; height: 16px; }
+
+/* attachment card inside the composer (closeup) */
+.sk-claude .cl-attachments { display: flex; gap: 10px; padding: 0 0 18px 4px; margin-top: -4px; }
+.sk-claude .cl-attach {
+  width: 112px; height: 110px; border-radius: 7px; padding: 10px 10px 9px;   /* closeup: 276x275 at 2.5x */
+  border: 1px solid var(--ck-attach-border); background: var(--ck-composer);
+  display: flex; flex-direction: column;
+}
+.sk-claude .cl-attach-name { font-size: 13.5px; line-height: 1.32; color: var(--ck-ink); }
+.sk-claude .cl-attach-meta { font-size: 13px; color: var(--ck-muted); margin-top: 4px; }
+.sk-claude .cl-attach-kind { margin-top: auto; align-self: flex-start; font-size: 11.5px; font-weight: 500; letter-spacing: 0.01em; color: var(--ck-muted); background: var(--ck-code-bg); border-radius: 5px; padding: 2px 6px; }
+
+/* control row UNDER the composer box (merged UI) */
+.sk-claude .cl-controls {
+  display: flex; align-items: center; height: 30px; margin-top: 7px; padding: 0 12px 0 12px;
+  font-size: 14.5px; color: var(--ck-ink-2); white-space: nowrap;
+}
+.sk-claude .cl-controls.is-home { margin-top: 9px; padding: 0 5px 0 16px; }
+.sk-claude .cl-controls .cl-grow { flex: 1; }
+.sk-claude .cl-ctl { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; margin: 0 -8px; border-radius: 6px; }
+/* pill edges sit 15px after the previous label (home: Project ⌄ → Output pill; closeup: → Slides chip) */
+.sk-claude .cl-ctl + .cl-ctl, .sk-claude .cl-chip-output + .cl-ctl { margin-left: 23px; }
+.sk-claude .cl-ctl + .cl-chip-output { margin-left: 15px; }
+.sk-claude .cl-ctl .cl-ic { width: 14px; height: 14px; color: var(--ck-faint); }
+.sk-claude .cl-ctl.is-open { background: var(--ck-pill); color: var(--ck-ink); }
+.sk-claude .cl-ctl .cl-ic.is-lead { width: 17px; height: 17px; color: var(--ck-ink-2); }
+.sk-claude .cl-ctl.is-iconic { padding: 0 5px; margin: 0 -5px; }
+.sk-claude .cl-ctl.is-iconic + .cl-ctl { margin-left: 12px; }
+.sk-claude .cl-ctl.is-iconic .cl-ic { width: 17px; height: 17px; color: var(--ck-icon); }
+.sk-claude .cl-ctl.is-chev { padding: 0 3px; margin: 0 -3px 0 2px !important; }
+.sk-claude .cl-ctl.is-chev .cl-ic { width: 13px; height: 13px; color: var(--ck-faint); }
+.sk-claude .cl-chip-output {
+  display: inline-flex; align-items: center; gap: 9px; height: 24px; padding: 0 7px 0 8px; margin: 0;
+  border-radius: 6px; background: var(--ck-chip-output-bg); color: var(--ck-chip-output-ink);   /* closeup: 65x22 */
+}
+.sk-claude .cl-chip-output .cl-ic { width: 14px; height: 14px; color: currentColor; }
+.sk-claude .cl-chip-output.is-docs { background: var(--ck-chip-docs-bg); color: var(--ck-chip-docs-ink); }
+.sk-claude .cl-chip-output.is-design { background: var(--ck-chip-design-bg); color: var(--ck-chip-design-ink); }
+.sk-claude .cl-model { position: relative; display: inline-flex; align-items: center; gap: 10px; }
+.sk-claude .cl-model-name { color: var(--ck-ink); padding: 2px 5px; margin: 0 -5px; border-radius: 5px; }
+.sk-claude .cl-model-name.is-open { background: var(--ck-pill); }
+.sk-claude .cl-effort { color: var(--ck-faint); }
+.sk-claude .cl-auto { color: var(--ck-ink-2); margin-left: 20px; }
+.sk-claude .cl-controls.is-home .cl-auto { margin-left: 14px; }
+.sk-claude .cl-ring { display: inline-flex; width: 15px; height: 15px; flex: none; margin-left: 14px; }
+.sk-claude .cl-ring svg { width: 100%; height: 100%; display: block; }
+
+/* ---------- home (new chat) ------------------------------------------------------ */
+.sk-claude .cl-home { flex: 1; display: flex; flex-direction: column; align-items: center; padding-top: 22vh; }
+.sk-claude .cl-home-inner { width: var(--ck-home-w); max-width: calc(100% - 64px); }
+.sk-claude .cl-greeting {
+  display: flex; align-items: center; justify-content: center; gap: 12px; margin: 0 0 20px;
+  font-family: var(--ck-serif); font-size: 37px; line-height: 1.12; color: var(--ck-ink); white-space: nowrap;
+  /* home frame: 2.3x the placeholder, heavy and tight. Source Serif's auto (display) cut is far too
+     thin at this size (ink 0.130 vs the official 0.187); weight 480 at opsz 30 gives 0.20. */
+  font-weight: 480; font-variation-settings: "opsz" 30; letter-spacing: -0.022em; word-spacing: -0.03em;
+}
+.sk-claude .cl-greeting .cl-spark { width: 27px; height: 27px; margin-top: 1px; }
+
+/* ---------- popover menus ---------------------------------------------------------- */
+.sk-claude .cl-menu {
+  position: absolute; z-index: 20;
+  background: var(--ck-menu); border: 1px solid var(--ck-menu-border);
+  border-radius: 11px; box-shadow: var(--ck-menu-shadow);
+  padding: 6px; font-size: 14.5px; color: var(--ck-ink);
+  display: flex; flex-direction: column; gap: 1px; white-space: nowrap;
+}
+.sk-claude .cl-menu-head { font-size: 13.5px; color: var(--ck-faint); padding: 5px 9px 3px; }
+.sk-claude .cl-menu-item {
+  position: relative; display: flex; align-items: center; gap: 10px; height: 31px; padding: 0 9px; border-radius: 8px;
+}
+.sk-claude .cl-menu-item.is-hover { background: var(--ck-menu-hover); }
+.sk-claude .cl-menu-item .cl-ic { width: 18px; height: 18px; color: var(--ck-icon); }
+.sk-claude .cl-menu-item .cl-end { margin-left: auto; display: inline-flex; align-items: center; color: var(--ck-faint); }
+.sk-claude .cl-menu-item .cl-end .cl-ic { color: var(--ck-faint); width: 15px; height: 15px; }
+.sk-claude .cl-menu-item.is-on, .sk-claude .cl-menu-item.is-on .cl-ic { color: var(--ck-blue); }
+.sk-claude .cl-menu-item.is-on .cl-end .cl-ic { color: var(--ck-blue); }
+.sk-claude .cl-menu-sep { height: 1px; background: var(--ck-hairline); margin: 4px 7px; }
+.sk-claude .cl-kbd { font-size: 14px; color: var(--ck-faint); min-width: 10px; text-align: right; font-variant-numeric: tabular-nums; }
+.sk-claude .cl-check { color: var(--ck-blue); display: inline-flex; }
+.sk-claude .cl-check .cl-ic, .sk-claude .cl-menu-item .cl-end .cl-check .cl-ic { width: 18px; height: 18px; color: var(--ck-blue); }
+.sk-claude .cl-beta {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 5px;   /* home: 38x20 */
+  background: var(--ck-beta-bg); color: var(--ck-beta-ink); font-size: 12.5px;
+}
+/* a single highlight that slides between rows (follows the pointer) */
+.sk-claude .cl-menu-hl { position: absolute; left: 6px; right: 6px; height: 31px; border-radius: 8px; background: var(--ck-menu-hover); pointer-events: none; }
+.sk-claude .cl-menu > :not(.cl-menu-hl) { position: relative; }
+
+/* model picker: plain list, digit shortcuts, blue check on the current model */
+/* 146px wide in both the Sept and Oct frames; crisp #d9d9d9 hairline, not just a shadow */
+.sk-claude .cl-picker { width: 146px; padding: 5px; border-color: var(--ck-picker-border); border-radius: 10px; box-shadow: var(--ck-picker-shadow); gap: 0; }
+.sk-claude .cl-picker .cl-menu-head { padding: 4px 8px 2px; font-size: 13.5px; }
+.sk-claude .cl-picker .cl-menu-item, .sk-claude .cl-picker .cl-menu-hl { height: 26px; }
+.sk-claude .cl-picker .cl-menu-hl { left: 3px; right: 3px; border-radius: 6px; }
+.sk-claude .cl-picker .cl-menu-item { justify-content: space-between; padding: 0 8px; border-radius: 6px; }
+.sk-claude .cl-picker .cl-menu-item .cl-end { gap: 8px; color: var(--ck-faint); }
+.sk-claude .cl-picker .cl-menu-item .cl-end .cl-check { margin-right: -3px; }
+.sk-claude .cl-picker .cl-menu-sep { margin: 5px 3px 4px; background: var(--ck-hairline); }
+.sk-claude .cl-picker .cl-menu-item.is-more .cl-ic { width: 16px; height: 16px; color: var(--ck-icon); }
+
+/* Output menu: tinted tiles + Beta pills (home frame) */
+/* home frame at 1.89x: 335px wide, 36px row pitch, 21px tiles, rows inset 13px, 13px radius */
+.sk-claude .cl-output-menu { width: 336px; padding: 8px 12px 7px; border-radius: 13px; font-size: 15px; gap: 3px; }
+.sk-claude .cl-output-menu .cl-menu-item { height: 33px; gap: 12px; padding: 0 2px 0 4px; margin: 0 -1px; border-radius: 7px; }
+.sk-claude .cl-output-menu .cl-menu-item.is-artifact { height: 26px; }
+.sk-claude .cl-output-menu .cl-menu-item.is-hover .cl-beta { background: var(--ck-beta-hover); }
+.sk-claude .cl-output-menu .cl-menu-item.is-hover { background: var(--ck-menu-hover); }
+.sk-claude .cl-tile { width: 21px; height: 21px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.sk-claude .cl-tile .cl-ic { width: 14px; height: 14px; }
+.sk-claude .cl-tile.is-docs { background: var(--ck-tile-docs-bg); color: var(--ck-tile-docs); }
+.sk-claude .cl-tile.is-docs .cl-ic, .sk-claude .cl-tile.is-slides .cl-ic, .sk-claude .cl-tile.is-design .cl-ic { color: inherit; }
+.sk-claude .cl-tile.is-slides { background: var(--ck-tile-slides-bg); color: var(--ck-tile-slides); }
+.sk-claude .cl-tile.is-design { background: var(--ck-tile-design-bg); color: var(--ck-tile-design); }
+.sk-claude .cl-output-menu .cl-menu-sep { margin: 4px 3px 0; }
+.sk-claude .cl-output-menu .cl-menu-item .cl-beta { margin-left: 4px; }
+.sk-claude .cl-output-menu .cl-menu-item > .cl-ic { width: 16px; height: 16px; margin: 0 2px 0 -1px; }
+.sk-claude .cl-output-menu .cl-hint { color: var(--ck-faint); font-size: 14.5px; margin-left: 2px; }
+
+/* + menu (Workspace frame) */
+.sk-claude .cl-plus-menu { width: 232px; padding: 8px; font-size: 15px; }
+.sk-claude .cl-plus-menu .cl-menu-item { height: 36px; gap: 12px; }
+
+/* connectors submenu (Workspace frame + extrapolated rows) */
+.sk-claude .cl-connectors { width: 280px; padding: 8px; font-size: 14.5px; }
+.sk-claude .cl-connectors .cl-back { color: var(--ck-muted); }
+.sk-claude .cl-search-field {
+  display: flex; align-items: center; gap: 8px; height: 34px; margin: 2px 2px 6px; padding: 0 10px;
+  border-radius: 8px; border: 1px solid var(--ck-menu-border); color: var(--ck-placeholder); font-size: 14px;
+}
+.sk-claude .cl-search-field .cl-ic { width: 15px; height: 15px; color: var(--ck-faint); }
+.sk-claude .cl-logo { width: 20px; height: 20px; border-radius: 5px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.sk-claude .cl-logo img, .sk-claude .cl-logo svg { width: 18px; height: 18px; }
+.sk-claude .cl-toggle { width: 30px; height: 19px; flex: none; color: var(--ck-blue); display: inline-flex; margin-left: auto; }
+.sk-claude .cl-toggle.is-off { color: var(--ck-toggle-off); }
+.sk-claude .cl-toggle svg { width: 100%; height: 100%; }
+
+/* ---------- macOS pointer (official renders: white arrow, black outline) --------- */
+/* Anthropic's renders draw big cursors: the home arrow is ~29x41 and the picker-sep hand ~42x54 at 1x */
+.sk-claude .cl-pointer { position: absolute; left: 0; top: 0; width: 27px; height: 40px; z-index: 60; pointer-events: none; color: var(--ck-pointer-fill); }
+.sk-claude .cl-pointer.is-hand { width: 40px; height: 49px; }
+.sk-claude .cl-pointer svg { width: 100%; height: 100%; display: block; overflow: visible; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.28)); }
+
+/* ---------- artifact panel (right side) ------------------------------------------- */
+.sk-claude .cl-split { display: flex; gap: 0; height: 100%; }
+.sk-claude .cl-split .cl-chatcol { width: 36%; flex: none; display: flex; flex-direction: column; min-width: 0; }
+.sk-claude .cl-panel {
+  flex: 1; min-width: 0; margin: 8px 8px 8px 0; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--ck-panel); border: 1px solid var(--ck-panel-border); border-radius: 12px;
+}
+.sk-claude .cl-panel-head { height: 52px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 18px; font-size: 15px; white-space: nowrap; }
+.sk-claude .cl-panel-head .cl-title { display: inline-flex; align-items: center; gap: 6px; color: var(--ck-ink); }
+.sk-claude .cl-panel-head .cl-title .cl-ic { width: 15px; height: 15px; color: var(--ck-ink-2); }
+.sk-claude .cl-panel-head .cl-end { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.sk-claude .cl-comment-toggle { display: inline-flex; height: 32px; border-radius: 8px; border: 1px solid var(--ck-btn-border); overflow: hidden; }
+.sk-claude .cl-comment-toggle span { width: 32px; display: inline-flex; align-items: center; justify-content: center; color: var(--ck-faint); background: var(--ck-btn); }
+.sk-claude .cl-comment-toggle span:first-child { background: var(--ck-comment-bg); color: var(--ck-comment-ink); }
+.sk-claude .cl-comment-toggle .cl-ic { width: 16px; height: 16px; }
+.sk-claude .cl-panel-band { height: 44px; flex: none; display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding: 0 12px; background: var(--ck-panel-band); border-bottom: 1px solid var(--ck-hairline); }
+.sk-claude .cl-panel-body { flex: 1; min-height: 0; overflow: hidden; position: relative; }
+
+/* Claude Docs content (docs frame) */
+.sk-claude .cl-doc-toolbar { display: flex; align-items: center; gap: 18px; height: 48px; padding: 0 22px; color: var(--ck-icon); font-size: 15px; border-bottom: 1px solid var(--ck-hairline); }
+.sk-claude .cl-doc-toolbar .cl-ic { width: 18px; height: 18px; }
+.sk-claude .cl-doc-toolbar .cl-vsep { width: 1px; height: 24px; background: var(--ck-hairline); }
+.sk-claude .cl-doc { padding: 48px 72px; }
+.sk-claude .cl-doc-title { font-family: var(--ck-serif); font-size: 36px; line-height: 1.15; letter-spacing: -0.022em; font-weight: 500; font-variation-settings: "opsz" 30; color: var(--ck-ink); margin: 0 0 20px; }
+.sk-claude .cl-doc-chips { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--ck-faint); }
+.sk-claude .cl-doc-chip { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--ck-code-bg); color: var(--ck-ink); font-size: 15px; }
+.sk-claude .cl-doc-chip .cl-ic { width: 16px; height: 16px; color: var(--ck-ink-2); }
+.sk-claude .cl-doc-body { font-size: 16px; line-height: 1.6; color: var(--ck-ink); }
+.sk-claude .cl-doc-body h2 { font-family: var(--ck-serif); font-weight: 500; font-variation-settings: "opsz" 28; font-size: 24px; letter-spacing: -0.015em; margin: 22px 0 8px; }
+.sk-claude .cl-claude-cursor { position: relative; display: inline-block; width: 2px; height: 1.2em; vertical-align: -0.22em; background: var(--ck-cursor-claude); margin-left: 2px; }
+.sk-claude .cl-claude-cursor::after {
+  content: "Claude"; position: absolute; left: 0; bottom: calc(100% + 1px);
+  background: var(--ck-cursor-claude); color: #fff; font-size: 11px; font-weight: 500; line-height: 1;
+  padding: 3px 5px 3px; border-radius: 3px 3px 3px 0; letter-spacing: 0; font-family: var(--ck-sans);
+}
+
+/* ---------- settings: usage (extrapolated, no official 2026 frame) ---------------- */
+.sk-claude .cl-usage { display: flex; flex-direction: column; gap: 22px; font-size: 14.5px; }
+.sk-claude .cl-usage-title { font-size: 16px; font-weight: 500; color: var(--ck-ink); }
+.sk-claude .cl-usage-row { display: grid; grid-template-columns: 180px 1fr 72px; align-items: center; column-gap: 20px; }
+.sk-claude .cl-usage-row .cl-usage-name { color: var(--ck-ink); }
+.sk-claude .cl-usage-row .cl-usage-hint { font-size: 13px; color: var(--ck-muted); margin-top: 2px; }
+.sk-claude .cl-usage-bar { height: 8px; border-radius: 999px; background: var(--ck-track); overflow: hidden; position: relative; }
+.sk-claude .cl-usage-bar > i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--pct, 0%); border-radius: inherit; background: var(--ck-usage); }
+.sk-claude .cl-usage-pct { text-align: right; color: var(--ck-muted); font-variant-numeric: tabular-nums; }

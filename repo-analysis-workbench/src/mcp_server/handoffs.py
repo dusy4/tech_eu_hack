@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 STATUSES = ("open", "in_progress", "done", "dismissed")
-ACTION_KINDS = ("focus", "ask")
+ACTION_KINDS = ("focus", "ask", "change")
 
 CodeRefResolver = Callable[[str, str], Optional[Dict[str, object]]]
 
@@ -55,6 +55,20 @@ def validate_batch(batch: object) -> Dict[str, object]:
             raise HandoffError(f"proposal {index}: focus actions need action.nodeId")
         if kind == "ask" and not action.get("question"):
             raise HandoffError(f"proposal {index}: ask actions need action.question")
+        if kind == "change":
+            if not isinstance(action.get("change"), str) or not action["change"].strip():
+                raise HandoffError(f"proposal {index}: change actions need action.change (what to build)")
+            anchors = action.get("anchors", [])
+            if not isinstance(anchors, list) or not all(isinstance(a, dict) and isinstance(a.get("symbol"), str) for a in anchors):
+                raise HandoffError(f"proposal {index}: action.anchors must be a list of {{symbol, file?, line?}}")
+            action = {
+                "kind": "change",
+                "change": action["change"].strip(),
+                "anchors": [
+                    {key: anchor[key] for key in ("symbol", "nodeId", "file", "line") if anchor.get(key) not in (None, "")}
+                    for anchor in anchors[:10]
+                ],
+            }
         normalised.append({
             "title": str(proposal.get("title") or ""),
             "why": str(proposal.get("why") or ""),
@@ -95,6 +109,14 @@ class HandoffStore:
                     proposal["code_ref"] = self.resolve_code_ref(handoff["repo"], str(action["nodeId"]))
                 except Exception:  # code refs are best effort; never lose a handoff over them
                     proposal["code_ref"] = None
+            if action["kind"] == "change" and self.resolve_code_ref is not None:
+                refs = []
+                for anchor in action["anchors"]:
+                    try:
+                        refs.append(self.resolve_code_ref(handoff["repo"], str(anchor["symbol"])))
+                    except Exception:
+                        refs.append(None)
+                proposal["code_refs"] = refs
         created = now_iso()
         doc = {
             "id": f"{datetime.now(timezone.utc):%Y%m%d-%H%M%S}-{uuid.uuid4().hex[:6]}",
@@ -178,5 +200,17 @@ def handoff_markdown(doc: Dict[str, object], repo_root: Optional[str] = None) ->
             lines.append(f"   - Code: `{ref.get('qualified_name') or action.get('nodeId')}` at {location}")
         elif action.get("kind") == "ask":
             lines.append(f"   - Open question to answer: {action.get('question')}")
+        elif action.get("kind") == "change":
+            lines.append(f"   - Change: {action.get('change')}")
+            refs = proposal.get("code_refs") or []
+            for position, anchor in enumerate(action.get("anchors") or []):
+                ref = refs[position] if position < len(refs) and refs[position] else {}
+                if ref.get("path"):
+                    location = f"{ref.get('path')}:{ref.get('start_line')}-{ref.get('end_line')}"
+                elif anchor.get("file"):
+                    location = str(anchor["file"]) + (f":{anchor['line']}" if anchor.get("line") else "")
+                else:
+                    location = "not found in the index"
+                lines.append(f"   - Code: `{ref.get('qualified_name') or anchor.get('symbol')}` at {location}")
     lines += ["", "When finished, call update_handoff_status with status \"done\" and a short note of what changed."]
     return "\n".join(lines)

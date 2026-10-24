@@ -1,0 +1,391 @@
+<!doctype html>
+<!--
+  Grok + Grok Bot skin — canonical markup for every UI piece.
+  Open this file directly to preview (it links the skin with relative paths).
+  In a component, link  assets/skins/grok/skin.css  and  assets/skins/grok/icons.js,
+  copy the block you need into a  .sk-grok  root, then call  SKIN_ICONS_GROK.hydrate(root)
+  to swap every <i data-ic="…"> for its inline SVG and every <span data-av="…"> for a bot avatar.
+  Theme: data-theme="dark" on the .sk-grok root (or an ancestor).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Grok skin snippets</title>
+<link rel="stylesheet" href="../../_shared/fonts/fonts.css" />
+<link rel="stylesheet" href="skin.css" />
+<script src="icons.js"></script>
+<style>
+  body { margin: 0; background: #e9e9e9; font-family: Inter, sans-serif; }
+  .demo { padding: 40px; display: flex; flex-direction: column; gap: 48px; }
+  .demo h2 { font: 600 15px/1 Inter, sans-serif; color: #444; margin: 0 0 12px; }
+  .frame { position: relative; overflow: hidden; border-radius: 8px; box-shadow: 0 0 0 1px rgba(0,0,0,.1); }
+</style>
+</head>
+<body>
+<div class="demo">
+
+<!-- =====================================================================
+     A. grok.com — logged-out window (header + empty-state home + footer)
+     Exact geometry at a 1920×1080 viewport. Variant: add data-theme="dark".
+     ===================================================================== -->
+<section><h2>A. grok.com home (logged out) — light</h2>
+<div class="frame sk-grok" style="width:1920px;height:1080px">
+  <div class="gk-page">
+    <!-- header: logo left; Imagine · settings · Sign in (outline) · Sign up (solid) right -->
+    <header class="gk-header">
+      <div class="gk-logo"><i data-ic="grok"></i></div>
+      <div class="gk-header-right">
+        <span class="gk-ghost"><i data-ic="imagine"></i>Imagine</span>
+        <span class="gk-iconbtn"><i data-ic="settings"></i></span>
+        <span class="gk-pill is-outline">Sign in</span>
+        <span class="gk-pill is-solid">Sign up</span>
+      </div>
+    </header>
+    <!-- home: 24px/600 heading at y≈278, composer 752×102 at y=343.
+         Smaller browser window: set --gk-home-top on .gk-page to ~25.7% of its height
+         (e.g. a 1152×648 window, shown full-frame at ×1.667 in video: style="--gk-home-top:167px"). -->
+    <div class="gk-home">
+      <h1 class="gk-heading">What should we explore?</h1>
+      <!-- COMPOSER — idle (empty). Placeholder rotates between:
+           "Type @ to search your apps" · "Type / to use slash commands" · "Drag and drop folders into chat" -->
+      <div class="gk-composer">
+        <div class="gk-input"><span class="gk-placeholder">Type @ to search your apps</span></div>
+        <div class="gk-row">
+          <span class="gk-iconbtn"><i data-ic="plus"></i></span>
+          <span class="gk-spacer"></span>
+          <!-- mode chip: closed. .is-hover = grey pill under the pointer; .is-open = grey pill, bold, chevron up.
+               After a pick, set .gk-chip-label to the mode ("Expert") and drop .is-open (no pill). -->
+          <span class="gk-chip"><span class="gk-chip-label">Fast</span><i data-ic="chevronDown" class="gk-chev-down"></i><i data-ic="chevronUp" class="gk-chev-up"></i></span>
+          <!-- send: 40px blue circle at 40% while empty -->
+          <span class="gk-send"><i data-ic="arrowUp" class="gk-ico-send"></i><i data-ic="stop" class="gk-ico-stop"></i></span>
+        </div>
+      </div>
+    </div>
+    <footer class="gk-footer">
+      <span>By messaging Grok, you agree to our <b>Terms</b> and <b>Privacy Policy</b>.</span>
+      <span><b>Your privacy choices</b></span>
+    </footer>
+  </div>
+</div></section>
+
+<!-- =====================================================================
+     B. Composer states + mode menu
+     ===================================================================== -->
+<section><h2>B. Composer — typing (.is-typing) · generating (.is-generating) · mode menu open (dark)</h2>
+<div style="display:flex;gap:24px;align-items:flex-start">
+  <div class="frame sk-grok" style="width:800px;height:170px"><div class="gk-page" style="padding:24px">
+    <!-- TYPING: text + caret, send turns solid blue. Two lines grow the card by 28px per line. -->
+    <div class="gk-composer is-typing">
+      <div class="gk-input"><span class="gk-placeholder">Type @ to search your apps</span>Compare Mars, Venus and Jupiter<span class="gk-caret"></span></div>
+      <div class="gk-row">
+        <span class="gk-iconbtn"><i data-ic="plus"></i></span><span class="gk-spacer"></span>
+        <span class="gk-chip"><span class="gk-chip-label">Fast</span><i data-ic="chevronDown" class="gk-chev-down"></i><i data-ic="chevronUp" class="gk-chev-up"></i></span>
+        <span class="gk-send"><i data-ic="arrowUp" class="gk-ico-send"></i><i data-ic="stop" class="gk-ico-stop"></i></span>
+      </div>
+    </div>
+  </div></div>
+  <div class="frame sk-grok" style="width:800px;height:170px"><div class="gk-page" style="padding:24px">
+    <!-- GENERATING: send becomes a stop square (extrapolated: no reference frame) -->
+    <div class="gk-composer is-generating">
+      <div class="gk-input"><span class="gk-placeholder">Type / to use slash commands</span></div>
+      <div class="gk-row">
+        <span class="gk-iconbtn"><i data-ic="plus"></i></span><span class="gk-spacer"></span>
+        <span class="gk-chip"><span class="gk-chip-label">Auto</span><i data-ic="chevronDown" class="gk-chev-down"></i><i data-ic="chevronUp" class="gk-chev-up"></i></span>
+        <span class="gk-send"><i data-ic="arrowUp" class="gk-ico-send"></i><i data-ic="stop" class="gk-ico-stop"></i></span>
+      </div>
+    </div>
+  </div></div>
+</div>
+<div class="frame sk-grok" data-theme="dark" style="width:800px;height:380px;margin-top:24px"><div class="gk-page" style="padding:24px">
+  <div class="gk-composer">
+    <div class="gk-input"><span class="gk-placeholder">Type / to use slash commands</span></div>
+    <div class="gk-row">
+      <span class="gk-iconbtn"><i data-ic="plus"></i></span><span class="gk-spacer"></span>
+      <span class="gk-chip is-open"><span class="gk-chip-label">Fast</span><i data-ic="chevronDown" class="gk-chev-down"></i><i data-ic="chevronUp" class="gk-chev-up"></i></span>
+      <span class="gk-send"><i data-ic="arrowUp" class="gk-ico-send"></i><i data-ic="stop" class="gk-ico-stop"></i></span>
+    </div>
+    <!-- MODE MENU: child of .gk-composer, .is-under-chip anchors it 6px under the chip, right-aligned.
+         Rows: Fast ✓ / Auto / Expert / Heavy. Logged-out upsell: "Premium — Unlock extended capabilities [Sign in]". -->
+    <div class="gk-menu is-under-chip">
+      <div class="gk-menu-item"><i data-ic="fast"></i><span class="gk-label">Fast</span><i data-ic="check" class="gk-check"></i></div>
+      <div class="gk-menu-item"><i data-ic="auto"></i><span class="gk-label">Auto</span></div>
+      <div class="gk-menu-item"><i data-ic="expert"></i><span class="gk-label">Expert</span></div>
+      <div class="gk-menu-item"><i data-ic="heavy"></i><span class="gk-label">Heavy</span></div>
+      <div class="gk-upsell">
+        <div class="gk-up-text"><div class="gk-up-title">Premium</div><div class="gk-up-sub">Unlock extended capabilities</div></div>
+        <span class="gk-pill is-solid is-sm">Sign in</span>
+      </div>
+    </div>
+  </div>
+</div></div>
+</section>
+
+<!-- =====================================================================
+     C. grok.com logged in — sidebar + conversation (EXTRAPOLATED, see DECISIONS.md)
+     ===================================================================== -->
+<section><h2>C. grok.com conversation (logged in, sidebar extrapolated) — light</h2>
+<div class="frame sk-grok" style="width:1920px;height:1080px">
+  <div class="gk-page">
+    <div class="gk-app">
+      <!-- SIDEBAR: 248px (--sidebar-width 15.5rem) -->
+      <aside class="gk-sidebar">
+        <div class="gk-side-top"><span class="gk-logo"><i data-ic="grok"></i></span><span class="gk-iconbtn is-sm"><i data-ic="sidebar"></i></span></div>
+        <nav class="gk-nav">
+          <div class="gk-nav-item is-search"><i data-ic="search"></i>Search<span class="gk-kbd">⌘K</span></div>
+          <div class="gk-nav-item"><i data-ic="newChat"></i>Chat</div>
+          <div class="gk-nav-item"><i data-ic="voice"></i>Voice</div>
+          <div class="gk-nav-item"><i data-ic="imagine"></i>Imagine</div>
+          <div class="gk-nav-item"><i data-ic="projects"></i>Projects</div>
+          <div class="gk-nav-item"><i data-ic="history"></i>History</div>
+        </nav>
+        <div class="gk-side-label">Today</div>
+        <div class="gk-hist-item is-active">Mars, Venus and Jupiter compared</div>
+        <div class="gk-hist-item">Raptor 3 vs Raptor 1 plumbing</div>
+        <div class="gk-side-foot"><span class="gk-avatar">C</span></div>
+      </aside>
+      <main class="gk-main">
+        <div class="gk-main-top"><span class="gk-pill is-outline"><i data-ic="share"></i>Share</span></div>
+        <div class="gk-thread">
+          <!-- USER MESSAGE: right-aligned grey bubble, max 633px, radius 24 -->
+          <div class="gk-msg-user"><div class="gk-bubble">Compare the planets Mars, Venus and Jupiter in a short table (diameter, moons, day length), then give one sentence of context.</div></div>
+          <!-- ASSISTANT MESSAGE: no bubble, markdown body -->
+          <div class="gk-msg-ai">
+            <!-- THINKING: while working use <span class="gk-shimmer">Thinking</span> (animate background-position 100%→-50%);
+                 when done: "Thought for 1s" + chevron -->
+            <div class="gk-thinking"><span>Thought for 1s</span><i data-ic="chevronRight"></i></div>
+            <p>Here's a quick side-by-side:</p>
+            <table class="gk-table">
+              <thead><tr><th>Planet</th><th>Diameter</th><th>Moons</th><th>Day length</th></tr></thead>
+              <tbody>
+                <tr><td>Mars</td><td class="num">6,779 km</td><td class="num">2</td><td>24 h 37 min</td></tr>
+                <tr><td>Venus</td><td class="num">12,104 km</td><td class="num">0</td><td>243 Earth days</td></tr>
+              </tbody>
+            </table>
+            <p>Inline <code>code</code> and blocks:</p>
+            <pre><code>grok --model grok-4.7 "hello"</code></pre>
+            <!-- ACTION ROW under a finished reply -->
+            <div class="gk-actions">
+              <span class="gk-iconbtn"><i data-ic="refresh"></i></span>
+              <span class="gk-iconbtn"><i data-ic="copy"></i></span>
+              <span class="gk-iconbtn"><i data-ic="share"></i></span>
+              <span class="gk-iconbtn"><i data-ic="thumbUp"></i></span>
+              <span class="gk-iconbtn"><i data-ic="thumbDown"></i></span>
+              <span class="gk-iconbtn"><i data-ic="more"></i></span>
+            </div>
+          </div>
+        </div>
+        <!-- DOCKED COMPOSER: same card, 24px above the bottom -->
+        <div class="gk-dock">
+          <div class="gk-composer">
+            <div class="gk-input"><span class="gk-placeholder">Type / to use slash commands</span></div>
+            <div class="gk-row">
+              <span class="gk-iconbtn"><i data-ic="plus"></i></span><span class="gk-spacer"></span>
+              <span class="gk-chip"><span class="gk-chip-label">Auto</span><i data-ic="chevronDown" class="gk-chev-down"></i><i data-ic="chevronUp" class="gk-chev-up"></i></span>
+              <span class="gk-send"><i data-ic="arrowUp" class="gk-ico-send"></i><i data-ic="stop" class="gk-ico-stop"></i></span>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div></section>
+
+<!-- =====================================================================
+     D. grok.com logged-out after sending: user bubble + "Continue your conversation" gate
+     ===================================================================== -->
+<section><h2>D. Logged-out gate card (what a logged-out send shows: no assistant reply)</h2>
+<div class="frame sk-grok" style="width:900px;height:330px"><div class="gk-page" style="padding:30px 87px">
+  <div class="gk-msg-user" style="margin-bottom:12px"><div class="gk-bubble">Compare the planets Mars, Venus and Jupiter in a short table.</div></div>
+  <div class="gk-gate">
+    <div>
+      <div class="gk-gate-title">Continue your conversation</div>
+      <div class="gk-gate-sub">Sign up to continue seamlessly with Grok's full power</div>
+      <span class="gk-pill is-solid">Sign up for free</span><!-- .is-hover under the pointer -->
+    </div>
+    <div class="gk-gate-list">
+      <div><i data-ic="imageSparkle"></i>Make stunning AI images &amp; videos</div>
+      <div><i data-ic="skills"></i>Use Skills &amp; Connectors</div>
+      <div><i data-ic="file"></i>Generate files</div>
+      <div><i data-ic="chat"></i>Chat history</div>
+    </div>
+  </div>
+</div></div></section>
+
+<!-- =====================================================================
+     E. Grok iOS (393×852 pt). Dark = App Store frame; light extrapolated.
+     Put it inside the device skin's phone frame.
+     ===================================================================== -->
+<section><h2>E. Grok iOS — dark</h2>
+<div class="frame sk-grok" data-theme="dark" style="width:393px;height:852px">
+  <div class="gi-screen">
+    <div class="gi-top">
+      <span class="gi-round"><i data-ic="menu"></i></span>
+      <div class="gi-seg"><span class="is-active">Ask</span><span>Imagine</span><span>Build</span></div>
+      <span class="gi-round"><i data-ic="compose"></i></span>
+    </div>
+    <div class="gi-thread">
+      <!-- user: OUTLINED pill on pure black -->
+      <div class="gi-user"><div>How does starship engine work</div></div>
+      <!-- assistant: plain white text, no bubble -->
+      <div class="gi-ai"><p>Starship's engine is the Raptor: liquid methane plus liquid oxygen, full-flow staged combustion.</p></div>
+      <!-- rich embed: rounded 1px card (X post). Fill with a REAL post: avatar <img>, name, handle · date,
+           media <img> and its real counts. The values below are the post shown in the App Store frame. -->
+      <div class="gi-post">
+        <span class="gi-post-av"></span>
+        <div class="gi-post-body">
+          <div class="gi-post-head"><b>David Senra</b><i data-ic="xVerified"></i><span>@davidsenra · 9/4/26</span></div>
+          <div class="gi-post-media"></div>
+          <div class="gi-post-stats"><span><i data-ic="xReply"></i>29</span><span><i data-ic="xRepost"></i>109</span><span><i data-ic="xLike"></i>1.2K</span><span><i data-ic="xViews"></i>1.1M</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="gi-composer">
+      <div class="gi-ph">Ask anything…</div>
+      <div class="gi-row">
+        <span class="gi-plus"><i data-ic="plus"></i></span>
+        <span class="gi-chip"><i data-ic="expert"></i>Expert<i data-ic="chevronDown"></i></span>
+        <span class="gi-speak"><i data-ic="waveform"></i>Speak</span>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- =====================================================================
+     F. Grok Bot desktop app — the Oct 6 "maya" frame (1585 px reference scale).
+     Full 16:9 video frame: a 1585×892 .gb-app shown at ×1.2114 (1920/1585); all three columns stay in frame.
+     Columns: list 350 · chat flex (≈705) · profile panel 530.
+     User bubbles take the CURRENT BOT'S colour: set --gb-bot on .gb-chat.
+     Bot colours: maya #f5b24c (bubble #b87829) · dex #ee4e5b (bubble #b22f34) · bobo #4a90f9 ·
+                  penny #57c0b0 · Dex #a083f5 · Sample support bot #9d7a5b · GTM Helper #cd3e85 (bubble #b33471)
+     Avatar shapes: cloud | hex | round | octa | drop | pill | house | leaf | tri | grok
+     Profile panel closed (two-column window): drop the .gb-panel and add .is-solo to .gb-chat.
+     ===================================================================== -->
+<section><h2>F. Grok Bot — list · chat · profile panel (light)</h2>
+<div class="frame sk-grok" style="width:1585px;height:892px">
+  <div class="gb-app">
+    <!-- LEFT LIST (scrolls behind the footer: .gb-list-fade + "More unreads") -->
+    <aside class="gb-list">
+      <div class="gb-list-tools"><span class="gb-tool"><i data-ic="search"></i></span><span class="gb-tool"><i data-ic="plus"></i></span></div>
+      <!-- primary bot: big blob + name + role tag (data-badge adds the orange star) -->
+      <div class="gb-primary"><span data-av="cloud" data-color="#4a90f9" data-size="76"></span><div class="gb-name">bobo</div><span class="gb-tag">life stabilizer</span></div>
+      <div class="gb-group">Grok Bot Sticker Team</div>
+      <!-- bot row: .is-selected / .is-hover; data-online adds the green dot; .gb-unread-dot for unread -->
+      <div class="gb-row is-selected">
+        <span data-av="hex" data-color="#f5b24c" data-size="42" data-online></span>
+        <div class="gb-row-text"><div class="gb-row-line1"><span class="gb-name">maya</span><span class="gb-tag">community</span></div><div class="gb-preview">Opening Google Forms on my computer now so you can take over.</div></div>
+      </div>
+      <div class="gb-row">
+        <span data-av="round" data-color="#57c0b0" data-size="42"></span>
+        <div class="gb-row-text"><div class="gb-row-line1"><span class="gb-name">penny</span><span class="gb-tag">sourcing</span></div><div class="gb-preview">What do you mainly want me finding for the team?</div></div>
+      </div>
+      <div class="gb-row">
+        <span data-av="octa" data-color="#ee4e5b" data-size="42"></span>
+        <div class="gb-row-text"><div class="gb-row-line1"><span class="gb-name">dex</span><span class="gb-tag">designer</span></div><div class="gb-preview" style="padding-right:16px">What should I focus on first?</div></div>
+        <span class="gb-unread-dot"></span>
+      </div>
+      <!-- collapsed groups show a count; an expanded group (.is-open) shows none and its rows follow -->
+      <div class="gb-fold"><span>OLD</span><span>3</span></div>
+      <div class="gb-fold"><span>MISC</span><span>3</span></div>
+      <div class="gb-fold is-open"><span>Unassigned</span></div>
+      <div class="gb-row">
+        <span data-av="drop" data-color="#a083f5" data-size="42"></span>
+        <div class="gb-row-text"><div class="gb-row-line1"><span class="gb-name">Dex</span><span class="gb-tag">designer</span></div><div class="gb-preview">What do you want me helping with today?</div></div>
+      </div>
+      <div class="gb-row">
+        <span data-av="tri" data-color="#9d7a5b" data-size="42"></span>
+        <div class="gb-row-text"><div class="gb-row-line1"><span class="gb-name">Sample support bot</span></div><div class="gb-preview">Want me to hand this to Elon for a final look?</div></div>
+      </div>
+      <!-- stock "Grok Bot": black ball with the orange star badge (draw it #ececec on a dark list) -->
+      <div class="gb-row">
+        <span data-av="grok" data-color="#000000" data-size="42" data-badge></span>
+        <div class="gb-row-text"><div class="gb-row-line1"><span class="gb-name">Grok Bot</span></div><div class="gb-preview">Sent 1 text file</div></div>
+      </div>
+      <!-- team bot row (published): building icon after the name -->
+      <div class="gb-row">
+        <span data-av="house" data-color="#cd3e85" data-size="42"></span>
+        <div class="gb-row-text"><div class="gb-row-line1"><span class="gb-name">GTM Helper</span><i data-ic="team" class="gb-team"></i></div><div class="gb-preview">What should we work on first?</div></div>
+      </div>
+      <div class="gb-list-fade"></div>
+      <span class="gb-more-unreads"><i data-ic="arrowDown"></i>More unreads</span>
+      <div class="gb-list-foot"><span class="gb-me">M</span><span class="gb-connect">Connect apps<span class="gb-applogos"><i data-ic="appDrive"></i><i data-ic="appGmail"></i><i data-ic="appGithub"></i></span></span></div>
+    </aside>
+
+    <!-- CHAT -->
+    <section class="gb-chat" style="--gb-bot:#b87829">
+      <!-- header pill: white + lifted in light, #1a1a1a in dark -->
+      <div class="gb-chat-head"><span class="gb-head-pill"><span data-av="hex" data-color="#f5b24c" data-size="22"></span>maya</span></div>
+      <!-- thread is bottom-anchored; add .is-scrolled for the top fade when content runs under the header -->
+      <div class="gb-thread is-scrolled" style="top:50px;justify-content:flex-end;overflow:hidden">
+        <!-- multiple-choice question card -->
+        <div class="gb-msg"><div class="gb-q"><div class="gb-q-opts">
+          <div class="gb-q-opt"><b>C</b>A specific role</div><div class="gb-q-opt"><b>D</b>Just exploring</div>
+        </div><div class="gb-q-own">Type your own answer</div></div></div>
+        <div class="gb-time">Today 1:29 PM</div>
+        <!-- relay label when a teammate bot forwards a message -->
+        <div class="gb-relay">Message from <span data-av="hex" data-color="#f5b24c" data-size="18"></span> maya</div>
+        <!-- dismissed question: bot bubble + chip -->
+        <div class="gb-msg"><div class="gb-bubble" style="display:flex;align-items:center">How do you want to set the sticker options?<span class="gb-dismissed">Dismissed</span></div></div>
+        <!-- USER bubble (bot colour) -->
+        <div class="gb-msg is-user"><div class="gb-bubble">Can you open up Google Forms on your computer so I can take control?</div></div>
+        <!-- BOT bubbles stack with 6px gaps; hover actions sit to the right of the hovered bubble -->
+        <div class="gb-msg">
+          <div class="gb-bubble">Opening Google Forms on my computer now so you can take over.<span class="gb-hover-actions"><i data-ic="emoji"></i><i data-ic="reply"></i><i data-ic="more"></i></span></div>
+        </div>
+        <!-- STATUS row: avatar + shimmering verb ("Reading file", "Running commands") -->
+        <div class="gb-status"><span data-av="hex" data-color="#f5b24c" data-size="32"></span><span class="gb-shimmer">Reading file</span></div>
+      </div>
+      <!-- COMPOSER: "+" in a faint circle · "Message <bot>" · mic (near-bare glyph; .is-mic) · black voice circle (white in dark).
+           In dark both "+" and mic are bare glyphs on the #2f2f2f pill. Once text is typed, the voice circle shows arrowUp. -->
+      <div class="gb-composer">
+        <span class="gb-circle"><i data-ic="plus"></i></span>
+        <span class="gb-ph">Message maya</span>
+        <span class="gb-circle is-mic"><i data-ic="mic"></i></span>
+        <span class="gb-voice"><i data-ic="waveform"></i></span>
+      </div>
+    </section>
+
+    <!-- RIGHT PROFILE PANEL: 78px avatar, name, role, Details | Library | Computer (selected = grey pill) -->
+    <aside class="gb-panel">
+      <span data-av="hex" data-color="#f5b24c" data-size="78"></span>
+      <div class="gb-p-name">maya</div>
+      <div class="gb-p-role">community</div>
+      <div class="gb-tabs"><span class="is-active">Details</span><span>Library</span><span>Computer</span></div>
+      <div class="gb-p-section">
+        <div class="gb-p-label">Routines</div>
+        <div class="gb-p-card">Ask in chat to set a routine</div>
+        <div class="gb-p-label">Meetings <span class="gb-dev">DEV</span></div>
+        <div class="gb-p-card">Give your Bot links to join Google Meet or Zoom</div>
+      </div>
+      <!-- Computer tab content instead of the section above:
+      <div class="gb-p-screen"><i data-ic="monitor"></i></div>
+      <div class="gb-p-caption">maya's screen</div> -->
+    </aside>
+  </div>
+</div></section>
+
+<!-- =====================================================================
+     G. Grok Bot team-bot setup (dark): setup rows, published card, recording bar
+     ===================================================================== -->
+<section><h2>G. Grok Bot — setup rows · published card · "watching and learning" bar (dark)</h2>
+<div class="frame sk-grok" data-theme="dark" style="width:900px;height:600px"><div class="gb-app" style="width:900px;height:600px;display:block;padding:24px">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div class="gb-setup"><div class="gb-setup-t"><div class="gb-setup-title">Plugins</div><div class="gb-setup-sub"><i data-ic="cube"></i>Salesforce, Gong, Granola, and 2 more</div></div><i data-ic="chevronRight"></i></div>
+    <div class="gb-setup"><div class="gb-setup-t"><div class="gb-setup-title">Secrets</div><div class="gb-setup-sub"><i data-ic="key"></i>None added</div></div><i data-ic="chevronRight"></i></div>
+    <div class="gb-setup"><div class="gb-setup-t"><div class="gb-setup-title">Skills</div><div class="gb-setup-sub"><i data-ic="cube"></i>ChatGTM Core Operating Manual and 4 more</div></div><i data-ic="chevronRight"></i></div>
+    <div class="gb-setup"><div class="gb-setup-t"><div class="gb-setup-title">Files</div><div class="gb-setup-sub"><i data-ic="file"></i>None added</div></div><i data-ic="chevronRight"></i></div>
+    <!-- published card: big blob bleeding off the bottom-left, Copy link (solid) + View details (ghost) -->
+    <div class="gb-pub">
+      <span class="gb-pub-blob" data-av="house" data-color="#cd3e85" data-size="140"></span>
+      <div class="gb-pub-title">GTM Helper is published</div>
+      <div class="gb-pub-sub">Teammates can find this Bot in their Bots list, or share the link with them</div>
+      <div class="gb-pub-btns"><span class="gb-btn is-solid"><i data-ic="link"></i>Copy link</span><span class="gb-btn is-ghost">View details</span></div>
+    </div>
+  </div>
+  <!-- recording bar: sits over the user's screen while a bot learns a task -->
+  <div class="gb-rec" style="margin-top:24px"><span class="gb-rec-label">maya is watching and learning</span><span class="gb-rec-time"><i data-ic="stopRec"></i>1:34</span><i data-ic="close"></i></div>
+</div></div></section>
+
+</div>
+<script>SKIN_ICONS_GROK.hydrate(document);</script>
+</body>
+</html>

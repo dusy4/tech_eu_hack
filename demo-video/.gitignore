@@ -3,3 +3,6 @@ out/
 .remotion/
 public/captures/raw/
 public/captures/session.webm
+# transitions.dev-derived motion kit inside the native components: licensed for use in its source project only,
+# never commit or publish it here (see src/native/NOTICE.md); scripts/render-native.mjs copies it in locally
+src/native/*/assets/kit/

@@ -1,0 +1,385 @@
+<!doctype html>
+<!--
+  OpenAI Codex skin: canonical markup for every UI piece.
+  Open this file directly to preview it (paths below are relative to library/_skins/codex/).
+  In a component use:
+    <link rel="stylesheet" href="assets/fonts/fonts.css">
+    <link rel="stylesheet" href="assets/skins/codex/skin.css">
+    <script src="assets/skins/codex/icons.js"></script>
+  then call  window.SKIN_ICONS_CODEX.mount(rootEl)  after building the DOM (fills every [data-cx-icon]).
+  Theme: data-theme="light|dark" on the .sk-codex root (or on any ancestor).
+  Sizes are logical macOS points. Scale the window from a wrapper: <div style="transform:scale(1.2);transform-origin:0 0">.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Codex skin snippets</title>
+<link rel="stylesheet" href="../../_shared/fonts/fonts.css">
+<link rel="stylesheet" href="skin.css">
+<script src="icons.js"></script>
+<style>
+  body { margin: 0; background: #e9e9e7; font-family: Inter, sans-serif; }
+  .sheet { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 40px; }
+  .sheet > section { display: flex; flex-direction: column; gap: 28px; }
+  .sheet > section[data-theme="dark"] { background: #0e0e0f; margin: -40px -40px -40px 0; padding: 40px; }
+  h2 { font: 600 13px Inter, sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #888; margin: 8px 0 -16px; }
+  .box { position: relative; }
+</style>
+</head>
+<body>
+<div class="sheet">
+<section data-theme="light" id="light"></section>
+<section data-theme="dark" id="dark"></section>
+</div>
+
+<template id="pieces">
+
+<!-- ====================================================================
+     1. WINDOW CHROME (ChatGPT desktop app, Codex section)
+     .cx-window > .cx-titlebar + .cx-body(.cx-rail + .cx-panel)
+     Title bar variants:
+       a) home: traffic lights, back, forward (dimmed = .is-off), sidebar toggle; new-tab icon far right
+       b) thread / PR: + vertical .cx-tb-sep, a main tab (.cx-tab, chat-bubble or PR icon, no fill, × at right),
+          and right-panel tabs (.cx-tb-side) where the active tab is a white pill (.cx-tab.is-active)
+     Set --cx-lead-w to rail + sidebar width so the main tab lines up with the main column.
+     ==================================================================== -->
+<h2>Window + rail + empty home</h2>
+<div class="sk-codex cx-window" style="width:820px;height:470px">
+  <div class="cx-titlebar">
+    <div class="cx-tb-lead">
+      <div class="cx-traffic"><i></i><i></i><i></i></div>
+      <span class="cx-tb-btn"><span class="cx-i" data-cx-icon="arrow-left"></span></span>
+      <span class="cx-tb-btn is-off"><span class="cx-i" data-cx-icon="arrow-right"></span></span>
+      <span class="cx-tb-btn"><span class="cx-i" data-cx-icon="sidebar"></span></span>
+    </div>
+    <div class="cx-tb-right"><span class="cx-tb-btn"><span class="cx-i" data-cx-icon="new-tab"></span></span></div>
+  </div>
+  <div class="cx-body">
+    <!-- 2. ICON RAIL: home (filled when active, blue dot = new activity), cards, history, plugins, more | code review, ChatGPT, scheduled; app avatar at the bottom -->
+    <div class="cx-rail">
+      <span class="cx-rail-btn is-active"><span class="cx-i" data-cx-icon="home-fill"></span><i class="cx-rail-dot"></i></span>
+      <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="cards"></span></span>
+      <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="clock"></span></span>
+      <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="plugins"></span></span>
+      <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="more"></span></span>
+      <i class="cx-rail-div"></i>
+      <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="pr"></span></span>
+      <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="openai"></span></span>
+      <span class="cx-rail-btn"><span class="cx-i" data-cx-icon="calendar"></span></span>
+      <div class="cx-rail-foot"><span class="cx-avatar-app"><span class="cx-i" data-cx-icon="openai"></span></span></div>
+    </div>
+    <!-- inset panel: rounded 12pt card sitting 5pt inside the window's right/bottom edges -->
+    <div class="cx-panel">
+      <div class="cx-main">
+        <!-- 4. EMPTY-STATE HOME: outlined Codex mark + "What should we build?" -->
+        <div class="cx-home">
+          <div class="cx-home-logo" data-cx-icon="codex"></div>
+          <div class="cx-home-title">What should we build?</div>
+        </div>
+        <div class="cx-dock" style="--cx-composer-max:600px">
+          <div class="cx-cwrap">
+            <!-- context tray: tucks under the composer's top edge -->
+            <div class="cx-tray">
+              <span class="cx-tray-chip is-dim"><span class="cx-i" data-cx-icon="folder"></span>Choose project</span>
+              <span class="cx-tray-chip"><span class="cx-i" data-cx-icon="laptop"></span>This computer</span>
+            </div>
+            <div class="cx-composer">
+              <div class="cx-input"><span class="cx-caret"></span><span class="cx-placeholder">Do anything</span></div>
+              <div class="cx-cfoot">
+                <span class="cx-cbtn"><span class="cx-i" data-cx-icon="plus"></span></span>
+                <span class="cx-perm"><span class="cx-i" data-cx-icon="gear"></span>Custom</span>
+                <span class="cx-grow"></span>
+                <span class="cx-model"><span class="cx-i cx-bolt" data-cx-icon="bolt"></span>GPT-6 Astra <span class="cx-effort">Medium</span><span class="cx-i cx-chev" data-cx-icon="chevron-down"></span></span>
+                <span class="cx-cbtn"><span class="cx-i" data-cx-icon="mic"></span></span>
+                <span class="cx-send" data-state="empty"><span class="cx-i cx-i-send" data-cx-icon="send"></span><span class="cx-i cx-i-stop" data-cx-icon="stop"></span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================================
+     5. COMPOSER STATES   .cx-send[data-state] = empty (pale blue ↑) | ready (blue ↑) | working (blue ■ stop)
+     Typing: put text in a span before .cx-caret and drop the .cx-placeholder.
+     Mention chip: <span class="cx-mention"><img src="…"> Plugin Creator</span>
+     ==================================================================== -->
+<h2>Composer: typing / generating / compact</h2>
+<div class="sk-codex" style="width:640px">
+  <div class="cx-cwrap">
+    <div class="cx-composer">
+      <div class="cx-input"><span>Add a dark mode toggle to settings and remember each user's choice</span><span class="cx-caret"></span></div>
+      <div class="cx-cfoot">
+        <span class="cx-cbtn"><span class="cx-i" data-cx-icon="plus"></span></span>
+        <span class="cx-perm"><span class="cx-i" data-cx-icon="gear"></span>Custom</span>
+        <span class="cx-grow"></span>
+        <span class="cx-model"><span class="cx-i cx-bolt" data-cx-icon="bolt"></span>GPT-6.1 Sol <span class="cx-effort">Medium</span><span class="cx-i cx-chev" data-cx-icon="chevron-down"></span></span>
+        <span class="cx-cbtn"><span class="cx-i" data-cx-icon="mic"></span></span>
+        <span class="cx-send" data-state="ready"><span class="cx-i cx-i-send" data-cx-icon="send"></span><span class="cx-i cx-i-stop" data-cx-icon="stop"></span></span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="sk-codex" style="width:640px">
+  <div class="cx-composer">
+    <div class="cx-input"><span class="cx-placeholder">Do anything</span></div>
+    <div class="cx-cfoot">
+      <span class="cx-cbtn"><span class="cx-i" data-cx-icon="plus"></span></span>
+      <span class="cx-perm"><span class="cx-i" data-cx-icon="gear"></span>Custom</span>
+      <span class="cx-grow"></span>
+      <span class="cx-model"><span class="cx-i cx-bolt" data-cx-icon="bolt"></span>GPT-6.1 Sol <span class="cx-effort">Medium</span><span class="cx-i cx-chev" data-cx-icon="chevron-down"></span></span>
+      <span class="cx-cbtn"><span class="cx-i" data-cx-icon="mic"></span></span>
+      <span class="cx-send" data-state="working"><span class="cx-i cx-i-send" data-cx-icon="send"></span><span class="cx-i cx-i-stop" data-cx-icon="stop"></span></span>
+    </div>
+  </div>
+</div>
+<!-- compact single-row composer (narrow right panel / Code Review thread) -->
+<div class="sk-codex" style="width:540px">
+  <div class="cx-composer is-compact">
+    <span class="cx-cbtn"><span class="cx-i" data-cx-icon="plus"></span></span>
+    <div class="cx-input"><span class="cx-placeholder">Do anything</span></div>
+    <span class="cx-model"><span class="cx-i cx-bolt" data-cx-icon="bolt"></span>GPT-6.1 Sol <span class="cx-effort">Medium</span><span class="cx-i cx-chev" data-cx-icon="chevron-down"></span></span>
+    <span class="cx-cbtn is-dim"><span class="cx-i" data-cx-icon="gear"></span></span>
+    <span class="cx-cbtn"><span class="cx-i" data-cx-icon="mic"></span></span>
+    <span class="cx-send" data-state="empty"><span class="cx-i cx-i-send" data-cx-icon="send"></span></span>
+  </div>
+</div>
+
+<!-- ====================================================================
+     6. "WORK IN" MENU (official Sep 29 2026 frame): opens above the tray, its left edge on the clicked chip;
+        the clicked chip gets .is-open. Open it from its origin (transform-origin is bottom-left):
+        fromTo(menu, {opacity:0, scale:.96, y:6}, {opacity:1, scale:1, y:0, duration:.24, ease:"expo.out"}).
+        Hovered row = .cx-menu-item.is-hover. Pointer: SKIN_ICONS_CODEX.pointer (see README).
+     ==================================================================== -->
+<h2>Work in menu (tray chip open)</h2>
+<div class="sk-codex box" style="width:640px;height:250px">
+  <div class="cx-menu" style="left:150px;top:0;width:330px">
+    <div class="cx-menu-label">Work in</div>
+    <div class="cx-menu-item is-checked"><span class="cx-i" data-cx-icon="laptop"></span>This computer<span class="cx-i cx-check" data-cx-icon="check"></span></div>
+    <div class="cx-menu-item is-hover"><span class="cx-i" data-cx-icon="cloud"></span>Cloud<span class="cx-i cx-check" data-cx-icon="check"></span></div>
+    <div class="cx-menu-item"><span class="cx-i" data-cx-icon="globe"></span>Remote<span class="cx-i cx-check" data-cx-icon="check"></span></div>
+  </div>
+  <div class="cx-tray" style="position:absolute;left:0;right:0;top:172px;margin:0 15px">
+    <span class="cx-tray-chip is-dim"><span class="cx-i" data-cx-icon="folder"></span>Choose project</span>
+    <span class="cx-tray-chip is-open"><span class="cx-i" data-cx-icon="laptop"></span>This computer</span>
+  </div>
+</div>
+<!-- tray after choosing Cloud [EXTRAPOLATED order + cube glyph; UI-NOTES: tray switches to "Cloud" + "Choose environment"] -->
+<div class="sk-codex" style="width:640px">
+  <div class="cx-tray" style="margin:0 15px;padding-bottom:7px;border-radius:16px">
+    <span class="cx-tray-chip is-dim"><span class="cx-i" data-cx-icon="box"></span>Choose environment</span>
+    <span class="cx-tray-chip"><span class="cx-i" data-cx-icon="cloud"></span>Cloud</span>
+  </div>
+</div>
+
+<!-- ====================================================================
+     7. MODEL PICKER  closed = .cx-model chip ("⚡ GPT-6 Astra" ink + effort grey + ⌄)
+        open = .cx-model.is-open + .cx-menu anchored above it, right-aligned.  [EXTRAPOLATED: no official open frame]
+     ==================================================================== -->
+<h2>Model picker open (extrapolated)</h2>
+<div class="sk-codex box" style="width:640px;height:470px">
+  <div class="cx-menu" style="right:40px;bottom:52px;width:290px">
+    <div class="cx-menu-label">Model</div>
+    <div class="cx-menu-item is-tall is-checked"><div class="cx-col"><span>GPT-6 Astra</span><span class="cx-sub">Most capable for hard, long tasks</span></div><span class="cx-i cx-check" data-cx-icon="check"></span></div>
+    <div class="cx-menu-item is-tall"><div class="cx-col"><span>GPT-6.1 Sol</span><span class="cx-sub">Near-Astra coding, faster</span></div><span class="cx-i cx-check" data-cx-icon="check"></span></div>
+    <div class="cx-menu-sep"></div>
+    <div class="cx-menu-label">Reasoning</div>
+    <div class="cx-menu-item">Low<span class="cx-i cx-check" data-cx-icon="check"></span></div>
+    <div class="cx-menu-item is-checked is-hover">Medium<span class="cx-i cx-check" data-cx-icon="check"></span></div>
+    <div class="cx-menu-item">High<span class="cx-i cx-check" data-cx-icon="check"></span></div>
+    <div class="cx-menu-item">Extra High<span class="cx-i cx-check" data-cx-icon="check"></span></div>
+    <div class="cx-menu-sep"></div>
+    <div class="cx-menu-item"><span class="cx-i" data-cx-icon="bolt"></span>Ultrafast<span class="cx-toggle is-on"></span></div>
+  </div>
+  <div style="position:absolute;right:40px;bottom:0;display:flex;align-items:center">
+    <span class="cx-model is-open"><span class="cx-i cx-bolt" data-cx-icon="bolt"></span>GPT-6 Astra <span class="cx-effort">Medium</span><span class="cx-i cx-chev" data-cx-icon="chevron-down"></span></span>
+  </div>
+</div>
+
+<!-- ====================================================================
+     3. SIDEBAR  (Codex ⌄ / search / magenta Activity bell / New chat / Priority list)
+     Task status: <i class="cx-unread"></i> (magenta) | spinner (running) | empty
+     ==================================================================== -->
+<h2>Sidebar</h2>
+<div class="sk-codex" style="display:flex;height:420px">
+  <div class="cx-sidebar">
+    <div class="cx-sb-head">
+      <span class="cx-sb-title">Codex<span class="cx-i" data-cx-icon="chevron-down"></span></span>
+      <span class="cx-sb-actions">
+        <span class="cx-ib"><span class="cx-i" data-cx-icon="search"></span></span>
+        <span class="cx-ib cx-bell"><span class="cx-i" data-cx-icon="bell"></span></span>
+      </span>
+    </div>
+    <div class="cx-sb-item"><span class="cx-i" data-cx-icon="compose"></span>New chat</div>
+    <div class="cx-sb-div"></div>
+    <div class="cx-sb-label">Priority</div>
+    <div class="cx-task is-selected">
+      <div class="cx-task-text"><div class="cx-task-title">Fix checkout rounding</div><div class="cx-task-meta"><span class="cx-i" data-cx-icon="folder"></span>checkout-web</div></div>
+      <div class="cx-task-status"><span class="cx-spin" data-cx-icon="spinner"></span></div>
+    </div>
+    <div class="cx-task">
+      <div class="cx-task-text"><div class="cx-task-title">Passkey sign-in</div><div class="cx-task-meta"><span class="cx-i" data-cx-icon="folder"></span>checkout-web</div></div>
+      <div class="cx-task-status"><i class="cx-unread"></i></div>
+    </div>
+  </div>
+  <!-- Code Review sidebar variant -->
+  <div class="cx-sidebar">
+    <div class="cx-sb-head"><span class="cx-sb-title" style="font-size:17px">Code Review</span><span class="cx-sb-actions"><span class="cx-ib"><span class="cx-i" data-cx-icon="more"></span></span></span></div>
+    <div class="cx-sb-search"><span class="cx-i" data-cx-icon="search"></span>Search or paste a PR link</div>
+    <div class="cx-sb-label">Needs my review</div>
+    <div class="cx-pr-row is-selected"><div class="t">Add order export to CSV</div><div class="m"><i class="cx-av"></i>Dana Ruiz · 2m</div></div>
+  </div>
+</div>
+
+<!-- ====================================================================
+     8–11. THREAD: user bubble (right, light blue) · "Worked for …" separator · unbubbled reply · action row ·
+     "Edited N files" card.  Live state: .cx-worked > span.cx-shimmer "Working for 1m 17s" + .cx-status-sub
+     ==================================================================== -->
+<h2>Thread</h2>
+<div class="sk-codex" style="width:620px;background:var(--cx-panel);padding:20px 26px;border-radius:12px">
+  <div class="cx-user"><div class="cx-bubble">Totals are off by a cent on some carts. Find the cause, fix it, and run the tests.</div></div>
+  <div class="cx-worked"><span class="cx-shimmer">Working for 1m 17s</span></div>
+  <div class="cx-status-sub">Running npm test</div>
+  <div class="cx-worked">Worked for 1m 19s<span class="cx-i" data-cx-icon="chevron-right"></span></div>
+  <div class="cx-ai">
+    <p>Each line item was rounded before it was added to the subtotal. I moved rounding into <code>computeTotal()</code> and added a regression test.</p>
+    <p><span class="cx-i" data-cx-icon="github" style="width:14px;height:14px;color:var(--cx-link);vertical-align:-2px"></span> <a>Posted the reply</a> with the test results.</p>
+  </div>
+  <div class="cx-files">
+    <div class="cx-files-head">
+      <span class="cx-files-tile"><span class="cx-i" data-cx-icon="diff"></span></span>
+      <div><div class="cx-files-title">Edited 2 files</div><div class="cx-files-counts"><span class="cx-plus">+7</span> <span class="cx-minus">-2</span></div></div>
+      <span class="cx-files-undo">Undo<span class="cx-i" data-cx-icon="undo"></span></span>
+      <span class="cx-btn">Review</span>
+    </div>
+    <div class="cx-files-row"><span class="dir">src/cart/</span>total.ts<span class="cnt"><span class="cx-plus">+2</span> <span class="cx-minus">-2</span></span></div>
+    <div class="cx-files-row"><span class="dir">src/cart/</span>total.test.ts<span class="cnt"><span class="cx-plus">+5</span> <span class="cx-minus">-0</span></span></div>
+  </div>
+  <div class="cx-actions"><span class="cx-ib"><span class="cx-i" data-cx-icon="copy"></span></span><span class="cx-ib"><span class="cx-i" data-cx-icon="thumb-up"></span></span><span class="cx-ib"><span class="cx-i" data-cx-icon="thumb-down"></span></span><span class="cx-ib"><span class="cx-i" data-cx-icon="fork"></span></span></div>
+</div>
+
+<!-- ====================================================================
+     12. APPROVAL REQUEST (desktop) [EXTRAPOLATED: replaces the composer while Codex waits]
+     ==================================================================== -->
+<h2>Approval request (extrapolated)</h2>
+<div class="sk-codex" style="width:620px">
+  <div class="cx-approval">
+    <div class="cx-approval-q">Allow Codex to run this command?</div>
+    <div class="cx-approval-cmd">npm install --save-dev vitest</div>
+    <div class="cx-approval-opts">
+      <div class="cx-approval-opt is-hover"><span class="k">1</span>Yes</div>
+      <div class="cx-approval-opt"><span class="k">2</span>Yes, and don't ask again for <code style="font-family:var(--cx-mono);font-size:12.5px">npm install</code></div>
+      <div class="cx-approval-opt"><span class="k">3</span>No, and tell Codex what to do differently</div>
+    </div>
+    <div class="cx-approval-foot"><span class="cx-btn">Skip</span><span class="cx-btn is-blue">Submit</span></div>
+  </div>
+</div>
+
+<!-- ====================================================================
+     13. RIGHT PANEL / DIFF  (.cx-rpanel: scope pill + icon pill group, per-file rows, "N unmodified lines", tinted lines)
+     ==================================================================== -->
+<h2>Diff panel</h2>
+<div class="sk-codex" style="display:flex;height:300px;border-radius:12px;overflow:hidden">
+  <div class="cx-rpanel" style="--cx-rp-w:560px;border-left:0">
+    <div class="cx-rp-head">
+      <span class="cx-pill">Uncommitted changes <span class="cx-plus">+32</span> <span class="cx-minus">-3</span><span class="cx-i" data-cx-icon="chevron-down"></span></span>
+      <span class="cx-pill-group"><span class="cx-ib"><span class="cx-i" data-cx-icon="more"></span></span><span class="cx-ib"><span class="cx-i" data-cx-icon="list-filter"></span></span><span class="cx-ib"><span class="cx-i" data-cx-icon="copy"></span></span></span>
+    </div>
+    <div class="cx-dfile"><span class="cx-badge ts">TS</span><span><span class="dir">src/cart/</span>total.ts</span><span class="cnt"><span class="cx-plus">+27</span> <span class="cx-minus">-3</span></span><span class="cx-ib"><span class="cx-i" data-cx-icon="more"></span></span></div>
+    <div class="cx-code">
+      <div class="cx-unmod">11 unmodified lines</div>
+      <div class="cx-ln"><span class="n">12</span><span class="c"><span class="tk-k">export</span> <span class="tk-k">function</span> <span class="tk-f">roundCents</span>(<span class="tk-p">value</span>: <span class="tk-p">number</span>) {</span></div>
+      <!-- changed rows: the gutter keeps a paler wash and the NUMBER takes the colour; the code cell gets the full tint -->
+      <div class="cx-ln del"><span class="n">13</span><span class="c">  <span class="tk-k">return</span> <span class="tk-p">Math</span>.<span class="tk-f">round</span>(<span class="tk-p">value</span> * <span class="tk-n">100</span>) / <span class="tk-n">100</span>;</span></div>
+      <div class="cx-ln add"><span class="n">13</span><span class="c">  <span class="tk-k">return</span> <span class="tk-p">Math</span>.<span class="tk-f">round</span>((<span class="tk-p">value</span> + <span class="tk-p">Number</span>.<span class="tk-p">EPSILON</span>) * <span class="tk-n">100</span>) / <span class="tk-n">100</span>;</span></div>
+      <div class="cx-ln"><span class="n">14</span><span class="c">}</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================================
+     14. CODE REVIEW pieces: Summary|Changes segmented control, Open pill, PR title, black "Submit review ⌄", activity row
+     ==================================================================== -->
+<h2>Code Review pieces</h2>
+<div class="sk-codex" style="display:flex;flex-direction:column;gap:14px;background:var(--cx-panel);padding:18px;border-radius:12px">
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="cx-seg"><span class="is-on">Summary</span><span>Changes <span class="cx-plus">+107</span> <span class="cx-minus">-1</span></span></span>
+    <span class="cx-grow"></span>
+    <span class="cx-btn">Review with Codex</span>
+    <span class="cx-btn is-dark">Submit review<span class="cx-i" data-cx-icon="chevron-down"></span></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px"><span class="cx-pr-open"><span class="cx-i" data-cx-icon="pr"></span>Open</span><span style="color:var(--cx-ink-3);font-size:14px">checkout-web #212</span></div>
+  <div class="cx-pr-title">Add order export to CSV</div>
+  <div class="cx-activity-row"><span class="cx-i" data-cx-icon="commit"></span>Add CSV writer and export button<span class="meta">3bbb4a6 · 11m</span></div>
+</div>
+
+<!-- ====================================================================
+     15. CLI (Codex TUI). .cx-term window; lines are .cx-tl rows (monospace, pre-wrap, 22pt side padding).
+     Bullets "•" sit at col 0, header text at col 2. User prompts are a full-width band (.cx-t-band).
+     Tool calls: "• Explored / Edited / Ran" + "└" tree rows. Final answer after the "─ Worked for …" rule.
+     Bottom: working status (shimmer), composer band (.cx-t-composer), status line (yellow) + hints.
+     ==================================================================== -->
+<h2>CLI</h2>
+<div class="sk-codex cx-term" style="width:640px;height:auto">
+  <div class="cx-term-bar"><div class="cx-traffic"><i></i><i></i><i></i></div>checkout-web — codex</div>
+  <div class="cx-term-body" style="--cx-t-size:12.5px">
+    <div class="cx-tl">  <span class="cx-t-strong">&gt;_</span> <span class="cx-t-b">OpenAI Codex</span> <span class="cx-t-dim">(v0.159.0-alpha.13)</span></div>
+    <div class="cx-tl">     <span class="cx-t-dim">~/code/checkout-web</span></div>
+    <div class="cx-t-gap"></div>
+    <div class="cx-tl">  <span class="cx-t-blue">One prompt to begin the journey.</span></div>
+    <div class="cx-t-gap"></div>
+    <div class="cx-tl cx-t-band"><span class="cx-t-b">›</span> Find the rounding bug and run the tests.</div>
+    <div class="cx-t-gap"></div>
+    <div class="cx-tl"><span class="cx-t-bullet">•</span> <span class="cx-t-b">Explored</span></div>
+    <div class="cx-tl">  <span class="cx-t-dim">└</span> <span class="cx-t-cyan">Read</span> total.ts, total.test.ts</div>
+    <div class="cx-tl"><span class="cx-t-green">•</span> <span class="cx-t-b">Ran</span> npm test -- cart</div>
+    <!-- diff rows: the class goes on the .cx-tl row so the tint runs the full terminal width -->
+    <div class="cx-tl cx-t-del">    42 -    subtotal += roundCents(item.price * item.qty);</div>
+    <div class="cx-tl cx-t-add">    42 +    subtotal += item.price * item.qty;</div>
+    <div class="cx-tl cx-t-rule">─ Worked for 1m 19s</div>
+    <div class="cx-tl is-item"><span class="cx-t-bullet">•</span> Rounding now happens once in <span class="cx-t-cyan">computeTotal()</span>. Tests pass.</div>
+    <div class="cx-t-gap"></div>
+    <!-- approval prompt -->
+    <div class="cx-t-approval">
+      <div class="cx-tl">Would you like to run the following command?</div>
+      <div class="cx-tl"><span class="cx-t-dim">$</span> npm install --save-dev vitest</div>
+      <div class="cx-tl"><span class="cx-t-blue">› 1. Yes, proceed</span> <span class="cx-t-dim">(y)</span></div>
+      <div class="cx-tl">  2. Yes, and don't ask again for this command <span class="cx-t-dim">(a)</span></div>
+      <div class="cx-tl">  3. No, and tell Codex what to do differently <span class="cx-t-dim">(esc)</span></div>
+    </div>
+    <div class="cx-t-gap"></div>
+    <!-- /status usage bars [EXTRAPOLATED layout] -->
+    <div class="cx-tl">  <span class="cx-t-dim">5h limit:    </span>[<span class="cx-t-green">████████</span><span class="cx-t-dim">░░░░░░░░░░░░</span>] 38% used <span class="cx-t-dim">(resets 16:40)</span></div>
+    <div class="cx-tl">  <span class="cx-t-dim">Weekly limit:</span>[<span class="cx-t-green">███</span><span class="cx-t-dim">░░░░░░░░░░░░░░░░░</span>] 14% used</div>
+    <div class="cx-t-gap"></div>
+    <!-- Agent command center row (selected = periwinkle bar) -->
+    <div class="cx-tl"><span class="cx-t-tab-on">All 11</span>  <span class="cx-t-dim">Needs you 0   Working 0   Ready 1</span></div>
+    <div class="cx-tl cx-t-sel">› ○ what are the impacts of this PR?      Inactive   5m ago</div>
+    <div class="cx-tl">  ○ <span class="cx-t-yellow">Untitled task</span>                          Ready      8s ago</div>
+    <div class="cx-tl cx-t-status"><span class="cx-t-bullet">•</span> <span class="cx-t-shimmer">Working</span> <span class="cx-t-dim">(12s • esc to interrupt)</span></div>
+    <div class="cx-t-composer"><div class="cx-tl"><span><span class="cx-t-b">›</span> <span class="cx-t-cursor"></span><span class="cx-t-ph">Ask Codex to do anything</span></span></div></div>
+    <div class="cx-t-foot">
+      <div class="cx-tl">  <span class="cx-t-yellow">gpt-6-Astra low ultrafast · ~/code/checkout-web</span></div>
+      <div class="cx-tl">  <span class="cx-t-dim">← for agents · <span class="cx-t-b">?</span> for shortcuts</span></div>
+    </div>
+    <!-- voice mode row (inside .cx-t-composer, above the input row):
+         <div class="cx-tl"><span>voice <i class="cx-t-dot"></i><span class="cx-t-strong">listening</span></span><span><span class="cx-t-b">ctrl+x</span> <span class="cx-t-dim">mute</span>    <span class="cx-t-dim">/voice stop</span></span></div> -->
+  </div>
+</div>
+
+</template>
+
+<script>
+  // Render every piece once per theme so both can be checked side by side.
+  var tpl = document.getElementById("pieces").innerHTML;
+  ["light", "dark"].forEach(function (t) {
+    var host = document.getElementById(t);
+    host.innerHTML = tpl;
+    host.querySelectorAll(".sk-codex").forEach(function (el) { el.setAttribute("data-theme", t); });
+    window.SKIN_ICONS_CODEX.mount(host);
+  });
+</script>
+</body>
+</html>

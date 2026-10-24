@@ -1,0 +1,410 @@
+<!doctype html>
+<!--
+  Claude Code skin: canonical markup for every UI piece.
+  Open this file in a browser (served next to assets/, or from a component's assets/skins/claude-code/)
+  to see each snippet in light and dark. Copy the markup inside each <template>.
+
+  Conventions
+  - Everything lives under <div class="sk-cc" data-theme="light|dark">.
+  - <i data-cc-icon="name"></i>  → desktop icon (SKIN_CLAUDE_CODE.mount fills it).
+  - <i data-cc-g="name"></i>     → terminal glyph sized to one mono cell (❯ ● ⎿ ✻ ⏵⏵ ⏸ ✔ …).
+  - Gutter glyphs that start a row go in <span class="cc-gut">…</span> so they share the text baseline.
+  - Terminal size: set --cct-fs (font size) and --cct-lh (line height, 1.6 = official videos) on .cc-term.
+  - Desktop sizes are the real app's CSS px. Scale a window with `zoom` (the demo uses 1.3–1.34).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Claude Code skin: snippets</title>
+<link rel="stylesheet" href="../../_shared/fonts/fonts.css">
+<link rel="stylesheet" href="skin.css">
+<script src="icons.js"></script>
+<style>
+  body { margin: 0; background: #e9e9e7; font: 13px/1.4 Inter, sans-serif; color: #333; }
+  h1 { font: 600 20px Inter; margin: 24px 32px 4px; }
+  .sec { margin: 28px 32px; }
+  .sec > h2 { font: 600 14px Inter; margin: 0 0 8px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  .pane { padding: 24px; border-radius: 10px; overflow: auto; }
+  .pane.light { background: #f5f5f4; }
+  .pane.dark { background: #0e0e0f; }
+</style>
+</head>
+<body>
+<h1>Claude Code skin: snippets</h1>
+
+<!-- ================================================================== TERMINAL ================================================================== -->
+
+<template class="snip" data-title="Terminal window (macOS chrome; Claude Code sets the title to ✳ + task)">
+  <div class="cc-term" style="width:760px;--cct-fs:15px;--cct-lh:1.6">
+    <div class="cc-term-bar"><span class="cc-lights"><i></i><i></i><i></i></span><span class="cc-term-title"><i data-cc-g="sp2"></i>Rename customerRef</span></div>
+    <div class="cc-cli">
+      <div class="cc-tx" style="flex:none;height:calc(9 * 1.6em)">
+        <!-- fullscreen-renderer header line -->
+        <div class="cc-l cc-hdr"><i data-cc-g="spark"></i> Claude Code · ~/code/billing-api</div>
+        <!-- user turn: full-width grey band, dim ❯ -->
+        <div class="cc-u cc-b"><span class="cc-gut"><i data-cc-g="chev"></i></span><span>Rename customerRef to accountRef in the orders handler</span></div>
+        <!-- assistant prose: ● + text; identifiers in the suggestion blue -->
+        <div class="cc-a cc-b"><span class="cc-gut"><i data-cc-g="dot"></i></span><span>Renamed <span class="cc-id">customerRef</span> to <span class="cc-id">accountRef</span> in the orders handler. All 14 tests pass.</span></div>
+        <!-- post-turn line -->
+        <div class="cc-done cc-b"><span class="cc-gut"><i data-cc-g="spark"></i></span><span>Worked for 38s</span></div>
+        <div class="cc-tx-fill"></div>
+      </div>
+      <div class="cc-input">
+        <div class="cc-rule"></div>
+        <div class="cc-pline"><span class="cc-gut"><i data-cc-g="chev"></i></span><span><span class="cc-cursor"></span></span></div>
+        <div class="cc-rule"></div>
+        <div class="cc-foot"><span class="cc-mode-auto"><i data-cc-g="ff"></i> auto mode on</span> <span class="cc-hint">(shift+tab to cycle)</span> · <i data-cc-g="larr"></i> for agents</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template class="snip" data-title="Tool calls: collapsed summary, running, done, error, Update with diff, ctrl+o hint">
+  <div class="cc-term" style="width:760px;--cct-fs:15px;--cct-lh:1.6"><div class="cc-cli">
+    <!-- collapsed read/search group: dim, indented two cells -->
+    <div class="cc-sum">Thought for 4s, searched for 1 pattern, read 2 files</div>
+    <!-- running tool: grey ● (blink it while running) -->
+    <div class="cc-t is-run cc-b"><span class="cc-gut"><i data-cc-g="dot"></i></span><span><span class="cc-tn">Bash</span>(pnpm vitest run api/orders)</span></div>
+    <div class="cc-r"><span class="cc-gut"><i data-cc-g="elbow"></i></span><span class="cc-rb cc-dim">Running…</span></div>
+    <!-- done: green ● + ⎿ result -->
+    <div class="cc-t cc-b"><span class="cc-gut"><i data-cc-g="dot"></i></span><span><span class="cc-tn">Bash</span>(pnpm vitest run api/orders)</span></div>
+    <div class="cc-r"><span class="cc-gut"><i data-cc-g="elbow"></i></span><span class="cc-rb">Tests  14 passed (14)</span></div>
+    <!-- error: red ● -->
+    <div class="cc-t is-err cc-b"><span class="cc-gut"><i data-cc-g="dot"></i></span><span><span class="cc-tn">Bash</span>(pnpm tsc --noEmit)</span></div>
+    <div class="cc-r"><span class="cc-gut"><i data-cc-g="elbow"></i></span><span class="cc-rb"><span class="cc-err">Error: src/api/orders/types.ts(9,3): Property 'customerRef' does not exist</span></span></div>
+    <div class="cc-r is-cont"><span></span><span class="cc-rb cc-dim">… +12 lines (ctrl+o to expand)</span></div>
+    <!-- Update + diff: line no · sign · code; full-row tint, changed words darker -->
+    <div class="cc-t cc-b"><span class="cc-gut"><i data-cc-g="dot"></i></span><span><span class="cc-tn">Update</span>(src/api/orders/handler.ts)</span></div>
+    <div class="cc-r"><span class="cc-gut"><i data-cc-g="elbow"></i></span><span class="cc-rb">Updated <b>src/api/orders/handler.ts</b> with <b>1</b> addition and <b>1</b> removal</span></div>
+    <div class="cc-r is-cont"><span></span><span class="cc-rb cc-diff">
+      <span class="cc-dl"><span class="cc-ln">13</span><span> </span><span>  async getOrder(req, res) {</span></span>
+      <span class="cc-dl is-rem"><span class="cc-ln">14</span><span>-</span><span>    const { <span class="cc-w-rem">customerRef</span> } = req.params;</span></span>
+      <span class="cc-dl is-add"><span class="cc-ln">14</span><span>+</span><span>    const { <span class="cc-w-add">accountRef</span> } = req.params;</span></span>
+      <span class="cc-dl"><span class="cc-ln">15</span><span> </span><span>    const order = await orders.find(id);</span></span>
+    </span></div>
+  </div></div>
+</template>
+
+<template class="snip" data-title="Working: spinner verb (claude orange, shimmering) + tip, footer shows esc to interrupt">
+  <div class="cc-term" style="width:760px;--cct-fs:15px;--cct-lh:1.6"><div class="cc-cli">
+    <div class="cc-spin"><span class="cc-gut cc-claude"><i data-cc-g="sp4"></i></span><span><span class="cc-verb" style="--cc-shim:60%">Cogitating…</span> <span class="cc-dim">(12s · ↓ 1.2k tokens)</span></span></div>
+    <div class="cc-r"><span class="cc-gut"><i data-cc-g="elbow"></i></span><span class="cc-rb cc-dim">Tip: Use /fast to turn on Fast mode (Opus 5.5)</span></div>
+    <div class="cc-input cc-b">
+      <div class="cc-rule"></div>
+      <div class="cc-pline"><span class="cc-gut"><i data-cc-g="chev"></i></span><span><span class="cc-cursor"></span></span></div>
+      <div class="cc-rule"></div>
+      <div class="cc-foot"><span class="cc-mode-auto"><i data-cc-g="ff"></i> auto mode on</span> <span class="cc-hint">(shift+tab to cycle)</span> · esc to interrupt</div>
+    </div>
+  </div></div>
+</template>
+
+<template class="snip" data-title="Footer modes (only the mode label is coloured), PR badge, custom status line">
+  <div class="cc-term" style="width:760px;--cct-fs:15px;--cct-lh:1.6"><div class="cc-cli">
+    <div class="cc-foot"><span class="cc-mode-manual"><i data-cc-g="pause"></i> manual mode on</span> · ? for shortcuts · <i data-cc-g="larr"></i> for agents</div>
+    <div class="cc-foot"><span class="cc-mode-accept"><i data-cc-g="ff"></i> accept edits on</span> <span class="cc-hint">(shift+tab to cycle)</span> · <i data-cc-g="larr"></i> for agents</div>
+    <div class="cc-foot"><span class="cc-mode-plan"><i data-cc-g="pause"></i> plan mode on</span> <span class="cc-hint">(shift+tab to cycle)</span> · <i data-cc-g="larr"></i> for agents</div>
+    <div class="cc-foot"><span class="cc-mode-auto"><i data-cc-g="ff"></i> auto mode on</span> <span class="cc-hint">(shift+tab to cycle)</span> · <span class="cc-pr is-approved">PR #418</span></div>
+    <div class="cc-b"></div>
+    <!-- status line example from the docs (user-scripted colours) -->
+    <div class="cc-status"><span style="color:#70c0ba">[Opus 5.5]</span> my-app | feature/auth</div>
+    <div class="cc-status"><span class="cc-meter" style="--v:40%"><i></i></span> 42% | <span style="color:#e8c069">$0.02</span> | 0m 2s</div>
+  </div></div>
+</template>
+
+<template class="snip" data-title="Permission prompt (no box; lavender title, dashed rules around the command)">
+  <div class="cc-term" style="width:760px;--cct-fs:15px;--cct-lh:1.6"><div class="cc-cli cc-perm">
+    <div class="cc-perm-title">Bash command</div>
+    <div class="cc-bold">Tip: auto mode handles these prompts for you — choose "switch to auto mode" below</div>
+    <div class="cc-dim">Run the test suite</div>
+    <div class="cc-dash"></div>
+    <div>pnpm vitest run api/orders</div>
+    <div class="cc-dash"></div>
+    <div>This command requires approval</div>
+    <div class="cc-b">Do you want to proceed?</div>
+    <div class="cc-opt is-sel"><span class="cc-gut"><i data-cc-g="chev"></i></span><span class="cc-n">1.</span><span class="cc-ol">Yes</span></div>
+    <div class="cc-opt"><span class="cc-gut"><i data-cc-g="chev"></i></span><span class="cc-n">2.</span><span class="cc-ol">Yes, and don’t ask again for: pnpm vitest *</span></div>
+    <div class="cc-opt"><span class="cc-gut"><i data-cc-g="chev"></i></span><span class="cc-n">3.</span><span class="cc-ol">Yes, and switch to auto mode <span class="cc-dim">· auto mode handles these prompts for you</span></span></div>
+    <div class="cc-opt"><span class="cc-gut"><i data-cc-g="chev"></i></span><span class="cc-n">4.</span><span class="cc-ol">No</span></div>
+    <div class="cc-b cc-dim">Esc to cancel · Tab to amend</div>
+  </div></div>
+</template>
+
+<template class="snip" data-title="/model picker (blue top rule, ❯ selection, green ✔ current) and /effort slider">
+  <div class="cc-term" style="width:760px;--cct-fs:15px;--cct-lh:1.6">
+    <div class="cc-pick">
+      <div class="cc-pick-title">Select model</div>
+      <div class="cc-dim">Switch between Claude models. Your pick becomes the default for new sessions. For other/previous model names, specify with --model.</div>
+      <div class="cc-b"></div>
+      <div class="cc-mrow"><span class="cc-gut"><i data-cc-g="chev"></i></span><span class="cc-n">1.</span><span class="cc-ml">Default (recommended)</span><span class="cc-md">Fable 5.1 with 1M context · Best for everyday</span></div>
+      <div class="cc-mrow is-sel"><span class="cc-gut"><i data-cc-g="chev"></i></span><span class="cc-n">2.</span><span class="cc-ml">Opus</span><span class="cc-md">Opus 5.5 with 1M context · Most capable</span></div>
+      <div class="cc-mrow is-cur"><span class="cc-gut"><i data-cc-g="chev"></i></span><span class="cc-n">3.</span><span class="cc-ml">Sonnet <i data-cc-g="check"></i></span><span class="cc-md"><span class="cc-mm">Sonnet 5.5</span> · Efficient for routine tasks</span></div>
+      <div class="cc-mrow"><span class="cc-gut"><i data-cc-g="chev"></i></span><span class="cc-n">4.</span><span class="cc-ml">Haiku</span><span class="cc-md">Haiku 4.5 · Fastest for quick answers</span></div>
+      <div class="cc-b cc-effort"><span class="cc-gut"><i data-cc-g="dot"></i></span><span><span style="color:var(--cct-fg)">High effort (default)</span> <i data-cc-g="larr"></i>/<i data-cc-g="rarr"></i> to adjust</span></div>
+      <div class="cc-b">Use <b>/fast</b> to turn on Fast mode (Fable 5.1).</div>
+      <div class="cc-b cc-dim">Enter to set as default · s to use this session only · Esc to cancel</div>
+      <div class="cc-b"></div>
+    </div>
+    <div class="cc-pick" style="margin-top:1.6em">
+      <div class="cc-pick-title is-plain">Effort</div>
+      <div class="cc-b cc-slider">
+        <div class="cc-slider-ends"><span>Faster</span><span>Smarter</span></div>
+        <div class="cc-slider-track" style="--at:50%"><i data-cc-g="tri"></i></div>
+        <div class="cc-slider-stops"><span>low</span><span>medium</span><span class="is-sel">high</span><span>xhigh</span><span>max</span></div>
+      </div>
+      <div class="cc-b cc-dim cc-it"><i data-cc-g="larr"></i> <i data-cc-g="rarr"></i> to adjust · Enter to confirm · Esc to cancel</div>
+      <div class="cc-b"></div>
+    </div>
+  </div>
+</template>
+
+<template class="snip" data-title="Agent view (← for agents) and the ctrl+t task list">
+  <div class="cc-term" style="width:760px;--cct-fs:15px;--cct-lh:1.6"><div class="cc-cli">
+    <div class="cc-dim">1 awaiting input · 2 working · 1 completed</div>
+    <div class="cc-b cc-bold">Needs input</div>
+    <div class="cc-agent-row is-sel"><span></span><span class="cc-st-needs"><i data-cc-g="spark"></i></span><span>billing-api</span><span>Pick a retry policy for webhooks</span><span class="cc-age">2m</span></div>
+    <div class="cc-b cc-bold">Working</div>
+    <div class="cc-agent-row"><span></span><span class="cc-st-work"><i data-cc-g="spark"></i></span><span>web</span><span>Lazy-load the pricing charts</span><span class="cc-age">6m</span></div>
+    <div class="cc-agent-row"><span></span><span class="cc-st-work"><i data-cc-g="spark"></i></span><span>api</span><span>Rate limit the search endpoint</span><span class="cc-age">9m</span></div>
+    <div class="cc-b cc-bold">Completed</div>
+    <div class="cc-agent-row"><span></span><span class="cc-st-done"><i data-cc-g="sp0"></i></span><span>docs</span><span>Update the SDK quickstart</span><span class="cc-age">1h</span></div>
+    <div class="cc-b"><div class="cc-pline"><span class="cc-gut"><i data-cc-g="chev"></i></span><span class="cc-ph">describe a task for a new session</span></div></div>
+    <div class="cc-dim">enter to open · space to reply · ctrl+x to delete · ? for shortcuts</div>
+    <div class="cc-b"></div>
+    <!-- task list -->
+    <div class="cc-todo is-done"><span><i data-cc-g="squarex"></i></span><span>Find every use of customerRef</span></div>
+    <div class="cc-todo is-doing"><span><i data-cc-g="square"></i></span><span>Rename it in the orders handler</span></div>
+    <div class="cc-todo"><span><i data-cc-g="square"></i></span><span>Run the orders tests</span></div>
+  </div></div>
+</template>
+
+<!-- ================================================================== DESKTOP ================================================================== -->
+
+<template class="snip" data-title="Desktop window: sidebar + session (Chat | Code toggle, repo groups, status icons)">
+  <div class="cc-win" style="width:1000px;height:640px;--ccd-side-w:290px">
+    <aside class="cc-side">
+      <div class="cc-side-top"><span class="cc-lights"><i></i><i></i><i></i></span>
+        <i data-cc-icon="sidebar" class="cc-tb-i"></i><i data-cc-icon="search" class="cc-tb-i"></i><i data-cc-icon="arrow-left" class="cc-tb-i"></i><i data-cc-icon="arrow-right" class="cc-tb-i is-off"></i>
+        <span class="cc-toggle"><span><i data-cc-icon="chat"></i></span><span class="is-on"><i data-cc-icon="code"></i></span></span></div>
+      <nav class="cc-nav">
+        <div class="cc-nav-row is-new"><i data-cc-icon="plus"></i>New</div>
+        <div class="cc-nav-row"><i data-cc-icon="projects"></i>Projects <span class="cc-beta">Beta</span></div>
+        <div class="cc-nav-row"><i data-cc-icon="artifacts"></i>Artifacts</div>
+        <div class="cc-nav-row"><i data-cc-icon="customize"></i>Customize</div>
+        <div class="cc-nav-row is-more"><i data-cc-icon="chev-down"></i>More</div>
+      </nav>
+      <div class="cc-side-label">Projects</div>
+      <div class="cc-srow"><span class="cc-badge-dot is-grey" style="display:inline-flex"><i data-cc-icon="bolt" class="st-proj"></i></span><span>Billing migration</span></div>
+      <div style="height:12px"></div>
+      <div class="cc-grp"><div class="cc-grp-h"><span>api</span><i data-cc-icon="plus"></i><i data-cc-icon="sliders"></i></div>
+        <div class="cc-srow is-sel"><i data-cc-icon="st-active" class="st-active"></i><span>Rate limit the search endpoint</span></div>
+        <div class="cc-srow"><i data-cc-icon="st-pr" class="st-pr"></i><span>Paginate the orders list</span></div></div>
+      <div class="cc-grp"><div class="cc-grp-h"><span>marketing-site</span><i data-cc-icon="plus"></i></div>
+        <div class="cc-srow"><i data-cc-icon="st-merged" class="st-merged"></i><span>Update footer links</span></div>
+        <div class="cc-srow"><i data-cc-icon="st-idle" class="st-idle"></i><span>Compress hero images</span></div></div>
+      <div class="cc-side-foot"><span class="cc-avatar">S</span><span class="cc-who">Sam <span class="cc-plan">· Max</span></span><i data-cc-icon="chev-down"></i><i data-cc-icon="bug"></i></div>
+    </aside>
+    <main class="cc-main">
+      <!-- header: env icon (laptop = local, cloud = cloud), title ⌄, repo chip, Terminal / Changes / Browser panes, ⋮ -->
+      <header class="cc-head"><i data-cc-icon="cloud" class="cc-env"></i><span class="cc-title">Upgrade to the latest Next.js</span><i data-cc-icon="chev-down" class="cc-title-chev"></i><span class="cc-chip">Default · marketing-site</span>
+        <span class="cc-head-r"><i data-cc-icon="terminal"></i><i data-cc-icon="diff"></i><i data-cc-icon="globe"></i><i data-cc-icon="more-v"></i></span></header>
+      <div class="cc-chat"><div class="cc-col">
+        <div class="cc-umsg">Upgrade the site to the latest version of Next.js. Run the build and the tests, and fix whatever breaks.</div>
+        <div class="cc-m-gap"></div>
+        <!-- status row with clay dots; the text shimmers -->
+        <div class="cc-stat"><span class="cc-dots"><i></i><i></i><i style="opacity:.4"></i></span><span class="cc-shim" style="--cc-shim:40%">Setting up a cloud container</span><i data-cc-icon="chev-right"></i></div>
+      </div></div>
+      <div class="cc-dock"><div class="cc-col">
+        <!-- working, cloud session: ring-with-dot stop (desktop-light-code-session.png) -->
+        <div class="cc-composer"><div class="cc-field is-ph" data-ph="Type / for commands"></div><i data-cc-icon="stop-target" class="cc-send is-stop"></i></div>
+        <div class="cc-under"><i data-cc-icon="plus"></i><i data-cc-icon="mic"></i><i data-cc-icon="chev-down" class="is-sm"></i><span>Auto</span><span class="cc-sp"></span><span>Fable 5.1</span><span class="cc-r-gap">High</span><i data-cc-icon="ring" data-pct="0.04" class="cc-r-gap" style="width:15px;height:15px"></i></div>
+      </div></div>
+    </main>
+  </div>
+</template>
+
+<template class="snip" data-title="Session pieces: tool group, reply with inline code, Edited card, working spark, collapsed-sidebar header">
+  <div class="cc-win no-side" style="width:900px;height:640px">
+    <main class="cc-main">
+      <header class="cc-head has-lights"><span class="cc-lights"><i></i><i></i><i></i></span><i data-cc-icon="sidebar" class="cc-tb-i cc-badge-dot"></i><i data-cc-icon="arrow-left" class="cc-tb-i"></i><span class="cc-head-gap"></span>
+        <i data-cc-icon="laptop" class="cc-env"></i><span class="cc-title">Rename customerRef to accountRef</span><span class="cc-chip">my-app</span>
+        <span class="cc-head-r"><i data-cc-icon="terminal"></i><i data-cc-icon="diff"></i><i data-cc-icon="globe"></i><i data-cc-icon="more-v"></i></span></header>
+      <div class="cc-chat"><div class="cc-col">
+        <!-- summary line (⌄ = expanded) + bordered card of rows -->
+        <div class="cc-tsum"><span>Searched code, read and edited handler.ts, ran a command</span><span class="cc-counts"><span class="cc-add">+6</span><span class="cc-rem">-6</span></span><i data-cc-icon="chev-down"></i></div>
+        <div class="cc-m-gap is-s"></div>
+        <div class="cc-card">
+          <div class="cc-trow"><span>Searched customerRef</span><i data-cc-icon="chev-right"></i></div>
+          <div class="cc-trow"><span>Read</span><b>handler.ts</b><i data-cc-icon="chev-right"></i></div>
+          <div class="cc-trow"><span>Edited</span><b>handler.ts</b><span class="cc-counts"><span class="cc-add">+6</span><span class="cc-rem">-6</span></span><i data-cc-icon="chev-right"></i></div>
+          <div class="cc-trow"><span>Ran API tests</span><i data-cc-icon="chev-right"></i></div>
+        </div>
+        <div class="cc-m-gap is-s"></div>
+        <div class="cc-amsg"><p>Renamed <span class="cc-code">customerRef</span> to <span class="cc-code">accountRef</span> in the orders handler. 14 of 14 passing in <span class="cc-code">api/orders</span>.</p></div>
+        <div class="cc-m-gap is-s"></div>
+        <div class="cc-card"><div class="cc-edit-h">Edited a file<span class="cc-undo">Undo</span><span class="cc-view">View changes</span></div>
+          <div class="cc-frow"><i data-cc-icon="code"></i><span>handler.ts</span><span class="cc-counts"><span class="cc-add">+6</span><span class="cc-rem">-6</span></span><i data-cc-icon="chev-right"></i></div></div>
+        <div class="cc-m-gap"></div>
+        <div class="cc-stat is-muted"><span>Searching</span><span class="cc-q">customerRef|customer_ref</span><i data-cc-icon="chev-right"></i></div>
+        <div class="cc-m-gap is-s"></div>
+        <!-- working spark under the last message: six thin clay spokes; turn it slowly and breathe its opacity -->
+        <span class="cc-work"><i data-cc-icon="work-spark" style="width:100%;height:100%;display:block"></i></span>
+      </div></div>
+      <div class="cc-dock"><div class="cc-col">
+        <!-- working, local session: dim outlined stop square (desktop-dark-session-tool-group.png).
+             Typing state: <div class="cc-field">text<span class="cc-caret"></span></div> + <i data-cc-icon="return" class="cc-send is-return"> -->
+        <div class="cc-composer"><div class="cc-field is-ph" data-ph="Type / for commands"></div><i data-cc-icon="stop-square" class="cc-send is-stop-sq"></i></div>
+        <div class="cc-under"><i data-cc-icon="plus"></i><i data-cc-icon="mic"></i><i data-cc-icon="chev-down" class="is-sm"></i><span>Auto</span><span class="cc-sp"></span><span>Opus 5.5</span><span class="cc-r-gap">High</span><i data-cc-icon="ring" data-pct="0.16" class="cc-r-gap" style="width:15px;height:15px"></i></div>
+      </div></div>
+    </main>
+  </div>
+</template>
+
+<template class="snip" data-title="New-session home: greeting, usage card + heatmap, environment chips, composer with Clawd">
+  <div class="cc-win no-side" style="width:960px;height:800px">
+    <main class="cc-main">
+      <header class="cc-head has-lights"><span class="cc-lights"><i></i><i></i><i></i></span><i data-cc-icon="sidebar" class="cc-tb-i cc-badge-dot"></i><i data-cc-icon="arrow-left" class="cc-tb-i"></i></header>
+      <div class="cc-chat"><div class="cc-col cc-home" style="max-width:760px">
+        <div class="cc-greet"><i data-cc-icon="claude-spark"></i>What’s up next, Sam?</div>
+        <div style="height:28px"></div>
+        <div class="cc-usage" style="width:auto">
+          <div class="cc-usage-h"><span class="cc-seg"><span class="is-on">Overview</span><span>Models</span></span><span class="cc-seg"><span class="is-on">All</span><span>30d</span><span>7d</span></span></div>
+          <div class="cc-tiles">
+            <div class="cc-tile"><span>Sessions</span><b>1,284</b></div><div class="cc-tile"><span>Messages</span><b>173,410</b></div><div class="cc-tile"><span>Total tokens</span><b>7.3B</b></div>
+            <div class="cc-tile"><span>Active days</span><b>152</b></div><div class="cc-tile"><span>Peak hour</span><b>4 PM</b></div><div class="cc-tile"><span>Favorite model</span><b>Opus 5.5</b></div>
+          </div>
+          <div class="cc-heat" data-heat></div>
+          <div class="cc-moby">You’ve used ~27,240× more tokens than Moby-Dick.</div>
+        </div>
+      </div></div>
+      <div class="cc-dock"><div class="cc-col" style="max-width:760px">
+        <div class="cc-envs"><span class="cc-env-chip"><i data-cc-icon="laptop"></i>Local</span><span class="cc-env-chip"><i data-cc-icon="folder"></i>my-app</span>
+          <span class="cc-env-chip"><i data-cc-icon="branch"></i>main<span class="cc-vsep"></span><i data-cc-icon="checkbox-on" class="is-check"></i>worktree</span><span class="cc-env-chip is-icon"><i data-cc-icon="folder-plus"></i></span></div>
+        <div class="cc-composer is-tall"><span class="cc-clawd"><i data-cc-icon="clawd" style="width:100%;height:100%;display:block"></i></span><div class="cc-field is-ph" data-ph="Describe a task or ask a question"></div><i data-cc-icon="return" class="cc-send is-return"></i></div>
+        <div class="cc-under"><i data-cc-icon="plus"></i><i data-cc-icon="mic"></i><i data-cc-icon="chev-down" class="is-sm"></i><span>Auto</span><span class="cc-sp"></span><span>Opus 5.5</span><span class="cc-r-gap">Medium</span><i data-cc-icon="ring" data-pct="0.3" class="cc-r-gap" style="width:15px;height:15px"></i></div>
+      </div></div>
+    </main>
+  </div>
+</template>
+
+<template class="snip" data-title="Popovers: model menu, effort, context window (open upward from the under-row)">
+  <div style="position:relative;height:330px;width:820px">
+    <div class="cc-pop" style="left:0;top:0;width:250px">
+      <div class="cc-pop-row"><span>Fable 5.1</span></div>
+      <div class="cc-pop-row is-hi"><span>Opus 5.5</span><i data-cc-icon="check" class="is-check"></i></div>
+      <div class="cc-pop-row"><span>Fable 5</span></div>
+      <div class="cc-pop-row"><span>Sonnet 5.5</span></div>
+      <div class="cc-pop-sep"></div>
+      <div class="cc-pop-row"><span>More models</span><i data-cc-icon="chev-right"></i></div>
+    </div>
+    <div class="cc-pop cc-pop-pad" style="left:270px;top:0;width:250px">
+      <div class="cc-pop-kv" style="margin-top:0"><b>Effort</b><span>Medium</span></div>
+      <div class="cc-eff-ends"><span>Faster</span><span>Smarter</span></div>
+      <div class="cc-eff-track" style="--at:40%"><b></b><i></i></div>
+    </div>
+    <div class="cc-pop cc-pop-pad" style="left:540px;top:0;width:280px">
+      <div class="cc-pop-kv" style="margin-top:0"><b>Context window</b><span>31.4k / 200.0k (16%)</span></div>
+      <div class="cc-bar" style="--v:16%"><i></i></div>
+      <div class="cc-pop-kv"><b>5-hour limit</b><span>38%</span></div>
+      <div class="cc-bar" style="--v:38%"><i></i></div>
+      <div class="cc-pop-kv"><b>Weekly · all models</b><span>12%</span></div>
+      <div class="cc-bar" style="--v:12%"><i></i></div>
+      <div style="margin-top:12px"><span class="cc-link">See detailed breakdown</span></div>
+    </div>
+  </div>
+</template>
+
+<template class="snip" data-title="Projects (beta): coordinator thread cards, PR chips and buttons, Threads panel">
+  <div class="cc-win no-side has-panel" style="width:1000px;height:640px;--ccd-panel-w:380px">
+    <main class="cc-main">
+      <header class="cc-head has-lights"><span class="cc-lights"><i></i><i></i><i></i></span><i data-cc-icon="sidebar" class="cc-tb-i"></i><i data-cc-icon="arrow-left" class="cc-tb-i"></i><span class="cc-head-gap"></span>
+        <span class="cc-proj-ic" style="margin-left:0"><i data-cc-icon="bolt"></i></span><span class="cc-title">Billing migration</span>
+        <span class="cc-head-r" style="gap:14px"><span class="cc-btn-soft"><i data-cc-icon="overview"></i>Overview</span><i data-cc-icon="gear"></i><i data-cc-icon="more-v"></i></span></header>
+      <div class="cc-chat"><div class="cc-col">
+        <!-- coordinator prose is a little tighter than session prose (.is-compact, 1.4) -->
+        <div class="cc-amsg is-compact"><p>On it. I've started a thread for each of the six.</p></div>
+        <div class="cc-m-gap is-s"></div>
+        <!-- working thread: grey dot, black title, grey shimmering status -->
+        <div class="cc-tcard"><i class="cc-tdot"></i><span class="cc-tt">Stripe webhooks</span><span class="cc-ts">Reading the handlers in api/webhooks</span></div>
+        <!-- finished thread: PR chip + actions -->
+        <div class="cc-tcard"><i class="cc-tdot is-done"></i><span class="cc-tt">Invoice PDFs</span><span class="cc-prchip"><i data-cc-icon="st-pr"></i>#482</span>
+          <span style="width:14px"></span><span class="cc-btn">Review PR</span><span style="width:8px"></span><span class="cc-btn">View thread</span><span style="width:8px"></span><span class="cc-btn is-black">Merge it</span></div>
+        <div class="cc-tcard"><i class="cc-tdot is-wait"></i><span class="cc-tt">Tax by region</span><span class="cc-ts">Needs a decision on VAT IDs</span></div>
+        <div class="cc-m-gap is-l"></div>
+        <div class="cc-stat"><span class="cc-dots"><i></i><i></i><i></i></span><span>Claude is working</span><span class="cc-timer">6m 7s</span></div>
+      </div></div>
+      <div class="cc-dock"><div class="cc-col">
+        <div class="cc-composer"><div class="cc-field is-ph" data-ph="Ask Claude a question or start a task…"></div><i data-cc-icon="stop-target" class="cc-send is-stop"></i></div>
+        <div class="cc-under"><i data-cc-icon="plus"></i><i data-cc-icon="mic"></i><i data-cc-icon="chev-down" class="is-sm"></i><span class="cc-sp"></span><span>Opus 5.5</span><span class="cc-r-gap">Low</span><i data-cc-icon="ring" data-pct="0.08" class="cc-r-gap" style="width:15px;height:15px"></i></div>
+      </div></div>
+    </main>
+    <section class="cc-panel">
+      <div class="cc-panel-tabs"><span class="cc-ptab is-on"><i data-cc-icon="chat"></i>Threads</span><span class="cc-ptab"><i data-cc-icon="library"></i></span><span class="cc-ptab"><i data-cc-icon="clock"></i></span><span class="cc-ptab"><i data-cc-icon="plus"></i></span>
+        <span class="cc-ptab-r"><i data-cc-icon="search"></i><i data-cc-icon="sliders"></i><i data-cc-icon="expand"></i><i data-cc-icon="close"></i></span></div>
+      <div class="cc-welcome"><h3>Welcome, Sam.</h3><p>Working on things! I’ll ping you.</p></div>
+      <div class="cc-secs">
+        <div class="cc-secbar"><i data-cc-icon="chev-down" class="is-blank"></i>Waiting on you <span class="cc-cnt">1</span></div>
+        <div style="height:6px"></div>
+        <div class="cc-thr"><div><b>Tax by region</b><span>Needs a decision on VAT IDs</span></div><em>now</em></div>
+        <div class="cc-secbar" style="margin-top:10px"><i data-cc-icon="chev-down"></i>Working <span class="cc-cnt">4</span></div>
+        <div style="height:6px"></div>
+        <div class="cc-thr"><div><b>Stripe webhooks</b><span>Reading the handlers in api/webhooks</span></div><em>now</em></div>
+        <div class="cc-thr"><div><b>Usage meters</b><span>Mapping events to the new meter IDs</span></div><em>1m</em></div>
+        <div class="cc-showmore">Show more</div>
+        <div class="cc-secbar"><i data-cc-icon="chev-right"></i>Resolved <span class="cc-cnt">1</span></div>
+      </div>
+    </section>
+  </div>
+</template>
+
+<template class="snip" data-title="Diff pane (Changes): branch header, file tree with counts, unified diff with tinted rows">
+  <div class="cc-diffpane" style="width:900px;height:360px">
+    <div class="cc-dp-h"><span class="cc-dp-ic"><i data-cc-icon="list"></i></span><span>main</span><i data-cc-icon="arrow-right"></i><span>subagents-on-sonnet</span><i data-cc-icon="chev-down"></i>
+      <span class="cc-dp-r"><i data-cc-icon="search"></i><i data-cc-icon="more-v"></i><i data-cc-icon="expand"></i><i data-cc-icon="close"></i></span></div>
+    <div class="cc-dp-body">
+      <div class="cc-tree">
+        <div class="cc-tree-row"><i data-cc-icon="chev-down"></i>.claude</div>
+        <div class="cc-tree-row" style="padding-left:30px"><i data-cc-icon="chev-down"></i>agents</div>
+        <div class="cc-tree-row is-file" style="padding-left:52px"><i data-cc-icon="file"></i>explore.md<span class="cc-counts"><span class="cc-add">+1</span> <span class="cc-rem">-0</span></span></div>
+        <div class="cc-tree-row is-file is-sel" style="padding-left:30px"><i data-cc-icon="file"></i>settings.json<span class="cc-counts"><span class="cc-add">+4</span> <span class="cc-rem">-1</span></span></div>
+      </div>
+      <div class="cc-code-view">
+        <div class="cc-cv-file"><i data-cc-icon="chev-down"></i><i data-cc-icon="file"></i>settings.json <span class="cc-dirn">.claude</span><span class="cc-counts"><span class="cc-add">+4</span> <span class="cc-rem">-1</span></span></div>
+        <div class="cc-cl"><span class="cc-ln">1</span><span class="cc-sg"></span><span>{</span></div>
+        <div class="cc-cl"><span class="cc-ln">2</span><span class="cc-sg"></span><span>  <span class="cc-k">"permissions"</span>: {</span></div>
+        <div class="cc-cl is-rem"><span class="cc-ln">3</span><span class="cc-sg">-</span><span>  }</span></div>
+        <div class="cc-cl is-add"><span class="cc-ln">3</span><span class="cc-sg">+</span><span>  },</span></div>
+        <div class="cc-cl is-add"><span class="cc-ln">4</span><span class="cc-sg">+</span><span>  <span class="cc-k">"env"</span>: { <span class="cc-k">"CLAUDE_CODE_SUBAGENT_MODEL"</span>: <span class="cc-s">"sonnet"</span> }</span></div>
+        <div class="cc-cl"><span class="cc-ln">5</span><span class="cc-sg"></span><span>}</span></div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template class="snip" data-title="Mobile-style pills that also appear under replies: Diff +9 -2 · Create PR">
+  <div style="display:flex;gap:10px"><span class="cc-pill">Diff <span class="cc-counts"><span class="cc-add">+9</span> <span class="cc-rem">-2</span></span></span><span class="cc-pill"><i data-cc-icon="st-pr" style="width:16px;height:16px" class="cc-i"></i>Create PR</span></div>
+</template>
+
+<script>
+  // render every template twice (light | dark) and fill icons + the deterministic heatmap
+  document.querySelectorAll('template.snip').forEach(function (t) {
+    var sec = document.createElement('div'); sec.className = 'sec';
+    sec.innerHTML = '<h2></h2><div class="pair"></div>';
+    sec.querySelector('h2').textContent = t.getAttribute('data-title');
+    ['light', 'dark'].forEach(function (th) {
+      var pane = document.createElement('div'); pane.className = 'pane ' + th;
+      var root = document.createElement('div'); root.className = 'sk-cc'; root.setAttribute('data-theme', th);
+      root.appendChild(t.content.cloneNode(true)); pane.appendChild(root);
+      sec.querySelector('.pair').appendChild(pane);
+    });
+    t.parentNode.insertBefore(sec, t);
+  });
+  document.querySelectorAll('[data-heat]').forEach(function (el) {
+    var h = '';
+    for (var i = 0; i < 26 * 7; i++) { var x = Math.sin(i * 3.17 + 1.3) * 9301.17; x = x - Math.floor(x); h += '<i class="' + (x < .35 ? '' : 'h' + (1 + Math.floor((x - .35) / .1625))) + '"></i>'; }
+    el.innerHTML = h;
+  });
+  SKIN_CLAUDE_CODE.mount(document);
+</script>
+</body>
+</html>

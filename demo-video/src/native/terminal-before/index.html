@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[
+  {"id":"variant","type":"enum","label":"Variant","default":"0","options":[{"value":"0","label":"Claude Code"},{"value":"1","label":"Codex CLI"},{"value":"2","label":"Gemini CLI"}]},
+  {"id":"theme","type":"enum","label":"Theme","default":"light","options":[{"value":"light","label":"Light"},{"value":"dark","label":"Dark"}]}
+]'>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="stylesheet" href="assets/fonts/fonts.css" />
+    <link rel="stylesheet" href="assets/skins/claude-code/skin.css" />
+    <link rel="stylesheet" href="assets/skins/codex/skin.css" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script src="assets/kit/motion/motion.js"></script>
+    <script src="assets/skins/claude-code/icons.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html { --stage: #f5f5f4; }
+      html[data-theme="dark"] { --stage: #0e0e0f; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--stage); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; font-family: 'Inter', sans-serif; }
+      #stage { position: absolute; inset: 0; background: var(--stage); }
+      #center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+      #lift { position: relative; display: block; transform-origin: 50% 55%; }
+
+      /* ============ the terminal window (shared by all three CLIs) ============
+         Drawn at native macOS size: 640 x 515 pt, 13 px monospace = an 80-column terminal.
+         Presented at 1.85x with CSS zoom: 1184 x 953 px on the frame (62% of the width), mono at 24 px. */
+      #win {
+        zoom: 1.85; position: relative; width: 640px; height: 515px; border-radius: 10px; overflow: hidden;
+        display: flex; flex-direction: column; background: var(--tbg);
+        box-shadow: 0 0 0 .5px rgba(0,0,0,.16), 0 .5px 1px rgba(0,0,0,.10), 0 2px 5px -1px rgba(0,0,0,.07),
+                    0 22px 44px -14px rgba(0,0,0,.22);
+      }
+      html[data-theme="dark"] #win {
+        box-shadow: 0 0 0 .5px rgba(255,255,255,.13), 0 1px 2px rgba(0,0,0,.5), 0 3px 8px -2px rgba(0,0,0,.45),
+                    0 26px 50px -12px rgba(0,0,0,.75);
+      }
+      .tbar {
+        flex: none; position: relative; height: 28px; display: flex; align-items: center; padding-left: 13px;
+        background: var(--tbg); border-bottom: .5px solid var(--tline);
+        font: 600 13px/1 'Inter', sans-serif; letter-spacing: -0.01em; color: var(--tfg);
+      }
+      html[data-theme="dark"] .tbar { box-shadow: inset 0 .5px 0 rgba(255,255,255,.07); }
+      .lights { display: inline-flex; gap: 8px; align-items: center; }
+      .lights i { display: block; width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 .5px rgba(0,0,0,.14); }
+      .lights i:nth-child(1) { background: #ff5f57; }
+      .lights i:nth-child(2) { background: #febc2e; }
+      .lights i:nth-child(3) { background: #28c840; }
+      .ttl { position: absolute; left: 90px; right: 90px; display: flex; justify-content: center; align-items: center; gap: 5px; white-space: nowrap; }
+      .ttl .cc-g { width: 9px; height: 13px; vertical-align: 0; color: var(--tfg); }
+      .tbody { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
+
+      /* per-CLI terminal tokens */
+      #win.v0 { --tbg: var(--cct-bg); --tfg: #6c6c6a; --tline: rgba(0,0,0,.07); }
+      html[data-theme="dark"] #win.v0 { --tfg: #8f8d88; --tline: rgba(255,255,255,.06); }
+      #win.v1 { --tbg: var(--cx-t-bg); --tfg: #6c6973; --tline: rgba(0,0,0,.07); }
+      html[data-theme="dark"] #win.v1 { --tfg: #8c8796; --tline: rgba(255,255,255,.06); }
+      #win.v2 { --tbg: var(--g-bg); --tfg: #6a6f7a; --tline: rgba(0,0,0,.07); }
+      html[data-theme="dark"] #win.v2 { --tfg: #8a8fa6; --tline: rgba(255,255,255,.06); }
+
+      /* a terminal viewport that scrolls whole rows: the inner column moves up by --sy rows */
+      .vp { flex: none; overflow: hidden; }
+      .vpi { display: flex; flex-direction: column; transform: translateY(calc(var(--sy, 0) * var(--row) * -1)); }
+      .vpi > * { flex: none; }
+
+      /* timeline state helpers */
+      #root .hid { display: none; }
+      #root .alt { display: none; }
+      #root .alt.on0 { display: inline; }
+      #root .w { visibility: hidden; }
+      .stk { position: relative; display: inline-block; width: 1ch; height: 1em; vertical-align: -0.15em; }
+      .stk > .fr { position: absolute; inset: 0; opacity: 0; }
+      .stk > .fr.on0 { opacity: 1; }
+      .stk > .fr > svg, .stk > .fr > span > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+      .stk > .fr > span { display: block; width: 100%; height: 100%; }
+      .tg { display: inline-block; width: 1ch; height: 1em; vertical-align: -0.15em; font-style: normal; }
+      .tg > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+      /* ================= v0  Claude Code (skin: claude-code) ================= */
+      html:not([data-theme="dark"]) #win.v0 { --cct-fg: #000; }   /* official light video: body text is pure black */
+      .v0 .cc-term { flex: 1; min-height: 0; border-radius: 0; box-shadow: none; background: transparent; }
+      .v0 .cc-cli { padding: 8px 1.6ch 0; }
+      .v0 .cc-tx { flex: none; display: block; height: calc(19 * 1.55em); --row: 1.55em; }
+      .v0 .km-caret { width: 1ch; height: 1.36em; margin-left: 0; vertical-align: -0.29em; border-radius: 0; background: var(--cct-cursor); }
+      .v0 .cc-rb b { font-weight: 700; }
+      /* ⎿ as in the official light video: it rises above cap height and its foot sits on the baseline */
+      .v0 .cc-r > .cc-gut .tg { color: var(--cct-dim); }
+      /* structured patch: context rows are plain, -/+ rows are tinted */
+      .v0 .cc-dl.is-ctx > .cc-ln { color: var(--cct-dim); }
+
+      /* ================= v1  Codex CLI (skin: codex) ================= */
+      .v1 .cxb { flex: none; height: calc(26 * 1.38em + 4px); padding: 4px 0 0; font-family: var(--cx-mono); font-size: 13px; line-height: 1.38; letter-spacing: 0; color: var(--cx-t-ink);
+                 font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; display: flex; flex-direction: column; }
+      .v1 .cxb .cx-tl { min-height: 1.38em; padding: 0 8px; }
+      .v1 .cxb .cx-tl.is-item { padding-left: calc(8px + 2ch); text-indent: -2ch; }
+      .v1 .cxb .cx-t-gap { height: 1.38em; }
+      .v1 .cxb .cx-t-band { padding-top: .69em; padding-bottom: .69em; }
+      .v1 .cxb .cx-t-composer { padding: 1.38em 0; margin-top: 0; }
+      .v1 .cxb .cx-t-foot { padding-top: 0; }
+      .v1 .cxtx { flex: 1 1 0; min-height: 0; --row: 1.38em; }
+      .v1 .cx-t-rule::after { height: 1px; opacity: 1; background: var(--cx-t-dim); }
+      .v1 .cx-t-rule .tg { color: var(--cx-t-dim); }
+      .v1 .cx-t-ph { white-space: pre; }
+      /* block cursor drawn over the first placeholder cell (the TUI paints that cell in reverse video) */
+      .v1 .km-caret { position: relative; z-index: 1; width: 1ch; height: 1.25em; line-height: 1.25em; margin-left: 0; vertical-align: baseline; border-radius: 0;
+                      background: var(--cx-t-strong); color: var(--cx-t-band); }
+      .v1 .km-caret::after { content: '\00a0'; }
+      .v1 .slot[data-ph="1"] .km-caret::after { content: attr(data-ch); }
+      .v1 .slot #ph { margin-left: -1ch; }
+      .v1 .slot[data-ph="0"] #ph { visibility: hidden; }
+
+      /* ================= v2  Gemini CLI (built here; no shipped skin covers the CLI) ================= */
+      .gmc {
+        --g-bg: #fafafa; --g-fg: #2a2c33; --g-gray: #8a93a3; --g-lblue: #5f9db1; --g-blue: #3b82f6; --g-purple: #8b5cf6;
+        --g-green: #3ca84b; --g-red: #dd4c4c; --g-add: #c6ead8; --g-rem: #ffcccc; --g-box: #b9c0cc; --g-cursor: #2a2c33;
+      }
+      html[data-theme="dark"] .gmc {
+        --g-bg: #1e1e2e; --g-fg: #cdd6f4; --g-gray: #6c7086; --g-lblue: #add8e6; --g-blue: #89b4fa; --g-purple: #cba6f7;
+        --g-green: #a6e3a1; --g-red: #f38ba8; --g-add: #28350b; --g-rem: #430000; --g-box: #585b70; --g-cursor: #cdd6f4;
+      }
+      .gmb { flex: none; padding: 8px 8px 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.4;
+             color: var(--g-fg); font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0; }
+      .gmv { height: calc(26 * 1.4em); --row: 1.4em; }
+      .gl { white-space: pre; min-height: 1.4em; }
+      .gg { color: var(--g-gray); }
+      .gp { color: var(--g-purple); }
+      .ggr { color: var(--g-green); }
+      .gr { color: var(--g-red); }
+      .gb { color: var(--g-blue); }
+      .glb { color: var(--g-lblue); }
+      .gmb b { font-weight: 700; }
+      .gsplit { display: flex; justify-content: space-between; }
+      .glogo { height: calc(8 * 1.4em); }
+      .glogo svg { display: block; width: 80ch; height: 100%; overflow: visible; }
+      /* a terminal box (╭─╮ │ │ ╰─╯): the line runs through the middle of the edge cells */
+      .gbox { margin: .7em .5ch; border: 1px solid var(--g-box); border-radius: 4px; padding: calc(.7em - 1px) calc(1.5ch - 1px); }
+      .gin { margin: .7em .5ch; border: 1px solid var(--g-blue); border-radius: 4px; padding: calc(.7em - 1px) calc(1.5ch - 1px); }
+      .gst { display: inline-block; width: 3ch; }
+      .gst .stk { color: var(--g-purple); }
+      .gst .stk .ok { color: var(--g-green); }
+      .gdl { display: grid; grid-template-columns: 3ch 3ch 2ch minmax(0, 1fr); white-space: pre; margin-right: -1ch; }
+      .gdl > .n { grid-column: 2; color: var(--g-gray); text-align: right; padding-right: 1ch; }
+      .gdl.rem > .n, .gdl.rem > .s, .gdl.rem > .c { background: var(--g-rem); }
+      .gdl.add > .n, .gdl.add > .s, .gdl.add > .c { background: var(--g-add); }
+      .gdl.rem > .s { color: var(--g-red); }
+      .gdl.add > .s { color: var(--g-green); }
+      .gans .tg { color: var(--g-purple); }
+      .gmb .km-caret { width: 1ch; height: 1.25em; margin-left: 0; vertical-align: -0.25em; border-radius: 0; background: var(--g-cursor); }
+      .gmb .slot[data-ph="0"] #ph { visibility: hidden; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="14.0" data-width="1920" data-height="1080">
+      <div id="stage" class="clip" data-start="0" data-duration="14.0" data-track-index="0">
+        <div id="center"><div id="lift"><div id="win"></div></div></div>
+      </div>
+    </div>
+    <script>
+      /* ======================= CONFIG: all content for the 3 variants ======================= */
+      const CONFIG = {
+        // Spelunk demo: one question about rust-agent-framework
+        task: 'Who uses ApprovalRequiredTool?',
+        // the patch (src/cart/total.ts). k: ' ' context, '-' removed, '+' added. «…» marks the changed words.
+        diff: [],
+        // shared timeline (seconds): every variant runs the same beats
+        time: {
+          enter: 0.15, typeAt: 3.4, cps: 14, submit: 6.2,
+          read: [7.1, 7.8], edit: [8.3, 9.3], bash: [10.0, 11.0],
+          answer: 11.4, done: 14.6, push: 11.0, exit: 13.6, end: 14.0,
+          row: 0.04, scroll: 0.26
+        },
+        variants: {
+          '0': {
+            product: 'Claude Code',
+            titleIdle: 'Claude Code', titleTask: 'Who uses ApprovalRequiredTool?',
+            header: 'Claude Code · ~/code/rust-agent-framework',
+            verb: 'Cogitating…',
+            tokens: [[0, 0], [0.4, 0], [1, 380], [3, 2900], [5, 6100], [8, 9400]],
+            read: { name: 'Search', args: '(pattern: "ApprovalRequiredTool")', result: 'Found <b>35</b> files', hint: '(ctrl+o to expand)' },
+            edit: { name: 'Read', args: '(crates/framework/src/decorators/invoke.rs)', result: 'Read <b>1068</b> lines' },
+            bash: { name: 'Search', args: '(pattern: "requires_approval", path: "crates")', running: 'Searching…', result: 'Found 10 matches in 3 files' },
+            answer: [{ t: 'It gets wrapped in ' }, { id: 'workspace.rs' }, { t: ' and checked somewhere in ' }, { id: 'invoke.rs' }, { t: '. Opening the other files to be sure…' }],
+            done: 'Still reading',
+            mode: 'auto mode on', hint: '(shift+tab to cycle)', idle: 'for agents', busy: 'esc to interrupt'
+          },
+          '1': {
+            product: 'Codex CLI',
+            title: 'checkout-web — codex — 80×26',
+            version: 'v0.159.0-alpha.13', cwd: '~/code/checkout-web',
+            tagline: 'One prompt to begin the journey.',
+            placeholder: 'Ask Codex to do anything',
+            explore: ['Exploring', 'Explored'], exploreItem: 'total.ts',
+            edit: { file: 'src/cart/total.ts', add: 1, rem: 1 },
+            run: ['Running', 'Ran'], cmd: 'pnpm vitest run cart',
+            timers: ['0s', '1s', '2s', '3s'],
+            worked: 'Worked for 3s',
+            answer: [{ code: 'cartTotal()' }, { t: ' now rounds once, after the sum. All 48 cart tests pass.' }],
+            status: 'gpt-6-Astra low ultrafast · ~/code/checkout-web'
+          },
+          '2': {
+            product: 'Gemini CLI',
+            title: 'Gemini - checkout-web',
+            // Gemini CLI's 80-column start-up logo (█ = full cell, ░ = shade)
+            logo: [
+              ' ███            █████████  ██████████ ██████   ██████ █████ ██████   █████ █████',
+              '░░░███         ███░░░░░███░░███░░░░░█░░██████ ██████ ░░███ ░░██████ ░░███ ░░███',
+              '  ░░░███      ███     ░░░  ░███  █ ░  ░███░█████░███  ░███  ░███░███ ░███  ░███',
+              '    ░░░███   ░███          ░██████    ░███░░███ ░███  ░███  ░███░░███░███  ░███',
+              '     ███░    ░███    █████ ░███░░█    ░███ ░░░  ░███  ░███  ░███ ░░██████  ░███',
+              '   ███░      ░░███  ░░███  ░███ ░   █ ░███      ░███  ░███  ░███  ░░█████  ░███',
+              ' ███░         ░░█████████  ██████████ █████     █████ █████ █████  ░░█████ █████',
+              '░░░            ░░░░░░░░░  ░░░░░░░░░░ ░░░░░     ░░░░░ ░░░░░ ░░░░░    ░░░░░ ░░░░░'
+            ],
+            tips: ['Tips for getting started:', '1. Ask questions, edit files, or run commands.', '2. Be specific for the best results.', '3. {/help} for more information.'],
+            context: 'Using: 1 GEMINI.md file', mode: 'accepting edits (shift + tab to toggle)',
+            placeholder: ' Type your message or @path/to/file',
+            phrases: ['Inspecting the cart total', 'Fixing the rounding', 'Running the cart tests'],
+            timers: ['0s', '1s', '2s', '3s'],
+            read: { name: 'ReadFile', desc: 'src/cart/total.ts' },
+            edit: { name: 'Edit', desc: 'src/cart/total.ts' },
+            shell: { name: 'Shell', desc: 'pnpm vitest run cart (Run the cart tests)', out: 'Tests  48 passed (48)' },
+            // the model's markdown: **bold** lead, `code` in the accent colour
+            answer: [{ b: 'Fixed.' }, { t: ' ' }, { code: 'cartTotal' }, { t: ' now rounds once, after summing. All 48 tests pass.' }],
+            footer: { path: '~/code/checkout-web', branch: ' (main*)', sandbox: 'no sandbox', model: 'gemini-4-argon', ctx: ['99%', '97%'] }
+          }
+        }
+      };
+
+      /* ======================= setup ======================= */
+      const VARS = (window.__hyperframes && window.__hyperframes.getVariables) ? window.__hyperframes.getVariables() : {};
+      const variant = ['0', '1', '2'].includes(String(VARS.variant)) ? String(VARS.variant) : '0';
+      const theme = VARS.theme === 'dark' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+
+      const K = window.KitMotion;
+      const SK = window.SKIN_CLAUDE_CODE;
+      const T = CONFIG.time;
+      const tl = gsap.timeline({ paused: true });
+      const win = document.getElementById('win');
+      const $ = (s, r) => (r || document).querySelector(s);
+      const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+      const el = (x) => (typeof x === 'string' ? $(x) : x);
+      const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      // every display change goes through show/hide, so the viewport can work out how far it has to scroll
+      const OPS = [];
+      const show = (x, t, d) => { x = el(x); OPS.push([t, x, d || 'block']); tl.set(x, { display: d || 'block' }, t); };
+      const hide = (x, t) => { x = el(x); OPS.push([t, x, 'none']); tl.set(x, { display: 'none' }, t); };
+      // show a list of rows one at a time, `T.row` apart (a TUI commits a cell row by row)
+      const rows = (list, t, d) => list.forEach((x, i) => show(x, t + i * T.row, d));
+
+      // a seek-safe driver: fn(t) runs for every rendered time between t0 and t1
+      function drive(t0, t1, fn) {
+        let v = 0;
+        const proxy = { p: function (x) { if (!arguments.length) return v; v = x; fn(t0 + x * (t1 - t0)); } };
+        tl.fromTo(proxy, { p: 0 }, { p: 1, duration: Math.max(t1 - t0, 1e-3), ease: 'none', immediateRender: false }, t0);
+      }
+
+      /* Terminal scrolling. Replays every display change in time order, measures how many rows the content overflows
+         the viewport by at each moment, then eases the inner column up by that many rows (power2.inOut). Content is
+         always whole rows, so the top row is never cut. `snap` can round a scroll up (Gemini clears its whole banner). */
+      function autoScroll(view, inner, snap) {
+        const ops = OPS.map((o, i) => o.concat(i)).sort((a, b) => a[0] - b[0] || a[3] - b[3]);
+        const saved = new Map();
+        ops.forEach((o) => { if (!saved.has(o[1])) saved.set(o[1], o[1].style.display); });
+        const rowH = inner.firstElementChild.getBoundingClientRect().height;   // the first child is always one row
+        const over = () => {
+          const vh = view.getBoundingClientRect().height, ih = inner.getBoundingClientRect().height;
+          return Math.max(0, Math.ceil((ih - vh) / rowH - 0.05));
+        };
+        const marks = [];
+        for (let i = 0; i < ops.length;) {
+          const t = ops[i][0];
+          while (i < ops.length && ops[i][0] === t) { ops[i][1].style.display = ops[i][2]; i++; }
+          let r = over(); if (snap) r = snap(r);
+          marks.push([t, r]);
+        }
+        saved.forEach((d, x) => { x.style.display = d; });
+        // one tween per change; changes that land while a scroll is still moving extend it to the newest target
+        let cur = 0, i = 0;
+        while (i < marks.length) {
+          if (marks[i][1] === cur) { i++; continue; }
+          const t0 = marks[i][0]; let to = marks[i][1], t1 = t0 + T.scroll; i++;
+          while (i < marks.length && marks[i][0] < t1) { if (marks[i][1] !== to) { to = marks[i][1]; t1 = marks[i][0] + T.scroll; } i++; }
+          tl.fromTo(inner, { '--sy': cur }, { '--sy': to, duration: t1 - t0, ease: 'power2.inOut', immediateRender: false }, t0);
+          cur = to;
+        }
+      }
+
+      /* ---- terminal glyphs the mono subset lacks (one cell = 60 x 100 units; baseline at y = 85) ---- */
+      const G = (body) => '<svg viewBox="0 0 60 100" aria-hidden="true">' + body + '</svg>';
+      const GLY = {
+        tree: G('<path d="M13 -18V52H60" fill="none" stroke="currentColor" stroke-width="5"/>'),                    // └
+        hline: G('<path d="M-1 50H61" stroke="currentColor" stroke-width="7.7"/>'),                                 // ─ (1 px, like the rule after it)
+        elbow: G('<path d="M11 -6V82.2H70" fill="none" stroke="currentColor" stroke-width="5.5"/>'),               // ⎿ (above cap height to baseline)
+        larr: SK.glyphs.larr,                                                                                        // ←
+        hcheck: G('<path d="M8 52 23 68 53 30" fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>'), // ✔
+        star: G('<path fill="currentColor" d="M30 12C32.6 37 37 44.5 59 50 37 55.5 32.6 63 30 88 27.4 63 23 55.5 1 50 23 44.5 27.4 37 30 12Z"/>') // ✦
+      };
+      const gl = (n) => '<i class="tg">' + GLY[n] + '</i>';
+      // braille spinner ⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏ (dots 1-6: left column 1,2,3 / right column 4,5,6)
+      const BRAILLE = [[1, 2, 4], [1, 4, 5], [1, 4, 5, 6], [4, 5, 6], [3, 4, 5, 6], [3, 5, 6], [2, 3, 6], [1, 2, 3, 6], [1, 2, 3], [1, 2, 3, 4]];
+      const DOTPOS = { 1: [17, 26], 2: [17, 50], 3: [17, 74], 4: [43, 26], 5: [43, 50], 6: [43, 74] };
+      const brailleSVG = (dots) => G(dots.map((d) => '<circle cx="' + DOTPOS[d][0] + '" cy="' + DOTPOS[d][1] + '" r="7.6" fill="currentColor"/>').join(''));
+      const stack = (frames, id, cls) => '<span class="stk' + (cls ? ' ' + cls : '') + '"' + (id ? ' id="' + id + '"' : '') + '>' +
+        frames.map((f, i) => '<span class="fr' + (i === 0 ? ' on0' : '') + '">' + f + '</span>').join('') + '</span>';
+      const alts = (list, cls) => list.map((s, i) => '<span class="alt' + (i === 0 ? ' on0' : '') + (cls ? ' ' + cls : '') + '">' + s + '</span>').join('');
+      // diff helpers: «…» marks the changed words
+      const plain = (s) => s.replace(/[«»]/g, '');
+      const marked = (s, cls) => esc(s).replace(/«(.*?)»/g, '<span class="' + cls + '">$1</span>');
+      // reply text split into word spans (hard-cut chunks, the way a terminal prints a stream)
+      function words(segs, codeCls) {
+        let out = '';
+        segs.forEach((sg) => {
+          if (sg.t != null) sg.t.split(/(?<= )/).forEach((w) => { out += '<span class="w">' + esc(w) + '</span>'; });
+          else if (sg.b != null) out += '<span class="w"><b>' + esc(sg.b) + '</b></span>';
+          else out += '<span class="w"><span class="' + codeCls + '">' + esc(sg.id || sg.code) + '</span></span>';
+        });
+        return out;
+      }
+      function printChunks(container, t0, dur, per) {
+        const ws = $$('.w', container);
+        const n = Math.ceil(ws.length / per);
+        ws.forEach((w, i) => tl.set(w, { visibility: 'visible' }, t0 + (n > 1 ? (dur * Math.floor(i / per)) / (n - 1) : 0)));
+      }
+      // stacked glyph frames: cycle the visible frame every `step` seconds
+      function cycleFrames(stackEl, t0, t1, step, seq) {
+        const fr = $$('.fr', stackEl);
+        seq = seq || fr.map((_, i) => i);
+        let k = 0, prev = seq[0];
+        for (let t = t0 + step; t < t1 - 1e-6; t += step) {
+          k++; const cur = seq[k % seq.length];
+          if (cur !== prev) { tl.set(fr[prev], { opacity: 0 }, t); tl.set(fr[cur], { opacity: 1 }, t); }
+          prev = cur;
+        }
+        return prev;
+      }
+      function toFrame(stackEl, from, idx, t) {
+        const fr = $$('.fr', stackEl);
+        if (from !== idx) { tl.set(fr[from], { opacity: 0 }, t); tl.set(fr[idx], { opacity: 1 }, t); }
+      }
+      // alternatives in one slot: alternative k shows from times[k]
+      function cycleAlt(els, times) {
+        times.forEach((t, k) => { if (k && els[k]) { tl.set(els[k - 1], { display: 'none' }, t); tl.set(els[k], { display: 'inline' }, t); } });
+      }
+      // a running indicator that dips and always comes back to full opacity
+      function blink(x, t0, t1, half) {
+        const n = Math.max(1, Math.floor((t1 - t0) / (2 * half)));
+        tl.fromTo(x, { opacity: 1 }, { opacity: 0.25, duration: half, ease: 'sine.inOut', yoyo: true, repeat: 2 * n - 1, immediateRender: false }, t0);
+      }
+      const timerTimes = () => [T.submit, T.submit + 1, T.submit + 2, T.submit + 3];
+      const lights = '<span class="lights"><i></i><i></i><i></i></span>';
+      // the composer placeholder belongs to GSAP alone: hidden on the first key, back the moment the prompt is sent
+      function placeholderState(slot) {
+        tl.set(slot, { attr: { 'data-ph': '0' } }, T.typeAt + 1e-3);   // the first key renders on the frame after typeAt
+        tl.set(slot, { attr: { 'data-ph': '1' } }, T.submit);
+      }
+
+      /* ======================= v0  Claude Code ======================= */
+      function buildClaude(C) {
+        const g = (n) => SK.g(n), gut = (n) => SK.gut(n);
+        const elbow = '<span class="cc-gut">' + gl('elbow') + '</span>';
+        const dot = (id) => '<span class="cc-gut">' + stack(['<span style="color:var(--cct-dim)">' + SK.glyphs.dot + '</span>', '<span style="color:var(--cct-success)">' + SK.glyphs.dot + '</span>'], id) + '</span>';
+        const tool = (tdef, id) => '<div class="cc-t">' + dot(id) + '<span><span class="cc-tn">' + tdef.name + '</span>' + esc(tdef.args) + '</span></div>';
+        const res = (html, id) => '<div class="cc-r hid"' + (id ? ' id="' + id + '"' : '') + '>' + elbow + '<span class="cc-rb">' + html + '</span></div>';
+        const dl = (d, i) => {
+          const cls = d.k === '+' ? 'is-add' : d.k === '-' ? 'is-rem' : 'is-ctx';
+          const code = d.k === ' ' ? esc(plain(d.s)) : marked(d.s, d.k === '+' ? 'cc-w-add' : 'cc-w-rem');
+          return '<span class="cc-dl ' + cls + ' hid" id="dl' + i + '"><span class="cc-ln">' + d.n + '</span><span>' + (d.k === ' ' ? ' ' : d.k) + '</span><span>' + code + '</span></span>';
+        };
+        const spinFrames = ['sp0', 'sp1', 'sp2', 'sp3', 'sp4', 'sp5'].map((n) => SK.glyphs[n]);
+
+        win.innerHTML =
+          '<div class="tbar">' + lights + '<span class="ttl">' + g('sp2') + '<span><span id="tt0">' + esc(C.titleIdle) + '</span><span id="tt1" class="hid">' + esc(C.titleTask) + '</span></span></span></div>' +
+          '<div class="tbody"><div class="cc-term" style="--cct-fs:13px;--cct-lh:1.55"><div class="cc-cli">' +
+            '<div class="cc-tx vp" data-layout-allow-overflow><div class="vpi" id="txi" style="--sy:0">' +
+              '<div class="cc-l cc-hdr" data-layout-allow-occlusion>' + g('spark') + ' ' + esc(C.header) + '</div>' +
+              '<div class="cc-u cc-b hid" id="ub">' + gut('chev') + '<span>' + esc(CONFIG.task) + '</span></div>' +
+              '<div class="cc-b hid" id="rd">' + tool(C.read, 'rdD') + res(C.read.result + ' <span class="cc-dim" data-layout-ignore>' + esc(C.read.hint) + '</span>', 'rdR') + '</div>' +
+              '<div class="cc-b hid" id="ed">' + tool(C.edit, 'edD') + res(C.edit.result, 'edR') +
+                '<div class="cc-r is-cont"><span></span><span class="cc-rb cc-diff">' + CONFIG.diff.map(dl).join('') + '</span></div></div>' +
+              '<div class="cc-b hid" id="bs">' + tool(C.bash, 'bsD') + res('<span class="cc-dim">' + esc(C.bash.running) + '</span>', 'bsRun') + res(esc(C.bash.result), 'bsR') + '</div>' +
+              '<div class="cc-a cc-b hid" id="ans">' + gut('dot') + '<span>' + words(C.answer, 'cc-id') + '</span></div>' +
+              '<div class="cc-b hid" id="spin"><div class="cc-spin"><span class="cc-gut">' + stack(spinFrames, 'spinG') + '</span><span><span class="cc-verb" id="verb" data-layout-ignore>' + esc(C.verb) +
+                '</span> <span class="cc-dim" data-layout-ignore>(<span id="ctr">0s · ↓ 0 tokens</span>)</span></span></div></div>' +
+              '<div class="cc-done cc-b hid" id="done">' + gut('spark') + '<span>' + esc(C.done) + '</span></div>' +
+            '</div></div>' +
+            '<div class="cc-input"><div class="cc-rule"></div>' +
+              '<div class="cc-pline">' + gut('chev') + '<span><span id="typed"></span></span></div>' +
+              '<div class="cc-rule"></div>' +
+              '<div class="cc-foot"><span class="cc-mode-auto">' + g('ff') + ' ' + esc(C.mode) + '</span> <span class="cc-hint" data-layout-ignore>' + esc(C.hint) + '</span> · ' +
+                '<span id="f-idle">' + g('larr') + ' ' + esc(C.idle) + '</span><span class="hid" id="f-busy">' + esc(C.busy) + '</span></div>' +
+            '</div></div></div></div>';
+        win.classList.add('v0', 'sk-cc');
+        win.setAttribute('data-theme', theme);
+
+        // 1. the prompt is typed after ❯ (block cursor), then Enter
+        K.typeText(tl, '#typed', CONFIG.task, T.typeAt, { cps: T.cps, caretFrom: 0.3, caretUntil: T.end });
+        const S = T.submit;
+        hide($('#typed .km-typed'), S);
+        show('#ub', S, 'grid');
+        show('#spin', S);
+        hide('#f-idle', S); show('#f-busy', S, 'inline');
+        hide('#tt0', S + 0.5); show('#tt1', S + 0.5, 'inline');
+        // spinner glyph ping-pongs · ✢ ✳ ✶ ✻ ✽, the verb shimmers, seconds tick and tokens roll every 100 ms
+        cycleFrames($('#spinG'), S, T.done, 0.12, [0, 1, 2, 3, 4, 5, 4, 3, 2, 1]);
+        const reps = Math.floor((T.done - S) / 1.1);
+        tl.fromTo('#verb', { '--cc-shim': '100%' }, { '--cc-shim': '0%', duration: 1.1, ease: 'none', repeat: reps - 1, immediateRender: false }, S);
+        const ctr = $('#ctr'), KT = C.tokens;
+        const tokensAt = (s) => {
+          for (let i = 1; i < KT.length; i++) if (s <= KT[i][0]) return KT[i - 1][1] + (KT[i][1] - KT[i - 1][1]) * (s - KT[i - 1][0]) / (KT[i][0] - KT[i - 1][0]);
+          return KT[KT.length - 1][1];
+        };
+        drive(S, T.done, (t) => {
+          const s = Math.max(0, t - S), q = Math.floor(s * 10 + 1e-6);
+          let n = Math.round(tokensAt(q / 10));
+          if (n > 0) n += ((q * 7) % 5) * 3;   // uneven 100 ms steps, still rising
+          const tok = n < 1000 ? String(n) : (n / 1000).toFixed(1) + 'k';
+          const txt = Math.floor(s + 1e-6) + 's · ↓ ' + tok + ' tokens';
+          if (ctr.textContent !== txt) ctr.textContent = txt;
+        });
+
+        // 2. Read → Update (+ patch) → Bash: grey ● while running, green ● with its ⎿ result when done
+        show('#rd', T.read[0]); blink($$('#rdD .fr')[0], T.read[0], T.read[1], 0.09);
+        toFrame($('#rdD'), 0, 1, T.read[1]); show('#rdR', T.read[1], 'grid');
+        show('#ed', T.edit[0]); blink($$('#edD .fr')[0], T.edit[0], T.edit[1], 0.09);
+        toFrame($('#edD'), 0, 1, T.edit[1]); show('#edR', T.edit[1], 'grid');
+        rows(CONFIG.diff.map((_, i) => '#dl' + i), T.edit[1] + T.row, 'grid');
+        show('#bs', T.bash[0]); show('#bsRun', T.bash[0] + 0.12, 'grid'); blink($$('#bsD .fr')[0], T.bash[0], T.bash[1], 0.15);
+        toFrame($('#bsD'), 0, 1, T.bash[1]); hide('#bsRun', T.bash[1]); show('#bsR', T.bash[1], 'grid');
+
+        // 3. the reply streams in under the tools; the turn ends on "✻ Worked for 4s"
+        show('#ans', T.answer, 'grid'); printChunks($('#ans'), T.answer, 0.42, 3);
+        hide('#spin', T.done); show('#done', T.done, 'grid');
+        hide('#f-busy', T.done); show('#f-idle', T.done, 'inline');
+
+        autoScroll($('.v0 .cc-tx'), $('#txi'));
+      }
+
+      /* ======================= v1  Codex CLI ======================= */
+      function buildCodex(C) {
+        const L = (html, cls, id, hidden) => '<div class="cx-tl' + (cls ? ' ' + cls : '') + (hidden ? ' hid' : '') + '"' + (id ? ' id="' + id + '"' : '') + '>' + html + '</div>';
+        const GAP = '<div class="cx-t-gap"></div>';
+        const B = '<span class="cx-t-bullet">•</span> ';
+        const dl = (d) => L('    ' + d.n + ' ' + d.k + esc(plain(d.s)), 'cx-t-' + (d.k === '+' ? 'add' : 'del'));
+        const ans = C.answer.map((s) => s.t != null ? esc(s.t) : '<span class="cx-t-cyan">' + esc(s.code) + '</span>').join('');
+        // the Ran bullet is the same text glyph as every other bullet; only its colour changes
+        const runBullet = '<span class="alt on0 cx-t-bullet" id="rnB">•</span><span class="alt cx-t-green">•</span> ';
+        const hid = (inner, id) => '<div class="hid" id="' + id + '">' + inner + '</div>';
+
+        win.innerHTML =
+          '<div class="tbar">' + lights + '<span class="ttl">' + esc(C.title) + '</span></div>' +
+          '<div class="tbody"><div class="cx-term-body cxb">' +
+            '<div class="cxtx vp" data-layout-allow-overflow><div class="vpi" id="txi" style="--sy:0">' +
+              L('  <span class="cx-t-strong">&gt;_</span> <span class="cx-t-b">OpenAI Codex</span> <span class="cx-t-dim" data-layout-ignore>(' + esc(C.version) + ')</span>') +
+              L('     <span class="cx-t-dim" data-layout-ignore>' + esc(C.cwd) + '</span>') + GAP +
+              L('  <span class="cx-t-blue">' + esc(C.tagline) + '</span>') +
+              hid(GAP + L('<span class="cx-t-b">›</span> ' + esc(CONFIG.task), 'cx-t-band'), 'ub') +
+              hid(GAP + L(B + '<span class="cx-t-b">' + alts(C.explore.map(esc)) + '</span>'), 'ex0') +
+              hid(L('  ' + gl('tree') + ' <span class="cx-t-cyan">Read</span> ' + esc(C.exploreItem)), 'ex1') +
+              hid(GAP + L(B + '<span class="cx-t-b">Edited</span> ' + esc(C.edit.file) + ' (<span class="cx-t-green">+' + C.edit.add + '</span> <span class="cx-t-red">-' + C.edit.rem + '</span>)'), 'ed0') +
+              CONFIG.diff.filter((d) => d.k !== ' ').map((d, i) => hid(dl(d), 'ed' + (i + 1))).join('') +
+              hid(GAP + L(runBullet + '<span class="cx-t-b">' + alts(C.run.map(esc)) + '</span> ' + esc(C.cmd)), 'rn0') +
+              hid(L('  ' + gl('tree') + ' Tests  <span class="cx-t-green">48 passed</span> (48)'), 'rn1') +
+              hid(GAP + '<div class="cx-tl cx-t-rule">' + gl('hline') + '<span>' + esc(C.worked) + '</span></div>', 'wk') +
+              hid(GAP + L('<span class="cx-t-bullet">•</span> ' + ans, 'is-item'), 'ans') +
+            '</div></div>' +
+            L(B + '<span class="cx-t-shimmer" id="shim">Working</span> <span class="cx-t-dim" data-layout-ignore>(' + alts(C.timers) + ' • esc to interrupt)</span>', '', 'status', true) +
+            '<div class="cx-t-composer">' + L('<span><span class="cx-t-b">›</span> <span class="slot" id="slot" data-ph="1"><span id="typed"></span><span class="cx-t-ph" id="ph" data-layout-ignore>' +
+              esc(C.placeholder) + '</span></span></span>') + '</div>' +
+            '<div class="cx-t-foot">' + L('  <span class="cx-t-yellow">' + esc(C.status) + '</span>') +
+              L('  <span class="cx-t-dim" data-layout-ignore>' + gl('larr') + ' for agents · <span class="cx-t-b">?</span> for shortcuts</span>') + '</div>' +
+          '</div></div>';
+        win.classList.add('v1', 'sk-codex');
+        win.setAttribute('data-theme', theme);
+
+        K.typeText(tl, '#typed', CONFIG.task, T.typeAt, { cps: T.cps, caretFrom: 0.3, caretUntil: T.end });
+        $('#typed .km-caret').setAttribute('data-ch', C.placeholder.charAt(0));
+        placeholderState($('#slot'));
+        const S = T.submit;
+        // Enter: the prompt lands in the history as a band; the composer empties; "Working" shimmers above it
+        hide($('#typed .km-typed'), S);
+        show('#ub', S);
+        show('#status', S);
+        const reps = Math.floor((T.answer - S) / 1.0);
+        tl.fromTo('#shim', { backgroundPosition: '100% 0' }, { backgroundPosition: '0% 0', duration: 1.0, ease: 'none', repeat: reps - 1, immediateRender: false }, S);
+        cycleAlt($$('#status .alt'), timerTimes());
+        // cells commit row by row: Exploring → Explored, Edited with its diff, Running → Ran
+        show('#ex0', T.read[0]); show('#ex1', T.read[0] + 0.12); cycleAlt($$('#ex0 .alt'), [0, T.read[1]]);
+        rows(['#ed0', '#ed1', '#ed2'], T.edit[1]);
+        show('#rn0', T.bash[0]); blink('#rnB', T.bash[0], T.bash[1], 0.15);
+        cycleAlt($$('#rn0 .alt'), [0, T.bash[1]]); cycleAlt([$$('#rn0 .alt')[2], $$('#rn0 .alt')[3]], [0, T.bash[1]]);
+        show('#rn1', T.bash[1]);
+        // turn end: the Working row goes in the same frame the "Worked for" rule prints; the reply commits a beat later
+        hide('#status', T.answer); show('#wk', T.answer);
+        show('#ans', T.answer + 0.18);
+
+        autoScroll($('.v1 .cxtx'), $('#txi'));
+      }
+
+      /* ======================= v2  Gemini CLI ======================= */
+      function buildGemini(C) {
+        const blank = '<div class="gl"></div>';
+        // the logo: one rect per run of █; ░ runs are drawn under a 25% dither mask (how a terminal paints the light-shade glyph)
+        const CW = 7.8, RH = 18.2;   // one mono cell at 13 px, line-height 1.4
+        let solid = '', shade = '';
+        C.logo.forEach((row, y) => {
+          const r = row.padEnd(80, ' ');
+          let x = 0;
+          while (x < 80) {
+            const ch = r[x];
+            if (ch === ' ') { x++; continue; }
+            let x2 = x; while (x2 < 80 && r[x2] === ch) x2++;
+            const rect = '<rect x="' + (x * CW).toFixed(2) + '" y="' + (y * RH).toFixed(2) + '" width="' + ((x2 - x) * CW + 0.25).toFixed(2) + '" height="' + (RH + 0.35).toFixed(2) + '"/>';
+            if (ch === '░') shade += rect; else solid += rect;
+            x = x2;
+          }
+        });
+        const LW = (80 * CW).toFixed(1), LH = (8 * RH).toFixed(1);
+        const logo = '<svg viewBox="0 0 ' + LW + ' ' + LH + '" aria-hidden="true"><defs>' +
+          '<linearGradient id="gemgrad" x1="0" y1="0" x2="' + LW + '" y2="0" gradientUnits="userSpaceOnUse">' +
+          '<stop offset="0" stop-color="#4796E4"/><stop offset="0.5" stop-color="#847ACE"/><stop offset="1" stop-color="#C3677F"/></linearGradient>' +
+          '<pattern id="dith" width="2.6" height="2.6" patternUnits="userSpaceOnUse"><rect width="1.3" height="1.3" fill="#fff"/></pattern>' +
+          '<mask id="shademask" maskUnits="userSpaceOnUse" x="0" y="0" width="' + LW + '" height="' + LH + '"><rect width="' + LW + '" height="' + LH + '" fill="url(#dith)"/></mask></defs>' +
+          '<g fill="url(#gemgrad)" mask="url(#shademask)">' + shade + '</g>' +
+          '<g fill="url(#gemgrad)">' + solid + '</g></svg>';
+        const tips = C.tips.map((s) => '<div class="gl">' + esc(s).replace(/\{(.+?)\}/, '<b class="gp">$1</b>') + '</div>').join('');
+        const spin = (id) => stack(BRAILLE.map(brailleSVG), id);
+        const status = (id) => '<span class="gst">' + stack(BRAILLE.map(brailleSVG).concat(['<span class="ok">' + GLY.hcheck + '</span>']), id) + '</span>';
+        const toolRow = (t, id) => '<div class="gl">' + status(id) + '<b>' + esc(t.name) + '</b> <span class="gg">' + esc(t.desc) + '</span></div>';
+        const dl = (d, i) => {
+          const k = d.k === '+' ? 'add' : d.k === '-' ? 'rem' : 'ctx';
+          return '<div class="gdl ' + k + ' hid" id="g' + i + '"><span class="n">' + d.n + '</span><span class="s">' + d.k + ' </span><span class="c">' +
+            esc(plain(d.s)) + '</span></div>';
+        };
+        const ans = words(C.answer, 'gp');
+        const F = C.footer;
+
+        win.innerHTML =
+          '<div class="tbar">' + lights + '<span class="ttl">' + esc(C.title) + '</span></div>' +
+          '<div class="tbody"><div class="gmb"><div class="gmv vp" data-layout-allow-overflow><div class="vpi" id="txi" style="--sy:0">' +
+            blank +
+            '<div class="glogo">' + logo + '</div>' + blank + tips +
+            '<div class="hid" id="um">' + blank + '<div class="gl"><span class="gp">&gt; </span><span class="gg">' + esc(CONFIG.task) + '</span></div>' + blank + '</div>' +
+            '<div class="gbox hid" id="rdBox">' + toolRow(C.read, 'rdS') + '</div>' +
+            '<div class="gbox hid" id="grp">' + toolRow(C.edit, 'edS') + CONFIG.diff.map(dl).join('') +
+              '<div class="hid" id="shw">' + blank + toolRow(C.shell, 'shS') + '</div>' +
+              '<div class="gl hid" id="shOut">   ' + esc(C.shell.out) + '</div></div>' +
+            '<div class="hid" id="ldw">' + blank + '<div class="gl">' + '<span class="gp">' + spin('ldS') + '</span> <span class="gp">' + alts(C.phrases.map(esc)) + '</span>' +
+              '<span class="gg" data-layout-ignore> (esc to cancel, ' + alts(C.timers) + ')</span></div></div>' +
+            '<div class="hid" id="answ">' + blank + '<div class="gl gans">' + gl('star') + ' ' + ans + '</div></div>' +
+            blank +
+            '<div class="gl gsplit"><span class="gg" data-layout-ignore>' + esc(C.context) + '</span><span class="ggr">' + esc(C.mode) + '</span></div>' +
+            '<div class="gin"><div class="gl"><span class="gp">&gt; </span><span class="slot" id="slot" data-ph="1"><span id="typed"></span><span class="gg" id="ph" data-layout-ignore>' + esc(C.placeholder) + '</span></span></div></div>' +
+            '<div class="gl gsplit"><span><span class="glb">' + esc(F.path) + '</span><span class="gg" data-layout-ignore>' + esc(F.branch) + '</span></span>' +
+              '<span class="gr">' + esc(F.sandbox) + '</span>' +
+              '<span><span class="gb">' + esc(F.model) + '</span><span class="gg" id="ctx" data-layout-ignore> (' + alts(F.ctx) + ' context left)</span></span></div>' +
+          '</div></div></div></div>';
+        win.classList.add('v2', 'gmc');
+
+        K.typeText(tl, '#typed', CONFIG.task, T.typeAt, { cps: T.cps, caretFrom: 0.3, caretUntil: T.end });
+        placeholderState($('#slot'));
+        const S = T.submit;
+        // Enter: the prompt prints as "> …", the input box empties, the loading line starts
+        hide($('#typed .km-typed'), S);
+        show('#um', S); show('#ldw', S);
+        cycleFrames($('#ldS'), S, T.answer, 0.08);
+        cycleAlt($$('#ldw .gp .alt'), [0, T.edit[0], T.bash[0]]);
+        cycleAlt($$('#ldw .gg .alt'), timerTimes());
+        // tools: a braille spinner in the status column, then a heavy ✔
+        const run = (stackId, t0, t1) => { const last = cycleFrames($('#' + stackId), t0, t1, 0.08); toFrame($('#' + stackId), last, 10, t1); };
+        show('#rdBox', T.read[0]); run('rdS', T.read[0], T.read[1]);
+        show('#grp', T.edit[0]); run('edS', T.edit[0], T.edit[1]);
+        rows(CONFIG.diff.map((_, i) => '#g' + i), T.edit[1] + T.row, 'grid');
+        show('#shw', T.bash[0]); run('shS', T.bash[0], T.bash[1]); show('#shOut', T.bash[1]);
+        // the reply replaces the loading line and streams in; the footer's context figure settles
+        hide('#ldw', T.answer); show('#answ', T.answer); printChunks($('#answ'), T.answer, 0.42, 3);
+        cycleAlt($$('#ctx .alt'), [0, T.done]);
+
+        // the first time the content overflows, the whole banner (blank + logo + blank + tips = 14 rows) scrolls away in one move
+        const BANNER = 2 + C.logo.length + C.tips.length;
+        autoScroll($('.v2 .gmv'), $('#txi'), (r) => (r > 0 ? Math.max(r, BANNER) : 0));
+      }
+
+      /* ======================= build + shared entrance / hold / exit ======================= */
+      const cfg = CONFIG.variants[variant];
+      if (variant === '0') buildClaude(cfg);
+      else if (variant === '1') buildCodex(cfg);
+      else buildGemini(cfg);
+
+      // the window rises in (expo-out), the hold gets one slow push-in, and the last 0.4 s clears so the tile loops
+      tl.fromTo('#lift', { opacity: 0, y: 28, scale: 0.985 }, { opacity: 1, y: 0, scale: 1, duration: 0.75, ease: 'expo.out', immediateRender: false }, T.enter);
+      gsap.set('#lift', { opacity: 0, y: 28, scale: 0.985 });
+      tl.fromTo('#lift', { scale: 1 }, { scale: 1.02, duration: T.exit - T.push, ease: 'power2.inOut', immediateRender: false }, T.push);
+      tl.fromTo('#lift', { opacity: 1, y: 0 }, { opacity: 0, y: -6, duration: T.end - T.exit, ease: 'power2.in', immediateRender: false }, T.exit);
+      tl.set({}, {}, T.end);
+
+      window.__timelines['main'] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

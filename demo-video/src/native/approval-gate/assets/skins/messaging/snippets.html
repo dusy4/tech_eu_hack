@@ -1,0 +1,383 @@
+<!doctype html>
+<!--
+  MESSAGING SKIN: canonical markup for iMessage (iOS 26), WhatsApp (iOS 26) and Slack (macOS desktop).
+  Copy the piece you need into your component.
+
+  Roots: .sk-ios.sk-imsg (iPhone screen, Messages) · .sk-ios.sk-wa (iPhone screen, WhatsApp) · .sk-slack (window).
+  Theme: data-theme="light|dark" on the root or any ancestor (e.g. <html>).
+  Icons: write <span data-ic="name"></span>, then call SKIN_ICONS_MESSAGING.mount(rootEl) once.
+  Keyboard: <div class="ios-kb caps"></div> filled with SKIN_ICONS_MESSAGING.keyboard(['I','The','I’m']).
+
+  Scale 1 = iOS points / Slack CSS px. For video, wrap the device in an element with `zoom`:
+  phone 1.55 (17 pt text lands at ~26 px; crop it the way a launch video does), Slack 1.72 on a
+  730 x 586 window (15 px Lato lands at ~26 px). See demo/index.html.
+  Open this file directly in a browser to see every piece rendered.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Messaging skin snippets</title>
+<link rel="stylesheet" href="../../_shared/fonts/fonts.css">
+<link rel="stylesheet" href="skin.css">
+<script src="icons.js"></script>
+<style>
+  body { margin: 0; padding: 40px; background: #e9e8e6; font-family: Inter, sans-serif; display: flex; flex-direction: column; gap: 56px; }
+  .label { font: 600 13px/1 Inter, sans-serif; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
+  .row { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
+  .dark-bg { background: #0e0e0f; padding: 32px; border-radius: 16px; }
+</style>
+</head>
+<body>
+
+<!-- =====================================================================
+     1. iPHONE BODY + iMESSAGE THREAD (keyboard down)
+     .msg-phone (430 x 902) > island + side buttons + .sk-ios.sk-imsg (402 x 874).
+     Layer order inside the screen: status bar, .imsg-thread, .ios-edge-top, .imsg-head,
+     .imsg-composer, .ios-home. The thread is bottom-anchored: append messages at the end.
+     ===================================================================== -->
+<section>
+<div class="label">1 · iMessage thread (light + dark): header, stamps, bubbles, tails, receipt, tapback, typing, composer idle</div>
+<div class="row">
+<div class="msg-phone" data-theme="light">
+  <i class="msg-phone-btn action"></i><i class="msg-phone-btn volup"></i><i class="msg-phone-btn voldn"></i><i class="msg-phone-btn side"></i><i class="msg-phone-btn cam"></i>
+  <div class="msg-phone-island"></div>
+  <div class="sk-ios sk-imsg">
+    <!-- status bar -->
+    <div class="ios-status">
+      <span class="ios-time">9:41</span>
+      <span class="ios-status-r"><span class="sig" data-ic="ios-signal"></span><span class="wifi" data-ic="ios-wifi"></span><span class="bat" data-ic="ios-battery"></span></span>
+    </div>
+
+    <!-- thread: .imsg-stamp (time), .imsg-row.recv|.sent > .imsg-b.
+         Grouping rules (iMessage):
+         - consecutive bubbles from one side form a group: 2 pt apart, ONLY the last one has .tail;
+         - .gap (10 pt) between groups from different sides;
+         - a stamp is printed when more than ~1 hour separates two messages, and it ends the group:
+           the bubble before the stamp keeps its tail;
+         - .imsg-receipt sits under the LAST sent bubble only, and is removed once the other side replies. -->
+    <div class="imsg-thread">
+      <div class="imsg-stamp">iMessage<br><b>Today</b> 8:02 AM</div>
+      <div class="imsg-row recv"><div class="imsg-b">Morning! Standup moved to 10:30.</div></div>
+      <!-- tapback (yours = blue) on a received bubble: .imsg-row.tb gives it headroom -->
+      <div class="imsg-row recv tb"><div class="imsg-b tail">Lunch with Sam is still on for 12:30 at Tartine.<div class="imsg-tapback"><span data-ic="heart"></span></div></div></div>
+      <div class="imsg-row sent gap"><div class="imsg-b tail">Perfect, thanks 🙏</div></div>
+      <!-- 1 h 39 min later: new stamp, so both blue bubbles keep their tails -->
+      <div class="imsg-stamp"><b>Today</b> 9:41 AM</div>
+      <div class="imsg-row sent"><div class="imsg-b tail">Can you move my 3pm to Friday?</div></div>
+      <!-- receipt: "Delivered" → "Read 9:41 AM"; drop it when the reply arrives -->
+      <div class="imsg-receipt"><span><b>Read</b> 9:41 AM</span></div>
+      <!-- typing indicator (animate the three <i> opacities in turn) -->
+      <div class="imsg-row recv gap"><div class="imsg-typing"><i></i><i></i><i></i></div></div>
+    </div>
+
+    <!-- header: scroll-edge effect first, then the floating controls -->
+    <div class="ios-edge-top"></div>
+    <div class="imsg-head">
+      <div class="ios-btn back ios-glass"><span data-ic="chev-left"></span></div>
+      <!-- avatar: data-ic="av-blossie" (the dots agent's puffy cloud), an <img>, or a monogram:
+           <div class="imsg-av ios-mono">PS</div> -->
+      <div class="imsg-av" data-ic="av-blossie"></div>
+      <div class="imsg-name ios-glass">Blossie<span data-ic="chev-right"></span></div>
+      <div class="ios-btn facetime ios-glass"><span data-ic="video"></span></div>
+    </div>
+
+    <!-- composer, idle: placeholder + mic (no text → no send button) -->
+    <div class="imsg-composer">
+      <div class="imsg-plus ios-glass"><span data-ic="plus"></span></div>
+      <div class="imsg-field ios-glass">
+        <span class="ph">iMessage</span>
+        <span class="txt"></span>
+        <span class="mic" data-ic="mic"></span>
+        <span class="imsg-send"><span data-ic="arrow-up"></span></span>
+      </div>
+    </div>
+    <div class="ios-home"></div>
+  </div>
+</div>
+
+<!-- 2. Same screen, dark theme, KEYBOARD UP and composer TYPING (.imsg-field.has-text). -->
+<div class="dark-bg" data-theme="dark">
+<div class="msg-phone">
+  <i class="msg-phone-btn action"></i><i class="msg-phone-btn volup"></i><i class="msg-phone-btn voldn"></i><i class="msg-phone-btn side"></i><i class="msg-phone-btn cam"></i>
+  <div class="msg-phone-island"></div>
+  <!-- .kb-up lifts the composer onto the keyboard and pads the thread -->
+  <div class="sk-ios sk-imsg kb-up">
+    <div class="ios-status"><span class="ios-time">9:41</span><span class="ios-status-r"><span class="sig" data-ic="ios-signal"></span><span class="wifi" data-ic="ios-wifi"></span><span class="bat" data-ic="ios-battery"></span></span></div>
+    <div class="imsg-thread">
+      <div class="imsg-stamp"><b>Today</b> 9:12 AM</div>
+      <div class="imsg-row recv"><div class="imsg-b tail">Lunch with Sam is still on for 12:30 at Tartine.</div></div>
+      <div class="imsg-row sent gap"><div class="imsg-b tail">Perfect, thanks 🙏</div></div>
+      <!-- rich link, compact: page title + domain on the left, the SITE'S OWN icon on the right
+           (.site = white app-icon tile; data-ic="gcal" for calendar.google.com). Without an icon,
+           drop .imsg-link-ico. The Apple date tile (.imsg-cal: <span class="d">FRI</span><span class="n">16</span>)
+           is only for Apple Calendar .ics invites, never for a web link. -->
+      <div class="imsg-row recv gap"><div class="imsg-b tail rich"><div class="imsg-link compact">
+        <div class="imsg-link-cap"><div class="imsg-link-title">Chris / Priya 1:1</div><div class="imsg-link-sub">calendar.google.com</div></div>
+        <div class="imsg-link-ico site" data-ic="gcal"></div>
+      </div></div></div>
+    </div>
+    <div class="ios-edge-top"></div>
+    <div class="imsg-head">
+      <div class="ios-btn back ios-glass"><span data-ic="chev-left"></span></div>
+      <div class="imsg-av ios-mono">PS</div>
+      <div class="imsg-name ios-glass">Priya Shah<span data-ic="chev-right"></span></div>
+      <div class="ios-btn facetime ios-glass"><span data-ic="video"></span></div>
+    </div>
+    <!-- composer, typing: text + blue caret; the mic gives way to the blue ↑ send button -->
+    <div class="imsg-composer">
+      <div class="imsg-plus ios-glass"><span data-ic="plus"></span></div>
+      <div class="imsg-field ios-glass has-text">
+        <span class="ph">iMessage</span>
+        <span class="txt">See you at 3<i class="imsg-caret"></i></span>
+        <span class="mic" data-ic="mic"></span>
+        <span class="imsg-send"><span data-ic="arrow-up"></span></span>
+      </div>
+    </div>
+    <!-- keyboard: filled by SKIN_ICONS_MESSAGING.keyboard(); remove .caps once a letter is typed -->
+    <div class="ios-kb" data-kb='["“3”","3:00","30"]'></div>
+    <div class="ios-home"></div>
+  </div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- =====================================================================
+     3. WHATSAPP CHAT (iOS 26)
+     Layer order: .wa-wall, status bar, .wa-thread, .ios-edge-top (height ~132), .wa-head, .wa-composer, .ios-home.
+     Bubbles: .wa-row.in|.out > .wa-b (.tail on the last bubble of a group). End the text with
+     <span class="wa-sp"></span><span class="wa-meta">time [ticks]</span>: the bubble hugs its text and the
+     time stays inline on the last line when it fits ("Anything you need for tonight? 8:05").
+     New messages are appended at the end of .wa-thread (it clips below the newest one).
+     Ticks: sent = data-ic="wa-tick"; delivered = "wa-ticks"; read = "wa-ticks" inside .wa-meta.read (blue).
+     ===================================================================== -->
+<section>
+<div class="label">3 · WhatsApp chat (light idle + dark typing with keyboard)</div>
+<div class="row">
+<div class="msg-phone" data-theme="light">
+  <i class="msg-phone-btn action"></i><i class="msg-phone-btn volup"></i><i class="msg-phone-btn voldn"></i><i class="msg-phone-btn side"></i><i class="msg-phone-btn cam"></i>
+  <div class="msg-phone-island"></div>
+  <div class="sk-ios sk-wa">
+    <div class="wa-wall"></div>
+    <div class="ios-status"><span class="ios-time">9:41</span><span class="ios-status-r"><span class="sig" data-ic="ios-signal"></span><span class="wifi" data-ic="ios-wifi"></span><span class="bat" data-ic="ios-battery"></span></span></div>
+    <div class="wa-thread">
+      <div class="wa-chip">Today</div>
+      <div class="wa-row in"><div class="wa-b">Morning Chris! Your 6:30 call with Lisbon is confirmed.<span class="wa-sp"></span><span class="wa-meta">8:05</span></div></div>
+      <div class="wa-row in"><div class="wa-b tail">Anything you need for tonight?<span class="wa-sp"></span><span class="wa-meta">8:05</span></div></div>
+      <!-- sent (one grey tick) -->
+      <div class="wa-row out gap"><div class="wa-b">Book a table for 4 tonight?<span class="wa-sp"></span><span class="wa-meta">9:41<span data-ic="wa-tick"></span></span></div></div>
+      <!-- read (two blue ticks) -->
+      <div class="wa-row out"><div class="wa-b tail">Near the office if you can<span class="wa-sp"></span><span class="wa-meta read">9:41<span data-ic="wa-ticks"></span></span></div></div>
+      <!-- link preview: .wa-preview above the link text (add .wa-preview-img as the first child for an image) -->
+      <div class="wa-row in gap"><div class="wa-b tail">
+        <div class="wa-preview"><div class="wa-preview-body"><div class="wa-preview-title">Lupa Trattoria · Reservation confirmed</div><div class="wa-preview-desc">Thu, Oct 15 · 7:15 PM · Table for 4</div><div class="wa-preview-url">lupatrattoria.com</div></div></div>
+        <span class="lnk">lupatrattoria.com/r/LT4821</span><span class="wa-sp"></span><span class="wa-meta">9:41</span>
+      </div></div>
+    </div>
+    <div class="ios-edge-top" style="--edge-top-h:132px"></div>
+    <!-- header: back (with unread count: add .count and the number), avatar, name, status, call capsule -->
+    <div class="wa-head">
+      <div class="ios-btn back count ios-glass"><span data-ic="chev-left"></span>3</div>
+      <!-- contact photo: data-ic="av-muse" (Muse's plush mascot), an <img>, or WhatsApp's grey
+           default silhouette: <div class="wa-av"><span data-ic="wa-avatar"></span></div> -->
+      <div class="wa-title">
+        <div class="wa-av" data-ic="av-muse"></div>
+        <div class="wa-title-text"><div class="wa-name">Muse</div><div class="wa-sub-wrap"><span class="wa-sub">online</span></div></div>
+      </div>
+      <div class="wa-actions-pill ios-glass"><span data-ic="wa-video"></span><span data-ic="wa-phone"></span></div>
+    </div>
+    <!-- composer, idle: + / empty field with sticker glyph / camera / mic -->
+    <div class="wa-composer">
+      <div class="wa-plus ios-glass"><span data-ic="wa-plus"></span></div>
+      <div class="wa-field ios-glass"><span class="ph"></span><span class="txt"></span><span data-ic="wa-sticker"></span></div>
+      <div class="wa-icon"><span data-ic="wa-camera"></span></div>
+      <div class="wa-icon"><span data-ic="wa-mic"></span></div>
+      <div class="wa-send"><span data-ic="wa-send"></span></div>
+    </div>
+    <div class="ios-home"></div>
+  </div>
+</div>
+
+<div class="dark-bg" data-theme="dark">
+<div class="msg-phone">
+  <i class="msg-phone-btn action"></i><i class="msg-phone-btn volup"></i><i class="msg-phone-btn voldn"></i><i class="msg-phone-btn side"></i><i class="msg-phone-btn cam"></i>
+  <div class="msg-phone-island"></div>
+  <div class="sk-ios sk-wa kb-up">
+    <div class="wa-wall"></div>
+    <div class="ios-status"><span class="ios-time">9:41</span><span class="ios-status-r"><span class="sig" data-ic="ios-signal"></span><span class="wifi" data-ic="ios-wifi"></span><span class="bat" data-ic="ios-battery"></span></span></div>
+    <div class="wa-thread">
+      <div class="wa-chip">Today</div>
+      <div class="wa-row out"><div class="wa-b tail">Book a table for 4 tonight?<span class="wa-sp"></span><span class="wa-meta read">9:41<span data-ic="wa-ticks"></span></span></div></div>
+      <!-- typing bubble (pairs with the header's "typing…") -->
+      <div class="wa-row in gap"><div class="wa-typing"><i></i><i></i><i></i></div></div>
+    </div>
+    <div class="ios-edge-top" style="--edge-top-h:132px"></div>
+    <div class="wa-head">
+      <div class="ios-btn back ios-glass"><span data-ic="chev-left"></span></div>
+      <div class="wa-title">
+        <div class="wa-av"><span data-ic="wa-avatar"></span></div>
+        <div class="wa-title-text"><div class="wa-name">Muse</div><div class="wa-sub-wrap"><span class="wa-sub">typing…</span></div></div>
+      </div>
+      <div class="wa-actions-pill ios-glass"><span data-ic="wa-video"></span><span data-ic="wa-phone"></span></div>
+    </div>
+    <!-- composer, typing (.has-text): camera + mic hide, the green send circle shows -->
+    <div class="wa-composer has-text">
+      <div class="wa-plus ios-glass"><span data-ic="wa-plus"></span></div>
+      <div class="wa-field ios-glass"><span class="ph"></span><span class="txt">Thanks!<i class="wa-caret"></i></span><span data-ic="wa-sticker"></span></div>
+      <div class="wa-icon"><span data-ic="wa-camera"></span></div>
+      <div class="wa-icon"><span data-ic="wa-mic"></span></div>
+      <div class="wa-send"><span data-ic="wa-send"></span></div>
+    </div>
+    <div class="ios-kb" data-kb='["I","The","I’m"]'></div>
+    <div class="ios-home"></div>
+  </div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- =====================================================================
+     4. SLACK WINDOW (macOS app, aubergine theme)
+     .sk-slack (grid: 70px rail + panel; 40px title bar) > .sl-top, .sl-rail, .sl-panel > .sl-side + .sl-main.
+     Size the window with --sl-w / --sl-h on .sk-slack (default 1100 x 630). Sidebar width: --sl-side-w.
+     Type is Lato (shipped in fonts/): names and titles 900, bold UI 700, body 15/22.
+     People use photo avatars (<img> inside .sl-av / .mini.photo / .stack span / .faces span / .sl-me);
+     avatars/ has five AI-generated stand-ins (not real people). Bots use their mark on a tile.
+     ===================================================================== -->
+<section>
+<div class="label">4 · Slack channel (light): rail, sidebar, header, tabs, messages, bot APP badge, unfurl, Block Kit, reactions, thread, composer</div>
+<div class="sk-slack" data-theme="light" style="height:760px">
+  <!-- title bar: traffic lights · history arrows + search (centred) · help -->
+  <div class="sl-top">
+    <div class="sl-lights"><i></i><i></i><i></i></div>
+    <div class="sl-search-wrap">
+      <div class="sl-history"><span data-ic="sl-back"></span><span class="dim" data-ic="sl-fwd"></span><span data-ic="sl-clock"></span></div>
+      <div class="sl-search"><span data-ic="sl-search"></span>Search Halcyon</div>
+    </div>
+    <div class="sl-top-r"><span data-ic="sl-help"></span></div>
+  </div>
+  <!-- tab rail: workspace tile, Home (on), DMs, Activity (with unread dot), Files, More; + and your avatar -->
+  <div class="sl-rail">
+    <div class="sl-ws" style="background:linear-gradient(160deg,#2f7de1,#1458b8)">H</div>
+    <div class="sl-tab on"><span class="sl-tab-ic"><span data-ic="sl-home-fill"></span></span>Home</div>
+    <div class="sl-tab"><span class="sl-tab-ic"><span data-ic="sl-dms"></span></span>DMs</div>
+    <div class="sl-tab"><span class="sl-tab-ic"><span data-ic="sl-bell"></span><i class="dot"></i></span>Activity</div>
+    <div class="sl-tab"><span class="sl-tab-ic"><span data-ic="sl-files"></span></span>Files</div>
+    <div class="sl-tab"><span class="sl-tab-ic"><span data-ic="sl-more"></span></span>More</div>
+    <div class="sl-rail-foot"><span class="sl-new"><span data-ic="sl-plus"></span></span><span class="sl-me"><img src="avatars/me.jpg" alt=""></span></div>
+  </div>
+  <div class="sl-panel">
+    <!-- sidebar: .sl-item (.on = open channel, .unread = bold, .sl-badge = mention count), .sl-sec headers -->
+    <div class="sl-side">
+      <div class="sl-side-head"><span class="ws">Halcyon</span><span class="ws-chev" data-ic="sl-chev-down"></span><span class="acts"><span><span data-ic="sl-sliders"></span></span><span><span data-ic="sl-compose"></span></span></span></div>
+      <div class="sl-item"><span data-ic="sl-threads"></span><span class="lbl">Threads</span></div>
+      <div class="sl-item"><span data-ic="sl-headphones"></span><span class="lbl">Huddles</span></div>
+      <div class="sl-item"><span data-ic="sl-sent"></span><span class="lbl">Drafts &amp; sent</span></div>
+      <div class="sl-sec"><span data-ic="sl-caret-down"></span>Channels</div>
+      <div class="sl-item"><span data-ic="sl-hash"></span><span class="lbl">announcements</span></div>
+      <div class="sl-item on"><span data-ic="sl-hash"></span><span class="lbl">eng-agents</span></div>
+      <div class="sl-item unread"><span data-ic="sl-hash"></span><span class="lbl">general</span></div>
+      <div class="sl-item"><span data-ic="sl-lock"></span><span class="lbl">launch-oct</span></div>
+      <div class="sl-sec"><span data-ic="sl-caret-down"></span>Direct messages</div>
+      <div class="sl-item unread"><span class="mini photo"><img src="avatars/sam-rivera.jpg" alt=""></span><span class="lbl">Sam Rivera</span><span class="sl-badge">1</span></div>
+      <div class="sl-sec"><span data-ic="sl-caret-down"></span>Apps</div>
+      <div class="sl-item"><span class="mini" style="background:#000"><img src="../../_shared/logos/grok.svg" alt="" style="filter:invert(1)"></span><span class="lbl">Grok Bot</span></div>
+    </div>
+    <div class="sl-main">
+      <!-- channel header: name ⌄ · members facepile + count · huddle · kebab -->
+      <div class="sl-ch-head">
+        <span class="sl-ch-name"><span data-ic="sl-hash"></span>eng-agents<span class="chev" data-ic="sl-chev-down"></span></span>
+        <span class="sl-ch-r">
+          <span class="sl-members"><span class="stack"><span><img src="avatars/maya-chen.jpg" alt=""></span><span><img src="avatars/sam-rivera.jpg" alt=""></span><span><img src="avatars/jules-ortiz.jpg" alt=""></span></span>14</span>
+          <span class="sl-huddle"><span data-ic="sl-headphones"></span><span class="chev" data-ic="sl-chev-down"></span></span>
+          <span class="sl-icon-btn"><span data-ic="sl-kebab"></span></span>
+        </span>
+      </div>
+      <div class="sl-tabs"><span class="on"><span data-ic="sl-message"></span>Messages</span><span><span data-ic="sl-canvas"></span>Add canvas</span><span><span data-ic="sl-files"></span>Files</span><span><span data-ic="sl-plus"></span></span></div>
+      <!-- message list (bottom-anchored) -->
+      <div class="sl-list">
+        <div class="sl-day"><span>Today<span data-ic="sl-chev-down"></span></span></div>
+        <!-- user message with a thread summary -->
+        <div class="sl-msg">
+          <div class="sl-av"><img src="avatars/maya-chen.jpg" alt=""></div>
+          <div>
+            <div class="sl-msg-head"><span class="sl-name">Maya Chen</span><span class="sl-time">10:12 AM</span></div>
+            <div class="sl-text">Checkout tests flaked on main again. Third time this week 😩</div>
+            <div class="sl-thread"><span class="faces"><span><img src="avatars/sam-rivera.jpg" alt=""></span><span><img src="avatars/jules-ortiz.jpg" alt=""></span></span><span class="n">2 replies</span><span class="last">Last reply 4 minutes ago</span></div>
+          </div>
+        </div>
+        <!-- (a continuation by the same author within a few minutes: add .cont to hide avatar + header) -->
+        <div class="sl-msg">
+          <div class="sl-av"><img src="avatars/sam-rivera.jpg" alt=""></div>
+          <div>
+            <div class="sl-msg-head"><span class="sl-name">Sam Rivera</span><span class="sl-time">10:14 AM</span></div>
+            <div class="sl-text"><span class="sl-mention">@Grok Bot</span> can you find the flake and open a PR?</div>
+          </div>
+        </div>
+        <!-- bot message: APP badge, inline code, link unfurl with a coloured bar, reactions -->
+        <div class="sl-msg">
+          <div class="sl-av" style="background:#000"><img src="../../_shared/logos/grok.svg" alt="" style="width:21px;height:21px;filter:invert(1)"></div>
+          <div>
+            <div class="sl-msg-head"><span class="sl-name">Grok Bot</span><span class="sl-app">APP</span><span class="sl-time">10:15 AM</span></div>
+            <div class="sl-text">On it. The flake is a race in <code>checkout.spec.ts</code>: the total is read before the price request resolves.</div>
+            <!-- GitHub app PR unfurl: author row (PR opener), title, optional PR body, "repo | Added by GitHub" -->
+            <div class="sl-unfurl" style="--bar:#1f883d">
+              <div class="sl-unfurl-author"><span class="ico" style="background:#000;padding:3px"><img src="../../_shared/logos/grok.svg" alt="" style="filter:invert(1)"></span>grok-bot</div>
+              <div class="sl-unfurl-title">#482 Fix race in checkout total test</div>
+              <div class="sl-unfurl-desc">Waits for the price response before asserting the cart total.</div>
+              <div class="sl-unfurl-foot"><img src="../../_shared/logos/github.svg" alt=""><span>halcyon/web</span><i>|</i><span>Added by GitHub</span></div>
+            </div>
+            <!-- Block Kit buttons (actions block) -->
+            <div class="sl-btns"><span class="sl-btn primary">Merge PR</span><span class="sl-btn">View diff</span></div>
+            <div class="sl-reacts"><span class="sl-react mine"><span class="emo">🙌</span>2</span><span class="sl-react"><span class="emo">🚀</span>1</span><span class="sl-react add"><span data-ic="sl-react"></span></span></div>
+          </div>
+        </div>
+      </div>
+      <!-- composer, typing: .focus on .sl-composer, text + caret in .sl-input, .sl-send.ready (green) -->
+      <div class="sl-composer focus">
+        <div class="sl-fmt"><span data-ic="sl-bold"></span><span data-ic="sl-italic"></span><span data-ic="sl-strike"></span><i class="sep"></i><span data-ic="sl-link"></span><i class="sep"></i><span data-ic="sl-list-ol"></span><span data-ic="sl-list-ul"></span><i class="sep"></i><span data-ic="sl-quote"></span><i class="sep"></i><span data-ic="sl-code"></span><span data-ic="sl-codeblock"></span></div>
+        <div class="sl-input">Nice, merging now<i class="sl-caret"></i></div>
+        <div class="sl-bar">
+          <span class="plus"><span data-ic="sl-plus-circle"></span></span><span><span data-ic="sl-aa"></span></span><span><span data-ic="sl-emoji"></span></span><span><span data-ic="sl-at"></span></span><i class="sep"></i>
+          <span><span data-ic="sl-video"></span></span><span><span data-ic="sl-mic"></span></span><i class="sep"></i><span><span data-ic="sl-slash"></span></span>
+          <span class="sl-send ready"><span class="go"><span data-ic="sl-send"></span></span><span class="more"><span data-ic="sl-chev-down"></span></span></span>
+        </div>
+      </div>
+      <!-- idle composer: drop .focus/.ready and use <span class="ph">Message #eng-agents</span> -->
+      <div class="sl-typing"><b>Grok Bot</b> is typing…</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="label">5 · Slack channel (dark)</div>
+<div class="dark-bg" data-theme="dark">
+<div class="sk-slack" style="height:420px;width:900px">
+  <div class="sl-top"><div class="sl-lights"><i></i><i></i><i></i></div><div class="sl-search-wrap"><div class="sl-history"><span data-ic="sl-back"></span><span class="dim" data-ic="sl-fwd"></span><span data-ic="sl-clock"></span></div><div class="sl-search"><span data-ic="sl-search"></span>Search Halcyon</div></div><div class="sl-top-r"><span data-ic="sl-help"></span></div></div>
+  <div class="sl-rail"><div class="sl-ws" style="background:linear-gradient(160deg,#2f7de1,#1458b8)">H</div><div class="sl-tab on"><span class="sl-tab-ic"><span data-ic="sl-home-fill"></span></span>Home</div><div class="sl-tab"><span class="sl-tab-ic"><span data-ic="sl-dms"></span></span>DMs</div></div>
+  <div class="sl-panel" style="--sl-side-w:220px">
+    <div class="sl-side"><div class="sl-side-head"><span class="ws">Halcyon</span><span class="ws-chev" data-ic="sl-chev-down"></span></div><div class="sl-sec"><span data-ic="sl-caret-down"></span>Channels</div><div class="sl-item on"><span data-ic="sl-hash"></span><span class="lbl">eng-agents</span></div><div class="sl-item unread"><span data-ic="sl-hash"></span><span class="lbl">general</span></div></div>
+    <div class="sl-main">
+      <div class="sl-ch-head"><span class="sl-ch-name"><span data-ic="sl-hash"></span>eng-agents<span class="chev" data-ic="sl-chev-down"></span></span></div>
+      <div class="sl-tabs"><span class="on"><span data-ic="sl-message"></span>Messages</span><span><span data-ic="sl-canvas"></span>Add canvas</span></div>
+      <div class="sl-list">
+        <div class="sl-msg"><div class="sl-av" style="background:#000"><img src="../../_shared/logos/grok.svg" alt="" style="width:21px;height:21px;filter:invert(1)"></div><div><div class="sl-msg-head"><span class="sl-name">Grok Bot</span><span class="sl-app">APP</span><span class="sl-time">10:15 AM</span></div><div class="sl-text">Fixed the race in <code>checkout.spec.ts</code>. 50/50 runs green.</div><div class="sl-reacts"><span class="sl-react mine"><span class="emo">🙌</span>2</span></div></div></div>
+      </div>
+      <div class="sl-composer"><div class="sl-input"><span class="ph">Message #eng-agents</span></div><div class="sl-bar"><span class="plus"><span data-ic="sl-plus-circle"></span></span><span><span data-ic="sl-aa"></span></span><span><span data-ic="sl-emoji"></span></span><span class="sl-send"><span class="go"><span data-ic="sl-send"></span></span><span class="more"><span data-ic="sl-chev-down"></span></span></span></div></div>
+      <div class="sl-typing"></div>
+    </div>
+  </div>
+</div>
+</div>
+</section>
+
+<script>
+  document.querySelectorAll('.ios-kb').forEach(function (kb) {
+    var p = kb.getAttribute('data-kb');
+    kb.innerHTML = SKIN_ICONS_MESSAGING.keyboard(p ? JSON.parse(p) : null);
+  });
+  SKIN_ICONS_MESSAGING.mount(document);
+</script>
+</body>
+</html>
