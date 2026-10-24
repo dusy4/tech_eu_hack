@@ -1,5 +1,6 @@
 import { SYMBOLS, CALLERS_OF_CALLERS, REPO } from "../data/repo";
 import { route } from "../engine/router";
+import { httpBackend } from "./http";
 
 /**
  * Code knowledge: the one seam between this UI and whatever indexes the repo
@@ -64,16 +65,22 @@ const mock: KnowledgeBackend = {
   },
 };
 
-let backend: KnowledgeBackend = mock;
+// VITE_KNOWLEDGE_URL points at bridge/server.py; without it the UI runs on the sample index.
+const knowledgeUrl = import.meta.env.VITE_KNOWLEDGE_URL as string | undefined;
+let backend: KnowledgeBackend = knowledgeUrl ? httpBackend(knowledgeUrl) : mock;
 export const setBackend = (b: KnowledgeBackend) => (backend = b);
 export const isMock = () => backend === mock;
 
 // ── Answering ───────────────────────────────────────────────────────────────
 
+// Spotting a symbol name in the question only works against the sample index;
+// a real backend gets the top search hit instead.
 const symbolIn = (text: string) =>
-  Object.keys(SYMBOLS)
-    .sort((a, b) => b.length - a.length)
-    .find((s) => text.toLowerCase().includes(s.toLowerCase()));
+  !isMock()
+    ? undefined
+    : Object.keys(SYMBOLS)
+        .sort((a, b) => b.length - a.length)
+        .find((s) => text.toLowerCase().includes(s.toLowerCase()));
 
 /**
  * Answers a question by calling the knowledge tools and narrating what they found.
