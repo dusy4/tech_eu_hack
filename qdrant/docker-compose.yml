@@ -1,0 +1,16 @@
+# Local Qdrant vector database for repo-analysis-workbench embeddings.
+#   docker compose -f qdrant/docker-compose.yml up -d
+# REST: http://127.0.0.1:6333 (dashboard at /dashboard), gRPC: 127.0.0.1:6334
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.2
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
+    volumes:
+      - ./storage:/qdrant/storage
+    environment:
+      QDRANT__TELEMETRY_DISABLED: "true"
+    mem_limit: 2g

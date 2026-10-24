@@ -10,14 +10,30 @@ from collections import Counter
 from pathlib import Path
 from typing import Callable, Dict, Iterable, Iterator, List, Sequence
 
+from backends.qdrant.store import (
+    collection_name,
+    count_points,
+    drop_collection,
+    ensure_collection,
+    existing_point_ids,
+    get_collection_dimensions,
+    point_id,
+    qdrant_url,
+    search_dense,
+    upsert_dense,
+    write_dense_vectors,
+)
 from common.native_tool import list_bm25_docs
 from common.text import tokenize
 from embeddings.units import build_retrieval_units
 from embeddings.providers import (
     DEFAULT_HASHING_MODEL,
+    EmbeddingQuotaExhausted,
     embed_with_openai,
+    embed_with_openrouter,
     embed_with_qwen,
     openai_embeddings_available,
+    openrouter_embeddings_available,
     qwen_embeddings_available,
     resolve_embedding_provider,
 )
@@ -27,8 +43,11 @@ from symbols.indexer import timestamp_now
 SCHEMA_VERSION = "0.3.0"
 DIMENSIONS = 256
 BATCH_SIZE = 32
+OPENROUTER_BATCH_SIZE = 256  # verified against nemotron-3.5-embed-8b; free tier allows only 50 requests/day
 LIST_DOCS_BATCH_SIZE = 10_000
 DEFAULT_QWEN_HEARTBEAT_SECONDS = 60.0
+QDRANT_CANDIDATE_MULTIPLIER = 20
+QDRANT_MIN_CANDIDATES = 200
 KIND_PRIORITY = {
     "symbol": 0.2,
     "statement": 0.15,
@@ -57,6 +76,8 @@ def build_embedding_index(
     *,
     provider: str | None = None,
     model: str | None = None,
+    skip_unit_kinds: Sequence[str] = (),
+    restart: bool = False,
     progress_callback: ProgressCallback | None = None,
 ) -> Dict[str, object]:
     started_at = timestamp_now()
@@ -88,7 +109,19 @@ def build_embedding_index(
     if not tantivy_dir.exists():
         raise FileNotFoundError(f"Missing Tantivy search documents for {repo_name}: {tantivy_dir}")
 
-    if provider_name == "openai":
+    if skip_unit_kinds and provider_name != "openrouter":
+        raise ValueError("skip_unit_kinds is only supported by the openrouter provider")
+
+    if provider_name == "openrouter":
+        payload = build_streaming_dense_payload(
+            search_root,
+            repo_name,
+            model_name,
+            skip_unit_kinds=skip_unit_kinds,
+            restart=restart,
+            progress_callback=progress_callback,
+        )
+    elif provider_name == "openai":
         payload = build_openai_embedding_payload(
             search_root,
             repo_name,
@@ -110,7 +143,7 @@ def build_embedding_index(
             progress_callback=progress_callback,
         )
 
-    if not payload["documents"]:
+    if not payload["documents"] and not payload.get("vector_store"):
         raise FileNotFoundError(f"Missing Tantivy search documents for {repo_name}: {tantivy_dir}")
 
     emit(
@@ -119,6 +152,19 @@ def build_embedding_index(
         model=payload["model"],
         documents=payload["summary"]["documents"],
     )
+
+    if payload["vector_format"] == "dense" and not payload.get("vector_store"):
+        # Dense vectors live in Qdrant; the JSON index keeps only the manifest fields.
+        url = qdrant_url()
+        collection = collection_name(repo_name, str(payload["model"]))
+        emit("qdrant_write_started", collection=collection, documents=len(payload["documents"]))
+        written = write_dense_vectors(url, collection, int(payload["dimensions"]), payload["documents"])
+        emit("qdrant_write_completed", collection=collection, documents=written)
+        payload = {
+            **payload,
+            "documents": [],
+            "vector_store": {"backend": "qdrant", "url": url, "collection": collection},
+        }
 
     repo_root = search_root / repo_name
     repo_root.mkdir(parents=True, exist_ok=True)
@@ -136,6 +182,7 @@ def build_embedding_index(
                 "model_backed": payload["model_backed"],
                 "dimensions": payload["dimensions"],
                 "vector_format": payload["vector_format"],
+                "vector_store": payload.get("vector_store"),
                 "summary": payload["summary"],
             },
             handle,
@@ -329,6 +376,112 @@ def build_openai_embedding_payload(
         "summary": {
             "documents": len(embedded_documents),
             "nonzero_dimensions": dimensions * len(embedded_documents),
+        },
+    }
+
+
+def build_streaming_dense_payload(
+    search_root: Path,
+    repo_name: str,
+    model_name: str,
+    *,
+    skip_unit_kinds: Sequence[str] = (),
+    restart: bool = False,
+    progress_callback: ProgressCallback | None = None,
+) -> Dict[str, object]:
+    """Embed retrieval units via OpenRouter and upsert each batch straight into
+    Qdrant, so memory stays flat. Units already in the collection are skipped,
+    which makes an interrupted or quota-limited build resumable."""
+    if not openrouter_embeddings_available():
+        raise RuntimeError("OpenRouter embedding provider requested but OPENROUTER_API_KEY is not set")
+
+    def emit(event: str, **extra: object) -> None:
+        if progress_callback is None:
+            return
+        progress_callback({"event": event, "repo": repo_name, **extra})
+
+    url = qdrant_url()
+    collection = collection_name(repo_name, model_name)
+    skipped_kinds = {str(kind) for kind in skip_unit_kinds}
+    batch_size = int(os.environ.get("REPO_ANALYSIS_OPENROUTER_BATCH_SIZE", OPENROUTER_BATCH_SIZE))
+
+    if restart:
+        drop_collection(url, collection)
+    done_ids = existing_point_ids(url, collection)
+    total_units = count_retrieval_units(search_root, repo_name, skip_unit_kinds=skipped_kinds)
+    emit(
+        "openrouter_embed_started",
+        provider="openrouter",
+        model=model_name,
+        collection=collection,
+        total_docs=total_units,
+        already_embedded=len(done_ids),
+        skipped_unit_kinds=sorted(skipped_kinds),
+    )
+
+    dimensions = 0
+    processed_docs = 0
+    batch_index = 0
+    for search_batch in iter_search_documents(search_root, repo_name, batch_size=LIST_DOCS_BATCH_SIZE):
+        pending = []
+        for unit in iter_retrieval_units(search_batch):
+            if str(unit.get("unit_kind")) in skipped_kinds:
+                continue
+            if point_id(str(unit["doc_id"])) in done_ids:
+                processed_docs += 1
+                continue
+            pending.append(unit)
+        for batch in batched(pending, batch_size):
+            batch_index += 1
+            try:
+                vectors = embed_with_openrouter([str(unit["content"] or "") for unit in batch], model_name)
+            except EmbeddingQuotaExhausted:
+                emit(
+                    "openrouter_embed_quota_exhausted",
+                    provider="openrouter",
+                    model=model_name,
+                    processed_docs=processed_docs,
+                    total_docs=total_units,
+                )
+                raise
+            if not dimensions:
+                dimensions = len(vectors[0])
+                ensure_collection(url, collection, dimensions)
+            records = []
+            for unit, vector in zip(batch, vectors):
+                record = build_embedded_unit_record(unit, 1.0 if vector else 0.0)
+                record["vector"] = vector
+                records.append(record)
+            upsert_dense(url, collection, records)
+            processed_docs += len(batch)
+            emit(
+                "openrouter_embed_progress",
+                provider="openrouter",
+                model=model_name,
+                batch_index=batch_index,
+                batch_docs=len(batch),
+                processed_docs=processed_docs,
+                total_docs=total_units,
+            )
+
+    stored = count_points(url, collection)
+    if not dimensions:
+        dimensions = int(get_collection_dimensions(url, collection))
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "repo": repo_name,
+        "generated_at": timestamp_now(),
+        "provider": "openrouter",
+        "model": model_name,
+        "model_backed": True,
+        "dimensions": dimensions,
+        "vector_format": "dense",
+        "documents": [],
+        "vector_store": {"backend": "qdrant", "url": url, "collection": collection},
+        "summary": {
+            "documents": stored,
+            "nonzero_dimensions": dimensions * stored,
+            "skipped_unit_kinds": sorted(skipped_kinds),
         },
     }
 
@@ -641,6 +794,11 @@ def query_embedding_index(
             raise RuntimeError("Embedding index uses Qwen, but no endpoint URL is configured")
         query_vector = embed_with_qwen([query], str(payload["model"]))[0]
         query_norm = 1.0 if query_vector else 0.0
+    elif provider == "openrouter":
+        if not openrouter_embeddings_available():
+            raise RuntimeError("Embedding index uses OpenRouter, but OPENROUTER_API_KEY is not set")
+        query_vector = embed_with_openrouter([query], str(payload["model"]), input_type="query")[0]
+        query_norm = 1.0 if query_vector else 0.0
     else:
         raw_query_vector = embed_tokens(query_tokens, None, max(len(documents), 1))
         query_norm = vector_norm(raw_query_vector)
@@ -649,14 +807,20 @@ def query_embedding_index(
     if query_norm == 0:
         return []
 
+    vector_store = payload.get("vector_store") or {}
+    if vector_store.get("backend") == "qdrant":
+        candidates = search_dense(
+            os.environ.get("REPO_ANALYSIS_QDRANT_URL") or str(vector_store["url"]),
+            str(vector_store["collection"]),
+            query_vector,
+            limit=max(limit * QDRANT_CANDIDATE_MULTIPLIER, QDRANT_MIN_CANDIDATES),
+        )
+    else:
+        candidates = score_local_documents(documents, query_vector, vector_format)
+
     grouped_results: Dict[str, Dict[str, object]] = {}
     grouped_unit_hits: Dict[str, List[Dict[str, object]]] = {}
-    for document in documents:
-        if vector_format == "dense":
-            similarity = dense_dot_product(query_vector, [float(value) for value in document.get("vector", [])])
-        else:
-            doc_vector = {int(index): float(value) for index, value in document["vector"].items()}
-            similarity = dot_product(query_vector, doc_vector)
+    for document, similarity in candidates:
         if similarity <= 0:
             continue
         searchable = " ".join(
@@ -740,16 +904,31 @@ def query_embedding_index(
     )[:limit]
 
 
+def score_local_documents(
+    documents: Sequence[Dict[str, object]],
+    query_vector: object,
+    vector_format: str,
+) -> Iterator[tuple[Dict[str, object], float]]:
+    for document in documents:
+        if vector_format == "dense":
+            similarity = dense_dot_product(query_vector, [float(value) for value in document.get("vector", [])])
+        else:
+            doc_vector = {int(index): float(value) for index, value in document["vector"].items()}
+            similarity = dot_product(query_vector, doc_vector)
+        yield document, similarity
+
+
 def iter_retrieval_units(documents: Iterable[Dict[str, object]]) -> Iterator[Dict[str, object]]:
     for document in documents:
         yield from build_retrieval_units(document)
 
 
-def count_retrieval_units(search_root: Path, repo_name: str) -> int:
+def count_retrieval_units(search_root: Path, repo_name: str, *, skip_unit_kinds: Iterable[str] = ()) -> int:
+    skipped = set(skip_unit_kinds)
     total_units = 0
     for batch in iter_search_documents(search_root, repo_name, batch_size=LIST_DOCS_BATCH_SIZE):
         for document in batch:
-            total_units += len(build_retrieval_units(document))
+            total_units += sum(1 for unit in build_retrieval_units(document) if unit.get("unit_kind") not in skipped)
     return total_units
 
 

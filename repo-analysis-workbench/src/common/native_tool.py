@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import copy
 import json
 import os
 import shutil
 import subprocess
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Optional, Sequence
 
@@ -156,7 +158,21 @@ def query_bm25_index(
         args.extend(["--path-prefix", path_prefix])
     if symbol_id:
         args.extend(["--symbol-id", symbol_id])
-    payload = run_native_json(args)
+    # Each query launches the native worker (~0.2s); retrieval repeats identical
+    # queries, so cache per process, keyed on the index's modification time.
+    return copy.deepcopy(_cached_bm25_query(tuple(args), _index_mtime(index_dir)))
+
+
+def _index_mtime(index_dir: Path) -> float:
+    try:
+        return max(path.stat().st_mtime for path in Path(index_dir).iterdir())
+    except (OSError, ValueError):
+        return 0.0
+
+
+@lru_cache(maxsize=2048)
+def _cached_bm25_query(args: tuple, index_mtime: float) -> list:
+    payload = run_native_json(list(args))
     return list(payload.get("results", []))
 
 

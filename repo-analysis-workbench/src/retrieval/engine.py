@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import PurePosixPath, Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -71,6 +72,18 @@ GRAPH_NOISE_KINDS = {
     "type_ref",
     "trait_ref",
 }
+
+
+def embeddings_enabled(search_root: Path, repo_name: str) -> bool:
+    """REPO_ANALYSIS_EMBEDDINGS: "required" (default) always queries the embedding
+    index and fails if it is missing; "optional" uses it only when it exists;
+    "off" never uses it."""
+    mode = os.environ.get("REPO_ANALYSIS_EMBEDDINGS", "required").strip().lower()
+    if mode == "off":
+        return False
+    if mode == "optional":
+        return (search_root / repo_name / "embedding_index.json").exists()
+    return True
 
 
 def retrieve_context(
@@ -211,7 +224,11 @@ def retrieve_context(
                 )
                 add_stage_results(candidates, body_results, stage_reason="body")
 
-            embedding_results = query_embedding_index(search_root, repo_name, query, limit=max(limit, 5))
+            embedding_results = (
+                query_embedding_index(search_root, repo_name, query, limit=max(limit, 5))
+                if embeddings_enabled(search_root, repo_name)
+                else []
+            )
             for result in embedding_results:
                 annotate_scope(result, summary_scopes)
             add_stage_results(candidates, embedding_results, stage_reason="embedding")
