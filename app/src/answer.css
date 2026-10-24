@@ -42,8 +42,7 @@
   transition: transform 260ms var(--ease-smooth-out), opacity 200ms ease;
 }
 .run-sheet.open { transform: none; opacity: 1; pointer-events: auto; }
-.run-sheet .agent-run { padding: 0; }
-.run-sheet .lanes-embed > [class*="card"] { box-shadow: 0 10px 30px rgba(16, 24, 32, 0.16); }
+.run-sheet { right: auto; width: min(560px, calc(100% - 24px)); }
 
 /* Selection drawer (beUI Drawer) */
 .insp-drawer { width: min(460px, 94vw) !important; display: flex; flex-direction: column; }

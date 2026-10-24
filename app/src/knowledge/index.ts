@@ -4,7 +4,7 @@ import { httpBackend } from "./http";
 
 /**
  * Code knowledge: the one seam between this UI and whatever indexes the repo
- * (embeddings, an MCP server, or both). The tool names match docs/swe-demo-plan.md.
+ * (the repo-analysis MCP server). The tool names match docs/swe-demo-plan.md.
  *
  * Everything here is mock: it answers from the sample index in data/repo.ts.
  * The real backend implements `KnowledgeBackend` and is swapped in with `setBackend`.
@@ -14,7 +14,7 @@ export type CodeHit = { symbol: string; file: string; line: number; score: numbe
 export type SymbolInfo = { symbol: string; file: string; start: number; code: string; callers: string[]; tests: string[] };
 
 export interface KnowledgeBackend {
-  /** Semantic search over code chunks (embeddings). */
+  /** Keyword search over symbols and code bodies (the MCP server's search_code). */
   searchCode(query: string, k?: number): Promise<CodeHit[]>;
   findSymbol(name: string): Promise<SymbolInfo | undefined>;
   callersOf(name: string): Promise<string[]>;

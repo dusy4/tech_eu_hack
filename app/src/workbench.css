@@ -61,10 +61,28 @@
   .gp { transition: none; }
 }
 
-/* Agent run: Agent Lanes embedded flush, without its demo stage */
-.agent-run { padding: 8px 12px 10px; }
-.lanes-embed.lanes-embed { min-height: 0; padding: 0; border-radius: 0; background: transparent; place-items: stretch; }
-.lanes-embed > [class*="card"] { max-width: none; box-shadow: none; }
+/* Agent run: one row per tool call, readable at a glance */
+.agent-run { width: min(560px, 100%); background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px rgba(16, 24, 32, 0.08), 0 10px 30px rgba(16, 24, 32, 0.14); padding: 12px 6px 6px; }
+.ar-head { display: flex; align-items: baseline; gap: 10px; padding: 0 10px 8px; }
+.ar-title { font: 600 14px/1 var(--display); color: #1c2024; }
+.ar-sub { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #60646c; }
+.ar-sub svg { align-self: center; }
+.ar-status { margin-left: auto; font-size: 12px; font-weight: 600; color: #2d72d2; }
+.ar-status.done { color: #18794e; }
+.ar-list { list-style: none; margin: 0; padding: 0; }
+.ar-row { display: grid; grid-template-columns: 18px 18px auto minmax(0, 1fr) auto; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border-radius: 6px; font-size: 13px; color: #1c2024; transition: opacity 200ms ease, background-color 200ms ease; }
+.ar-row.pending { opacity: 0.4; }
+.ar-row.running { background: #eef4fc; }
+.ar-row > svg { color: #60646c; }
+.ar-name { font: 500 12.5px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; }
+.ar-row.agent .ar-name { font: 500 13px/1 var(--body, inherit); }
+.ar-arg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #60646c; }
+.ar-result { font-size: 12px; color: #60646c; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ar-state { display: grid; place-items: center; color: #18794e; }
+.ar-dot { width: 6px; height: 6px; border-radius: 50%; background: #b9bbc6; }
+.ar-spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #c7dbf6; border-top-color: #2d72d2; animation: ar-spin 700ms linear infinite; }
+@keyframes ar-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ar-spin { animation: none; } }
 
 
 /* The canvas fills whatever holds it */

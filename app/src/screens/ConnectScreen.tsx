@@ -8,7 +8,7 @@ const STAGES = [
   { name: "Parse symbols", unit: "symbols" },
   { name: "Imports and references", unit: "edges" },
   { name: "Build the graph", unit: "nodes" },
-  { name: "Embeddings", unit: "chunks" },
+  { name: "Keyword index", unit: "documents" },
   { name: "Summaries", unit: "modules" },
 ];
 
