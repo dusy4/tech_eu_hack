@@ -1,0 +1,16 @@
+.DS_Store
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+
+# Model weights (download with qwen-mlx/download_models.sh)
+qwen-mlx/models/
+
+# Workbench build outputs
+repo-analysis-workbench/data/*
+!repo-analysis-workbench/data/eval/
+repo-analysis-workbench/data/eval/*
+!repo-analysis-workbench/data/eval/cases/
+repo-analysis-workbench/native/target/

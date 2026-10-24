@@ -1,0 +1,5 @@
+modes:
+  - semantic_graph_rerank
+  - semantic_graph_rerank_summaries
+  - selective_on
+  - selective_off
