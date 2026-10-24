@@ -27,6 +27,12 @@ search `repo-analysis` before the first call.
 | "If X changes, what breaks?" | `symbol_relations(callers)` on X, then on each caller for transitive impact |
 | Broad "how does feature Z work?" | `prepare_answer_bundle` first (slow on first call, ~20 s), then the precise tools on what it surfaces |
 
+## File paths
+
+Paths in tool results (`path`, `code_ref.path`) are **relative to the indexed repo's checkout**, which is not
+necessarily your working directory. Every result carries `repo_root` (and `list_repos` lists it per repo): open files
+as `<repo_root>/<path>` with `Read`, and point `Grep`/`Glob` at `repo_root`. Don't guess the location.
+
 ## Workflow
 
 1. Orient once per repo with `repo_overview` (skip if you already know the layout).

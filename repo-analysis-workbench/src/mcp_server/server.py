@@ -137,9 +137,57 @@ def slim(value: object, key: str = "") -> object:
     return value
 
 
+def lookup_symbols(repo: str, name: str, *, limit: int) -> List[Dict[str, object]]:
+    """Symbol definitions for a name, `Type::method` or qualified name.
+
+    The workbench's lookup misses some `Type::method` queries; then search the last
+    segment and keep only definitions whose qualified name ends with the full path, so
+    `FunctionInvokingChatClient::run` never resolves to some other `run`."""
+    matches = toolkit.where_defined(SEARCH_ROOT, PARSED_ROOT, repo, name, limit=limit).get("matches") or []
+    if matches or "::" not in name:
+        return matches
+    suffix = "::" + name.strip(":")
+    wider = toolkit.where_defined(SEARCH_ROOT, PARSED_ROOT, repo, name.split("::")[-1], limit=200).get("matches") or []
+    return [match for match in wider if str(match.get("qualified_name") or "").endswith(suffix)][:limit]
+
+
+RAW_ROOT = DATA_ROOT / "raw"
+WORKSPACE_ROOT = Path(os.environ.get("REPO_ANALYSIS_WORKSPACE_ROOT", WORKBENCH_ROOT.parent / "repo_analyse"))
+
+
+def repo_root(repo: str) -> Optional[str]:
+    """Absolute path of the indexed repo's checkout, so agents can open the files the tools
+    return (their paths are repo-relative). Prefers the path recorded at index time; falls
+    back to <workspace>/<repo> when the index was moved or copied to another machine."""
+    candidates = []
+    try:
+        recorded = json.loads((RAW_ROOT / repo / "manifest.json").read_text(encoding="utf-8"))
+        candidates.append((recorded.get("source") or {}).get("path"))
+    except (OSError, json.JSONDecodeError):
+        pass
+    candidates.append(str(WORKSPACE_ROOT / repo))
+    for candidate in candidates:
+        if candidate and Path(candidate).is_dir():
+            return str(Path(candidate).resolve())
+    return None
+
+
+def with_repo_root(payload: object) -> object:
+    """Add `repo_root` beside the payload's `repo` (or the first bundle's)."""
+    if not isinstance(payload, dict):
+        return payload
+    repo = payload.get("repo")
+    if not isinstance(repo, str) and payload.get("bundles"):
+        repo = (payload["bundles"][0] or {}).get("repo")
+    root = repo_root(repo) if isinstance(repo, str) else None
+    if not root:
+        return payload
+    return {"repo_root": root, "paths_are_relative_to": "repo_root", **payload}
+
+
 def render(payload: object) -> str:
     """Slimmed compact JSON, truncated so a single call can't flood the agent's context."""
-    text = json.dumps(slim(payload), ensure_ascii=False, separators=(",", ":"), default=str)
+    text = json.dumps(slim(with_repo_root(payload)), ensure_ascii=False, separators=(",", ":"), default=str)
     if len(text) <= MAX_CHARS:
         return text
     return text[:MAX_CHARS] + f'\n... [truncated {len(text) - MAX_CHARS} chars; narrow the query or lower `limit`]'
@@ -147,8 +195,12 @@ def render(payload: object) -> str:
 
 @mcp.tool(annotations=READ_ONLY)
 def list_repos() -> str:
-    """List the repositories that have been indexed and can be queried."""
-    return render({"repos": indexed_repos(), "default": os.environ.get("REPO_ANALYSIS_DEFAULT_REPO")})
+    """List the repositories that have been indexed, with the absolute path of each
+    checkout (tool results give file paths relative to it)."""
+    return render({
+        "repos": [{"repo": name, "repo_root": repo_root(name)} for name in indexed_repos()],
+        "default": os.environ.get("REPO_ANALYSIS_DEFAULT_REPO"),
+    })
 
 
 @mcp.tool(annotations=READ_ONLY)
@@ -187,7 +239,7 @@ def find_symbol(name: str, repo: Optional[str] = None, limit: int = 10) -> str:
     """Find symbol definitions (functions, methods, structs, traits, impls...) by name or
     qualified name. Returns path, line range and signature."""
     repo_name = resolve_repo(repo)
-    return render(toolkit.where_defined(SEARCH_ROOT, PARSED_ROOT, repo_name, name, limit=limit))
+    return render({"repo": repo_name, "query": name, "matches": lookup_symbols(repo_name, name, limit=limit)})
 
 
 @mcp.tool(annotations=READ_ONLY)
@@ -273,23 +325,20 @@ def prepare_answer_bundle(question: str, repo: Optional[str] = None, limit: int 
 
 
 def resolve_code_ref(repo: str, node_id: str) -> Optional[Dict[str, object]]:
-    """Best-effort file/line location for a proposal's nodeId (a symbol name or path::name)."""
-    store = get_metadata_store(str(PARSED_ROOT), repo)
-    candidates = [node_id, node_id.split("::")[-1], node_id.rsplit(".", 1)[-1]]
-    for name in dict.fromkeys(candidate for candidate in candidates if candidate):
-        matches = toolkit.where_defined(SEARCH_ROOT, PARSED_ROOT, repo, name, limit=1).get("matches") or []
-        if matches:
-            symbol = store.get_symbol(str(matches[0].get("symbol_id"))) or matches[0]
-            span = symbol.get("span") or symbol.get("range") or {}
-            return {
-                "qualified_name": symbol.get("qualified_name"),
-                "kind": symbol.get("kind"),
-                "path": symbol.get("path"),
-                "start_line": span.get("start_line"),
-                "end_line": span.get("end_line"),
-                "signature": symbol.get("signature"),
-            }
-    return None
+    """Best-effort file/line location for a proposal's nodeId (a symbol name or Type::name)."""
+    matches = lookup_symbols(repo, node_id.replace(".", "::") if "::" not in node_id else node_id, limit=1)
+    if not matches:
+        return None
+    symbol = get_metadata_store(str(PARSED_ROOT), repo).get_symbol(str(matches[0].get("symbol_id"))) or matches[0]
+    span = symbol.get("span") or symbol.get("range") or {}
+    return {
+        "qualified_name": symbol.get("qualified_name"),
+        "kind": symbol.get("kind"),
+        "path": symbol.get("path"),
+        "start_line": span.get("start_line"),
+        "end_line": span.get("end_line"),
+        "signature": symbol.get("signature"),
+    }
 
 
 HANDOFFS = HandoffStore(HANDOFF_ROOT, resolve_code_ref=resolve_code_ref)
@@ -312,7 +361,7 @@ def get_handoff(handoff_id: str) -> str:
         doc = HANDOFFS.get(handoff_id)
     except HandoffError as exc:
         return render({"error": str(exc)})
-    return render({**doc, "instructions": handoff_markdown(doc)})
+    return render({**doc, "instructions": handoff_markdown(doc, repo_root(str(doc.get("repo"))))})
 
 
 @mcp.tool(annotations=HANDOFF_WRITE)
@@ -371,7 +420,8 @@ async def http_handoff(request):
         doc = HANDOFFS.get(request.path_params["handoff_id"])
     except HandoffError as exc:
         return JSONResponse({"error": str(exc)}, status_code=404)
-    return JSONResponse({**doc, "instructions": handoff_markdown(doc)})
+    root = repo_root(str(doc.get("repo")))
+    return JSONResponse({**doc, "repo_root": root, "instructions": handoff_markdown(doc, root)})
 
 
 def http_app(host: str):

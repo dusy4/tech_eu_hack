@@ -151,7 +151,7 @@ class HandoffStore:
         return doc
 
 
-def handoff_markdown(doc: Dict[str, object]) -> str:
+def handoff_markdown(doc: Dict[str, object], repo_root: Optional[str] = None) -> str:
     """The handoff as instructions an agent can act on directly."""
     answer = doc.get("answer") or {}
     lines = [
@@ -159,6 +159,8 @@ def handoff_markdown(doc: Dict[str, object]) -> str:
         "",
         f"Repo: `{doc.get('repo')}`" + (f". Discussed on the view: {answer.get('title')}" if answer.get("title") else ""),
     ]
+    if repo_root:
+        lines.append(f"Checkout: `{repo_root}` (code paths below are relative to it)")
     if answer.get("asked"):
         lines.append(f"Question the team was looking at: {answer['asked']}")
     lines += ["", "The team accepted these decisions. Each was confirmed by a person; act on them in order.", ""]

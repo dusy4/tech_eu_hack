@@ -17,7 +17,8 @@ batch is published as a **handoff** on the `repo-analysis` MCP server. Each deci
 3. **Claim it.** `update_handoff_status(handoff_id, "in_progress", "<who/what is starting>")` so the room sees it
    was picked up.
 4. **Ground each decision in the code** before changing anything:
-   - focus decisions: open the `code_ref` (path and lines); if it's missing or stale, use `find_symbol` and
+   - focus decisions: open the `code_ref` at `<repo_root>/<code_ref.path>` (the handoff carries `repo_root`; code paths
+     are relative to it, not to your working directory). If it's missing or stale, use `find_symbol` and
      `get_symbol_body`;
    - check impact with `symbol_relations` (`callers`, `implements`) so a change doesn't break call sites;
    - ask decisions are questions the team left open: answer them from the code (use the `repo-analysis` skill), and

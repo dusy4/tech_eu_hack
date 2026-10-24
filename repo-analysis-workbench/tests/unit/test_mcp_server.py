@@ -59,6 +59,26 @@ class McpServerTest(unittest.TestCase):
                 self.assertEqual(server.resolve_repo("other"), "other")
 
 
+class RepoRootTest(unittest.TestCase):
+    def test_recorded_path_then_workspace_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            recorded, workspace = tmp / "checkout", tmp / "workspace"
+            recorded.mkdir()
+            (workspace / "demo").mkdir(parents=True)
+            (tmp / "raw" / "demo").mkdir(parents=True)
+            (tmp / "raw" / "demo" / "manifest.json").write_text(
+                json.dumps({"source": {"path": str(recorded)}}), encoding="utf-8"
+            )
+            with mock.patch.object(server, "RAW_ROOT", tmp / "raw"), mock.patch.object(server, "WORKSPACE_ROOT", workspace):
+                self.assertEqual(server.repo_root("demo"), str(recorded.resolve()))
+                recorded.rmdir()  # index copied to another machine: the recorded path is gone
+                self.assertEqual(server.repo_root("demo"), str((workspace / "demo").resolve()))
+                self.assertIsNone(server.repo_root("missing"))
+                payload = json.loads(server.render({"repo": "demo", "matches": [{"path": "src/lib.rs"}]}))
+                self.assertEqual(payload["repo_root"], str((workspace / "demo").resolve()))
+
+
 class EmbeddingsModeTest(unittest.TestCase):
     def test_modes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
