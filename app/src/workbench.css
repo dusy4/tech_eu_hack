@@ -3,33 +3,37 @@
 .toolstrip { display: flex; gap: 2px; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 3px; box-shadow: 0 1px 2px rgba(16, 24, 32, 0.06); }
 .tool { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 54px; padding: 5px 0 4px; border: 0; background: transparent; border-radius: 4px; color: #33404b; font-size: 11px; }
 .tool:hover { background: #f1f4f6; }
-.tool.on { background: #e5edf8; color: #1d5fa8; }
+.tool.on { background: #2d72d2; color: #fff; }
 .legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 14px; max-width: 58%; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; box-shadow: 0 1px 2px rgba(16, 24, 32, 0.06); font-size: 12.5px; }
 .legend-head { font: 600 12px/1 var(--display); color: #55606b; margin-bottom: 6px; }
-.legend-row { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
-.legend-row .num { color: var(--text-muted); }
+.legend-row { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; padding: 3px 8px 3px 4px; border-radius: 999px; background: color-mix(in srgb, var(--c) 12%, #fff); color: color-mix(in srgb, var(--c) 60%, #1c2024); font-weight: 600; }
+.legend-row .num { color: inherit; opacity: 0.75; }
 .sw { width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid; }
 .react-flow__controls { box-shadow: 0 1px 2px rgba(16, 24, 32, 0.06) !important; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 .react-flow__minimap { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 
 /* Graph nodes: solid pills coloured by group, outline when off-path or not reached */
 .gp {
-  display: flex; align-items: center; gap: 7px; height: 32px; padding: 0 10px; border-radius: 4px;
+  position: relative; display: flex; align-items: center; height: 40px; padding: 0 12px 0 5px; border-radius: 7px;
   background: var(--fill); color: var(--ink); border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 1px 0 rgba(16, 24, 32, 0.08); cursor: pointer;
-  transition: opacity var(--duration-fast) var(--ease-in-out), box-shadow var(--duration-fast) var(--ease-smooth-out), transform var(--duration-fast) var(--ease-smooth-out), background-color var(--duration-fast) var(--ease-in-out);
+  transition: opacity 200ms var(--ease-in-out), box-shadow 200ms var(--ease-smooth-out), background-color 240ms ease, border-color 240ms ease;
 }
-.gp-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12.5px/1 var(--display); letter-spacing: -0.005em; }
+.gp-in { display: flex; align-items: center; gap: 8px; min-width: 0; width: 100%; }
+.gp-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 14px/1 var(--display); letter-spacing: -0.01em; }
 .gp svg { flex: none; }
 .gp.s-ghost { background: transparent; border: 1px dashed #b7c0c8; box-shadow: none; }
 .gp.s-outline, .gp.ctx { background: #fff; color: #2b333b; border: 1.5px solid var(--fill); box-shadow: none; }
-.gp.ctx svg, .gp.s-outline svg { color: var(--fill); }
+.gp-chip { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 5px; background: rgba(0, 0, 0, 0.18); color: var(--ink); }
+.gp.s-outline .gp-chip, .gp.ctx .gp-chip { background: var(--fill); color: #fff; }
+.gp.s-skipped .gp-chip { background: #c9d0d6; color: #55606b; }
+.gp.s-ghost .gp-chip { display: none; }
 .gp.ctx { border-style: dashed; }
-.gp.s-now { transform: scale(1.05); box-shadow: 0 0 0 3px #fff, 0 0 0 5px #1f2933, 0 6px 18px rgba(16, 24, 32, 0.18); }
+.gp.s-now { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #1f2933, 0 6px 18px rgba(16, 24, 32, 0.18); }
 /* taste-skill-ignore: a hatch marks a skipped subtree */
 .gp.s-skipped { background: repeating-linear-gradient(45deg, #eef1f4 0 6px, #e0e5ea 6px 12px); color: #55606b; border: 1px dashed #a9b3bc; box-shadow: none; }
 .gp.s-flagged { box-shadow: 0 0 0 2px #c93a6a; }
-.gp-badge { margin-left: auto; background: #c93a6a; color: #fff; font: 600 10.5px/1 var(--font); padding: 3px 6px; border-radius: 3px; flex: none; }
+.gp-badge { margin-left: auto; background: #c93a6a; color: #fff; font: 600 11.5px/1 var(--font); padding: 3px 6px; border-radius: 3px; flex: none; }
 .gp.dim { opacity: 0.22; }
 .gp.sel { outline: 2px solid #1f2933; outline-offset: 2px; }
 .grp { border: 1.5px dashed #9aa6b1; border-radius: 8px; background: rgba(255, 255, 255, 0.5); }
@@ -48,9 +52,9 @@
 .dedge { transition: opacity var(--duration-fast) var(--ease-in-out); }
 .dedge.dim { opacity: 0.12; }
 @keyframes t-dots { to { stroke-dashoffset: -12; } }
-.ring { fill: none; stroke: #c9d1d8; stroke-dasharray: 4 5; }
-.ring.on { fill: rgba(47, 111, 209, 0.035); stroke: #9fb3c8; }
-.ring-label { font-size: 12px; fill: #6b7580; font-family: var(--font); }
+.ring { fill: #f7f9fa; stroke: color-mix(in srgb, var(--ring) 35%, #d5dbe0); stroke-dasharray: 4 5; transition: fill 400ms ease, stroke 400ms ease; }
+.ring.on { fill: color-mix(in srgb, var(--ring) 9%, #fff); stroke: color-mix(in srgb, var(--ring) 70%, #fff); stroke-dasharray: none; }
+.ring-label { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; fill: color-mix(in srgb, var(--ring) 80%, #33404b); font-family: var(--font); }
 @media (prefers-reduced-motion: reduce) {
   .de-dots.run { animation: none; }
   .gp { transition: none; }
@@ -61,3 +65,14 @@
 .lanes-embed.lanes-embed { min-height: 0; padding: 0; border-radius: 0; background: transparent; place-items: stretch; }
 .lanes-embed > [class*="card"] { max-width: none; box-shadow: none; }
 
+
+/* The canvas fills whatever holds it */
+.rf-wrap { position: absolute; inset: 0; }
+.de-line.lit { opacity: 0.85; stroke-width: 2; }
+.ripple { fill: none; stroke: #2f6fd1; stroke-width: 2; }
+
+/* A node the live conversation points at: a soft ring that breathes until it's applied or dismissed */
+.gp.sug { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #8e4ec6; }
+.gp-sug { position: absolute; inset: -9px; border-radius: 12px; border: 2px solid #8e4ec6; pointer-events: none; animation: sug-breathe 1.6s ease-in-out infinite; }
+@keyframes sug-breathe { 0%, 100% { opacity: 0.15; transform: scale(0.98); } 50% { opacity: 0.7; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .gp-sug { animation: none; opacity: 0.5; } }

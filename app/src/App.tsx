@@ -234,6 +234,8 @@ export default function App() {
               onPin={togglePin}
               onOpenInClaude={() => setClaudeOpen(true)}
               onAskBlast={(sym) => ask(`What breaks if I change ${sym}?`)}
+              onAsk={ask}
+              agentName={agent}
             />
             </ErrorBoundary>
           )}

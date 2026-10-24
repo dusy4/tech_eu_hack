@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { Recording } from "../data/types";
 import { useReplay } from "../engine/useReplay";
 import GraphCanvas from "../views/GraphCanvas";
@@ -8,6 +9,13 @@ import AgentRun from "../ui/AgentRun";
 import { Icon } from "../ui/Icon";
 import { Dock, DockItem, DockSeparator } from "@/components/motion/dock";
 import { Drawer } from "@/components/motion/drawer";
+import { EASE_OUT } from "@/lib/ease";
+import LivePanel, { type SuggestionState } from "../ui/LivePanel";
+import { demoScript, suggestFrom, type Suggestion, type Utterance } from "../engine/suggest";
+import { useLiveTranscript } from "../engine/useLiveTranscript";
+import { sendToAgent, toBatch } from "../engine/agent";
+import { REPO } from "../data/repo";
+import type { ButtonState } from "@/components/motion/button";
 
 type Props = {
   rec: Recording;
@@ -21,7 +29,13 @@ type Props = {
   onPin: () => void;
   onOpenInClaude: () => void;
   onAskBlast: (symbol: string) => void;
+  /** Ask a question as if it were typed, e.g. from a live suggestion. */
+  onAsk: (question: string) => void;
+  /** The connected coding agent, if any; accepted proposals go to it. */
+  agentName?: string | null;
 };
+
+const LIVE_W = 380;
 
 const STEP_MS = 1600;
 const SPEEDS = [0.5, 1, 2];
@@ -51,6 +65,62 @@ export default function AnswerScreen(p: Props) {
   const [runOpen, setRunOpen] = useState(!instant);
   const [drawer, setDrawer] = useState(false);
   const steps = rec.spec.steps;
+  const reduce = useReducedMotion();
+
+  // Live suggestions: the conversation outlives a single answer, so it isn't reset with the recording.
+  const [liveOpen, setLiveOpen] = useState(false);
+  const [utterances, setUtterances] = useState<Utterance[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [sgState, setSgState] = useState<Record<string, SuggestionState>>({});
+  const [flyTo, setFlyTo] = useState<{ id: string; n: number }>();
+  const [sendState, setSendState] = useState<ButtonState>("idle");
+  const send = async (accepted: Suggestion[]) => {
+    setSendState("loading");
+    try {
+      await sendToAgent(toBatch(REPO.slug, { id: rec.spec.id, title: rec.spec.title, asked: p.asked }, accepted, utterances));
+      setSgState((st) => ({ ...st, ...Object.fromEntries(accepted.map((s) => [s.id, "sent" as const])) }));
+      setSendState("success");
+    } catch {
+      setSendState("error");
+    }
+    setTimeout(() => setSendState("idle"), 1800);
+  };
+  const script = useMemo(() => demoScript(rec.spec), [rec.spec]);
+  const onUtterance = useCallback(
+    (u: Utterance) => {
+      setUtterances((us) => [...us, u]);
+      setSuggestions((ss) => [...ss, ...suggestFrom(u, rec.spec)]);
+    },
+    [rec.spec],
+  );
+  const live = useLiveTranscript(script, onUtterance);
+  const suggested = useMemo(
+    () => new Set(suggestions.flatMap((s) => (s.kind === "focus" && !sgState[s.id] && rec.spec.nodes.some((n) => n.id === s.nodeId) ? [s.nodeId] : []))),
+    [suggestions, sgState, rec.spec],
+  );
+  const openLive = () => {
+    setLiveOpen(true);
+    if (live.mode === "off") {
+      setUtterances([]);
+      setSuggestions([]);
+      live.start("demo");
+    }
+  };
+  const closeLive = () => {
+    setLiveOpen(false);
+    live.stop();
+  };
+  const applySuggestion = (s: Suggestion) => {
+    setSgState((st) => ({ ...st, [s.id]: "approved" }));
+    if (s.kind === "ask") return p.onAsk(s.question);
+    setSelected(s.nodeId);
+    setFlyTo({ id: s.nodeId, n: Date.now() });
+    const idx = steps.findIndex((st) => st.focus.includes(s.nodeId));
+    if (idx >= 0) {
+      setPlaying(false);
+      setStep(idx);
+    }
+  };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const startedAt = useMemo(() => (instant ? undefined : Date.now()), [rec, runKey, instant]);
 
@@ -135,14 +205,69 @@ export default function AnswerScreen(p: Props) {
       </header>
 
       <section className="stage-canvas" aria-label="Answer">
-        <GraphCanvas spec={rec.spec} visible={replay.visible} step={step} ready={replay.ready} selected={selected} onSelect={onSelect} />
+        <GraphCanvas
+          spec={rec.spec}
+          visible={replay.visible}
+          step={step}
+          ready={replay.ready}
+          selected={selected}
+          onSelect={onSelect}
+          suggested={suggested}
+          flyTo={flyTo}
+          rightInset={liveOpen ? LIVE_W + 12 : 0}
+          tools={
+            <button className={`tool${liveOpen ? " on" : ""}`} onClick={() => (liveOpen ? closeLive() : openLive())} aria-pressed={liveOpen}>
+              <Icon name="wave" size={16} />
+              <span>Live</span>
+            </button>
+          }
+        />
+
+        <AnimatePresence>
+          {liveOpen && (
+            <motion.aside
+              key="live"
+              className="live-dock"
+              style={{ width: LIVE_W }}
+              initial={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateX(24px)" }}
+              animate={{ opacity: 1, transform: "translateX(0px)" }}
+              exit={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateX(24px)", transition: { duration: 0.16, ease: EASE_OUT } }}
+              transition={{ duration: 0.26, ease: EASE_OUT }}
+              aria-label="Live suggestions"
+            >
+              <LivePanel
+                mode={live.mode}
+                done={live.done}
+                interim={live.interim}
+                speaker={live.speaker}
+                analyser={live.analyser}
+                error={live.error}
+                utterances={utterances}
+                suggestions={suggestions}
+                states={sgState}
+                onMode={(m) => {
+                  if (m === "demo") {
+                    setUtterances([]);
+                    setSuggestions([]);
+                  }
+                  live.start(m);
+                }}
+                onClose={closeLive}
+                onApply={applySuggestion}
+                onDismiss={(sg) => setSgState((st) => ({ ...st, [sg.id]: "rejected" }))}
+                agentName={p.agentName}
+                sendState={sendState}
+                onSend={send}
+              />
+            </motion.aside>
+          )}
+        </AnimatePresence>
 
         <div className={`run-sheet${runOpen ? " open" : ""}`} aria-hidden={!runOpen}>
           {runOpen && <AgentRun key={`${rec.spec.id}:${runKey}`} rec={rec} startedAt={startedAt} />}
         </div>
 
-        <div className="playbar">
-          <StepStrip spec={rec.spec} step={step} ready={replay.ready} onStep={go} />
+        <div className="playbar" style={{ ["--live" as string]: liveOpen ? `${LIVE_W + 12}px` : "0px" }}>
           <Dock size={40} className="playdock">
             <DockItem aria-label="Previous step" onClick={() => go(step - 1)}>
               <Icon name="prev" size={18} />
@@ -163,7 +288,9 @@ export default function AnswerScreen(p: Props) {
             <DockItem aria-label="Next step" onClick={() => go(step + 1)}>
               <Icon name="next" size={18} />
             </DockItem>
-            <DockSeparator />
+          </Dock>
+          <StepStrip spec={rec.spec} step={step} ready={replay.ready} onStep={go} />
+          <Dock size={40} className="playdock">
             <DockItem aria-label={`Speed ${speed}×, change`} onClick={() => p.onSpeed(SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length])}>
               <span className="dock-text num">{speed}×</span>
             </DockItem>

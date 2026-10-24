@@ -90,7 +90,7 @@ body {
   font: 400 var(--fs-body)/20px var(--font);
   -webkit-font-smoothing: antialiased;
 }
-button, input { font: inherit; color: inherit; }
+@layer base { button, input { font: inherit; color: inherit; } }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
 .mono { font-family: var(--mono); }
