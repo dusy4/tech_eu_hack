@@ -535,4 +535,5 @@ Everything about the project is in this README. These are deep references for on
 | [`knowledge/repo-analysis-workbench-guide.md`](knowledge/repo-analysis-workbench-guide.md) | How the upstream workbench works inside (written before our MCP server) |
 | [`docs/ilograph.yaml`](docs/ilograph.yaml) | Architecture diagram of the Spelunk app ([Ilograph](https://www.ilograph.com)) |
 | [`docs/Research Sources.md`](docs/Research%20Sources.md), [`Research Summaries.md`](docs/Research%20Summaries.md) | Reading list: dependence graphs, impact analysis, code retrieval |
+| [`docs/paper-code-mapping/`](docs/paper-code-mapping/papers-to-code.html) | Which of the 85 papers each workbench file implements or approximates: an HTML dashboard, plus the same tables as `.xlsx` and `.csv` (line numbers from backend `416efcf`) |
 | [`qwen-mlx/README.md`](qwen-mlx/README.md) | The local Qwen server (unused since embeddings were dropped) |
