@@ -162,6 +162,10 @@ def rerank_candidates(
         if suffix == ".md" and kind not in {"file", "doc"} and not query_profile.get("explicit_docs"):
             score -= 4.0
 
+        # Tests whose names echo the query otherwise outrank the code they exercise.
+        if is_test_candidate(kind, metadata, qualified_name, path) and not TEST_QUERY_TOKENS.intersection(query_tokens):
+            score -= TEST_CODE_PENALTY
+
         updated = dict(candidate)
         updated["score"] = round(score, 6)
         ranked.append(updated)
@@ -176,6 +180,18 @@ def rerank_candidates(
         ),
     )
     return maybe_qwen_rerank(heuristic_ranked, query_text)
+
+
+TEST_CODE_PENALTY = 40.0
+TEST_QUERY_TOKENS = {"test", "tests", "testing", "spec", "fixture", "fixtures"}
+
+
+def is_test_candidate(kind: str, metadata: Dict[str, object], qualified_name: str, path: str) -> bool:
+    if kind == "test" or metadata.get("is_test"):
+        return True
+    lowered_qname = qualified_name.lower()
+    lowered_path = path.lower()
+    return "::tests::" in lowered_qname or "/tests/" in lowered_path or lowered_path.endswith("_test.rs")
 
 
 def maybe_qwen_rerank(ranked: List[Dict[str, object]], query_text: str) -> List[Dict[str, object]]:

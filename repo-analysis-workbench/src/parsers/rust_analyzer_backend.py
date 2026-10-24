@@ -276,8 +276,11 @@ def normalize_document_symbols(
             continue
 
         qualified_name = f"{parent_qualified_name}::{name}" if parent_qualified_name else name
-        selection_range = item.get("selectionRange") or item.get("range") or {}
-        full_range = item.get("range") or selection_range
+        # Hierarchical DocumentSymbol carries range/selectionRange; the flat
+        # SymbolInformation form (what rust-analyzer often returns) carries location.range.
+        location_range = (item.get("location") or {}).get("range")
+        selection_range = item.get("selectionRange") or item.get("range") or location_range or {}
+        full_range = item.get("range") or location_range or selection_range
 
         normalized.append(
             {

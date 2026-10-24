@@ -3,7 +3,7 @@ name = "repo-analysis"
 version = "0.1.0"
 description = "Code-intelligence and retrieval workbench for local source repositories"
 requires-python = ">=3.10"
-dependencies = ["lmdb>=1.4", "ryugraph>=25.9.2", "qdrant-client>=1.19", "mcp>=2.3,<3"]
+dependencies = ["lmdb>=1.4", "ryugraph>=25.9.2", "qdrant-client>=1.19", "mcp>=2.3,<3", "protobuf>=7.36"]
 
 [project.optional-dependencies]
 tree-sitter = [
