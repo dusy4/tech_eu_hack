@@ -209,7 +209,7 @@ tech_eu_hack/
 | You can… | Real or sample? |
 |---|---|
 | Use the 12 MCP tools from Claude Code opened in this folder (after indexing) | **Real** |
-| Index a Rust repo and query callers, callees, paths, bodies | **Real**, but the call graph misses many calls ([measured](repo-analysis-workbench/docs/MCP%20Server.md#limitations)) |
+| Index a Rust repo and query callers, callees, paths, bodies | **Real.** With the SCIP step, callers include method calls, trait dispatch and cross-crate calls (12/12 on the check set) |
 | Talk and see the live transcript (Reson8) | **Real** (needs `RESON8_API_KEY`) |
 | Get proposals from what was said | Real time, but a **keyword matcher** against the sample symbols, not Haiku |
 | Accept proposals and send them to the agent | UI real; sending only logs to the console unless `VITE_AGENT_URL` is set |
@@ -226,6 +226,8 @@ tech_eu_hack/
 - **Extraction:** Claude Haiku 5.5 (`claude-haiku-5-5`) reads the transcript. It may also build the graphs.
 - **Handoff goes out through MCP**, so it works with whatever agent people already use.
 - **Code facts come from the repo-analysis MCP server.** Keyword search (BM25) plus the code graph.
+- **Rust call graph from rust-analyzer (SCIP).** Compiler-grade references now catch method calls, trait dispatch
+  and cross-crate calls: real callers found on Aneeth's check set went from 0/12 to 12/12 (`39a9c81`).
 - **No embeddings.** Qdrant, OpenRouter and Qwen are built but switched off and nothing depends on them.
 - **The graph's contract is `ViewSpec`**, owned by the frontend ([section 10](#10-viewspec-what-the-graph-draws)).
 - **Domain:** software codebases. Earlier ideas (bio, finance visualisations) are dropped.
@@ -274,14 +276,6 @@ Each needs one owner and one answer.
   - Add `list_handoffs` / `get_handoff` tools (or an MCP resource) to the repo-analysis server, so Claude Code or
     Cursor pull it with the MCP connection they already have.
 - **Owner needed.** It spans the app and the server.
-
-### 5. The call graph misses real calls
-
-- **The clash:** FlowTrace and BlastRadius depend on callers and callees, but the Rust graph misses method-call
-  syntax, trait dispatch and cross-crate calls ([measured](repo-analysis-workbench/docs/MCP%20Server.md#limitations)).
-- **Options:**
-  - Import a SCIP index from rust-analyzer. `build-index --scip-index` exists but hasn't been tried.
-  - Pick demo questions whose paths the graph does find.
 
 ---
 
@@ -425,7 +419,7 @@ One question is asked live and unscripted.
 
 | Risk | Fallback |
 |---|---|
-| The call graph misses the demo's path | Curate questions the graph resolves; try the SCIP import (open decision 5) |
+| The call graph misses the demo's path | Rebuild with the SCIP step; check with `scripts/graph_recall_check.py`; curate questions the graph resolves |
 | Haiku proposals are noisy or slow | Only propose on sentences that name code; keep the keyword matcher as a backup |
 | Haiku's graphs are weak | A bigger Claude model builds the `ViewSpec`; recordings for scripted questions |
 | Reson8 is flaky | Browser speech recognition, then the text box |
@@ -469,8 +463,10 @@ cargo build --manifest-path native/Cargo.toml
 # index a target repo (about 6 minutes for a 67k-line Rust workspace)
 git clone --depth 1 https://github.com/Rust-Framework/rust-agent-framework ../repo_analyse/rust-agent-framework
 export PYTHON_BIN="$PWD/.venv/bin/python"; WS="$PWD/../repo_analyse"
+./scripts/build_scip.sh       --repo rust-agent-framework --workspace-root "$WS"   # Rust call graph, ~1 min
 ./scripts/parse_repos.sh      --repo rust-agent-framework --workspace-root "$WS"
-./scripts/build_index.sh      --repo rust-agent-framework --workspace-root "$WS"
+./scripts/build_index.sh      --repo rust-agent-framework --workspace-root "$WS" \
+                              --scip-index "$WS/.scip/rust-agent-framework.scip.json"
 ./scripts/build_search.sh     --repo rust-agent-framework --workspace-root "$WS"
 ./scripts/export_summaries.sh --repo rust-agent-framework
 
@@ -511,14 +507,19 @@ Then set `VITE_KNOWLEDGE_URL=http://127.0.0.1:18300` in `app/.env.local`.
 - **Qdrant vector store** (`src/backends/qdrant/`) replacing the single-JSON-file vector index.
 - **OpenRouter embedding provider**, streamed into Qdrant batch by batch, resumable, rate-limited, with
   `--skip-unit-kinds` to limit scope.
+- **SCIP call graph for Rust** (`src/symbols/scip_bridge.py`, `scripts/build_scip.sh`, `scripts/scip_to_json.py`):
+  rust-analyzer's references become CALLS edges. Also fixes rust-analyzer symbol locations, which removed ~1.5k
+  phantom duplicate symbols (statements 244k → 33k on `rust-agent-framework`).
+- **Rerank penalises test code** unless the question is about tests.
+- **Graph recall check** (`scripts/graph_recall_check.py`): compares callers with hand-verified call sites.
 
 ## 20. Backend notes
 
 - `tree-sitter-rust` isn't in the workbench's optional dependencies, but its Rust parser needs it.
 - With rust-analyzer installed, 5 upstream unit tests fail because they assume optional tools (rust-analyzer,
   tree-sitter) are *not* installed; all tests for our additions pass.
-- The Rust call graph misses many real calls (method-call syntax, trait dispatch, cross-crate); see
-  [MCP Server › Limitations](repo-analysis-workbench/docs/MCP%20Server.md#limitations).
+- Without the SCIP step, the Rust call graph misses most method calls, trait dispatch and cross-crate calls
+  (links by name only). Always index Rust repos with `build_scip.sh` first.
 - Python support in the workbench is shallow (symbols and search only: no call graph). Rust gets the full analysis.
 - The embedding chunks are padded with search metadata, so a 1M-token repo becomes ~40M tokens to embed by default.
   One reason embeddings were dropped.
