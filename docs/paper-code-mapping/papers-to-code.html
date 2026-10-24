@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Papers to Code Traceability</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a research-audit ledger. Header + legend that doubles as filter, one wide evidence table, then file index and guide audit. */
+:root {
+  --bg: #f6f7f8; --surface: #ffffff; --ink: #18202a; --muted: #5b6673; --rule: #d9dee4; --accent: #1f5f7a;
+  --direct: #155e3b; --direct-bg: #dcefe4; --strong: #2a6b5f; --strong-bg: #e1f0ec;
+  --partial: #8a5a00; --partial-bg: #f6ead2; --context: #3d5a8a; --context-bg: #e3e9f4;
+  --none: #6b6f75; --none-bg: #eceef0; --codebg: #f0f3f6; --hl: #fff4c2;
+  --f-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161c; --surface: #171e26; --ink: #e4e9ee; --muted: #9aa6b2; --rule: #2b3540; --accent: #7cc0dc;
+  --direct: #8fdcb0; --direct-bg: #183a2a; --strong: #93d3c4; --strong-bg: #173631;
+  --partial: #f0c36b; --partial-bg: #3a2d12; --context: #a9bfe6; --context-bg: #1f2b40;
+  --none: #a8adb3; --none-bg: #262c33; --codebg: #1d252e; --hl: #4a4116; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #171e26; --ink: #e4e9ee; --muted: #9aa6b2; --rule: #2b3540; --accent: #7cc0dc;
+  --direct: #8fdcb0; --direct-bg: #183a2a; --strong: #93d3c4; --strong-bg: #173631;
+  --partial: #f0c36b; --partial-bg: #3a2d12; --context: #a9bfe6; --context-bg: #1f2b40;
+  --none: #a8adb3; --none-bg: #262c33; --codebg: #1d252e; --hl: #4a4116; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+.wrap { max-width: 1680px; margin: 0 auto; display: grid; gap: 36px; }
+header { display: grid; gap: 12px; max-width: 78ch; }
+.eyebrow { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 600 clamp(28px, 4vw, 42px)/1.1 var(--f-display); margin: 0; text-wrap: balance; }
+h2 { font: 600 26px/1.2 var(--f-display); margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.lede { color: var(--muted); font-size: 16px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font: 400 13px/1.4 var(--f-mono); color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 500; }
+section { display: grid; gap: 14px; min-width: 0; }
+.sechead { display: grid; gap: 6px; max-width: 90ch; }
+.sechead p { color: var(--muted); }
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.lg { all: unset; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; padding: 12px 14px; border-radius: 8px;
+  background: var(--surface); border: 1px solid var(--rule); }
+.lg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lg[aria-pressed="true"] { border-color: currentColor; box-shadow: inset 0 0 0 1px currentColor; }
+.lgk { font-weight: 600; } .lgn { font: 600 20px/1 var(--f-mono); font-variant-numeric: tabular-nums; }
+.lgd { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+.s-Direct { color: var(--direct); } .s-Strong { color: var(--strong); } .s-Partial { color: var(--partial); }
+.s-Context { color: var(--context); } .s-None { color: var(--none); }
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.tools input { font: inherit; padding: 9px 12px; border-radius: 6px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); width: min(420px, 100%); }
+.tools input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tools button { font: 500 13px var(--f-body); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); cursor: pointer; }
+.tools button:focus-visible { outline: 2px solid var(--accent); }
+.count { font: 400 13px var(--f-mono); color: var(--muted); }
+.scroller { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; }
+#map { min-width: 1500px; }
+th, td { text-align: left; vertical-align: top; padding: 12px 12px; border-bottom: 1px solid var(--rule); font-size: 14px; }
+thead th { position: sticky; top: 0; background: var(--surface); font: 600 12px/1.3 var(--f-body); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); z-index: 1; }
+tbody tr:target { background: var(--hl); }
+td.pid { width: 44px; } .num { font: 500 13px var(--f-mono); color: var(--muted); }
+td.paper { width: 230px; } .ptitle { font: 600 15px/1.3 var(--f-display); margin-bottom: 6px; }
+.venue { display: block; font: 400 12px var(--f-mono); color: var(--muted); margin-bottom: 8px; }
+.pill { display: inline-block; font: 600 11px/1 var(--f-body); letter-spacing: .06em; text-transform: uppercase; padding: 5px 8px; border-radius: 99px; }
+.pill.s-Direct { background: var(--direct-bg); } .pill.s-Strong { background: var(--strong-bg); } .pill.s-Partial { background: var(--partial-bg); }
+.pill.s-Context { background: var(--context-bg); } .pill.s-None { background: var(--none-bg); }
+td.cite { color: var(--muted); font-size: 13px; width: 200px; }
+td.codecell { width: 360px; }
+ul.refs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ul.refs li { display: grid; gap: 2px; }
+code.ref { font: 400 12px/1.4 var(--f-mono); background: var(--codebg); padding: 2px 5px; border-radius: 4px; word-break: break-all; color: var(--ink); }
+.ln { color: var(--accent); font-weight: 500; }
+.what { font-size: 13px; color: var(--muted); }
+.muted { color: var(--muted); font-size: 13px; }
+#files td:first-child { width: 42%; } #files .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 12px/1 var(--f-mono); padding: 5px 7px; border-radius: 4px; text-decoration: none; border: 1px solid currentColor; }
+.chip:focus-visible { outline: 2px solid var(--accent); }
+.gst { font: 600 11px/1 var(--f-body); letter-spacing: .05em; text-transform: uppercase; padding: 5px 8px; border-radius: 99px; white-space: nowrap; }
+.g-ok { background: var(--strong-bg); color: var(--strong); } .g-fix { background: var(--partial-bg); color: var(--partial); } .g-skip { background: var(--none-bg); color: var(--none); }
+#guide td:first-child { width: 34%; } #guide td:nth-child(2) { width: 120px; }
+.notes { display: grid; gap: 8px; max-width: 90ch; color: var(--muted); font-size: 14px; }
+.notes li { margin-bottom: 4px; }
+@media (max-width: 640px) { body { font-size: 14px; } .legend { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="eyebrow">tech_eu_hack · backend branch · repo-analysis-workbench</span>
+  <h1>Papers to Code Traceability</h1>
+  <p class="lede">Each of the 85 PDFs in research_papers is matched to the exact files and line ranges in the backend branch that implement, approximate or relate to its main idea. The code never names a paper, so every match is by mechanism. Where a paper has no counterpart, the table says so.</p>
+  <div class="meta"><span><b>85</b> papers</span><span><b>112</b> non-markdown files</span><span><b>61</b> files linked to a paper</span><span>Backend commit <b>416efcf1</b></span><span>Paths are relative to <b>repo-analysis-workbench/</b> unless they start with <b>qwen-mlx/</b>, <b>qdrant/</b> or <b>.mcp.json</b></span></div>
+</header>
+
+<section aria-labelledby="h-map">
+  <div class="sechead">
+    <h2 id="h-map">Paper → code matches</h2>
+    <p>Page numbers refer to the PDF page where the cited idea appears. Paper ideas are paraphrased, not quoted. Select a strength to filter.</p>
+  </div>
+  <div class="legend" role="group" aria-label="Filter by match strength"><button type="button" class="lg s-Direct" data-f="Direct" aria-pressed="false"><span class="lgk">Direct</span><span class="lgn">1</span><span class="lgd">The code implements the paper&#x27;s mechanism, including matching parameters.</span></button><button type="button" class="lg s-Strong" data-f="Strong" aria-pressed="false"><span class="lgk">Strong</span><span class="lgn">17</span><span class="lgd">The paper&#x27;s core idea is implemented in the code; differences are in method details.</span></button><button type="button" class="lg s-Partial" data-f="Partial" aria-pressed="false"><span class="lgk">Partial</span><span class="lgn">35</span><span class="lgd">Part of the idea is implemented, or a rule-based version of a learned method.</span></button><button type="button" class="lg s-Context" data-f="Context" aria-pressed="false"><span class="lgk">Context</span><span class="lgn">19</span><span class="lgd">Same problem, task or evaluation framing; the paper&#x27;s mechanism is not in the code.</span></button><button type="button" class="lg s-None" data-f="None" aria-pressed="false"><span class="lgk">None</span><span class="lgn">13</span><span class="lgd">No counterpart in the code.</span></button></div>
+  <div class="tools">
+    <label for="q" class="count">Search</label>
+    <input id="q" type="search" placeholder="Paper, file or idea, e.g. maxp, DATA_FLOW, toolkit.py">
+    <button type="button" id="reset">Show all</button>
+    <span class="count" id="shown"></span>
+  </div>
+  <div class="scroller">
+    <table id="map">
+      <thead><tr><th>#</th><th>Paper</th><th>Paper's main idea</th><th>Matching part in the paper</th><th>Matching code (file:lines)</th><th>Code's main idea</th><th>Why they match, and where they differ</th></tr></thead>
+      <tbody>
+<tr data-s="Strong" id="p01">
+<td class="pid"><span class="num">01</span></td>
+<td class="paper"><div class="ptitle">Ferrante - The Program Dependence Graph and Its Use in Optimization</div><span class="venue">ACM TOPLAS 1987</span><span class="pill s-Strong">Strong</span></td>
+<td>Introduces the PDG, one graph that makes both data dependences and control dependences explicit for every operation, so a single walk over dependences supports optimizations and slicing.</td>
+<td class="cite">p1 abstract: data + control dependences in one graph, control dependences derived from the control flow graph; key words list slicing and data flow.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/symbols/indexer.py<span class="ln">:1232-1349</span></code><span class="what">per-statement records with parent_statement_id (enclosing if/match/for/while/loop) and previous_statement_id</span></li><li><code class="ref">src/graph/builder.py<span class="ln">:687-700</span></code><span class="what">CONTROL_FLOW edge, relation=&quot;sequential&quot;</span></li><li><code class="ref">src/graph/builder.py<span class="ln">:702-715</span></code><span class="what">DEPENDENCE edge, relation=&quot;control&quot; (parent statement → child)</span></li><li><code class="ref">src/graph/builder.py<span class="ln">:744-771</span></code><span class="what">DATA_FLOW edge from last write of a target to a later read</span></li><li><code class="ref">src/backends/ryugraph/queries.py<span class="ln">:301-343, 501-533</span></code><span class="what">statement_slice: statements + reads/writes/calls + control predecessors/successors</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:546-592</span></code><span class="what">statement_slice agent tool</span></li></ul></td>
+<td>Builds a statement-level dependence graph per function with control and data edges, and exposes slicing over it as an agent tool.</td>
+<td>Same representation goal: control and data dependence as explicit edges, traversed for slicing. Differences: control dependence in the code is approximated by syntactic nesting (control_stack), not post-dominator analysis on a CFG; DATA_FLOW links the last write in line order, not CFG reaching definitions. Used for retrieval, not compiler optimization.</td>
+</tr>
+<tr data-s="Partial" id="p02">
+<td class="pid"><span class="num">02</span></td>
+<td class="paper"><div class="ptitle">Lehnert - A review of software change impact analysis</div><span class="venue">TU Ilmenau 2011</span><span class="pill s-Partial">Partial</span></td>
+<td>Surveys and classifies change impact analysis approaches with a taxonomy. Impact analysis identifies the potential consequences of a change.</td>
+<td class="cite">p2 abstract + intro: review and taxonomy; impact analysis definition quoted from Bohner &amp; Arnold.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:462-483, 426-435, 595-675</span></code><span class="what">callers_of / callees_of / who_imports / path_between</span></li><li><code class="ref">src/graph/builder.py<span class="ln">:189-214, 356-370</span></code><span class="what">test nodes and TESTS edges from test symbols to referenced targets</span></li><li><code class="ref">src/symbols/indexer.py<span class="ln">:811-844</span></code><span class="what">compute_transitive_calls (depth 2)</span></li></ul></td>
+<td>Provides dependency queries (callers, importers, paths, test links, transitive calls) that are the raw inputs an impact analysis needs.</td>
+<td>The code supplies the dependency-graph primitives the review classifies (call/import/inheritance dependencies). It has no command that computes an impact set for a proposed change, and nothing from the taxonomy (e.g. history mining) is implemented.</td>
+</tr>
+<tr data-s="Partial" id="p03">
+<td class="pid"><span class="num">03</span></td>
+<td class="paper"><div class="ptitle">Gethers - Integrated Impact Analysis for Managing Software Changes</div><span class="pill s-Partial">Partial</span></td>
+<td>Estimates the impact set of a textual change request by combining information retrieval (LSI), dynamic execution traces and mining of past commits, picking the best combination for the available context.</td>
+<td class="cite">p1 abstract: IR + dynamic analysis + history mining combined to offset each technique&#x27;s precision/recall deficit.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:89-273</span></code><span class="what">retrieve_context fuses lexical, scoped symbol, graph, body and embedding stages</span></li><li><code class="ref">src/retrieval/staged.py<span class="ln">:137-194</span></code><span class="what">pre_rank_score mixes BM25 score, embedding score, token overlap, exact boost</span></li></ul></td>
+<td>Fuses several retrieval signals (BM25, dense embeddings, graph neighborhood) into one ranked list from a natural-language query.</td>
+<td>Shared idea: combining complementary signals beats any single technique. Difference: the code combines lexical, semantic and static-structure signals; it has no execution traces and no commit-history mining.</td>
+</tr>
+<tr data-s="Context" id="p04">
+<td class="pid"><span class="num">04</span></td>
+<td class="paper"><div class="ptitle">CodeBERT</div><span class="venue">arXiv 2002.08155</span><span class="pill s-Context">Context</span></td>
+<td>Bimodal pre-trained Transformer for natural language and code (MLM + replaced token detection), used for natural-language code search and documentation generation.</td>
+<td class="cite">p1 abstract: NL-PL representations; state of the art on NL code search.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/embeddings/providers.py<span class="ln">:34-69</span></code><span class="what">embedding providers: qwen (default), openai, hashing</span></li><li><code class="ref">qwen-mlx/server.py<span class="ln">:38-41, 151-170</span></code><span class="what">Qwen3-Embedding with code-search query instruction</span></li><li><code class="ref">src/embeddings/providers.py<span class="ln">:80-140</span></code><span class="what">OpenRouter provider (default model nvidia/nemotron-3.5-embed-8b:free), separate query/passage input types</span></li><li><code class="ref">src/backends/qdrant/store.py<span class="ln">:124-141</span></code><span class="what">cosine search in Qdrant</span></li></ul></td>
+<td>Uses a pre-trained embedding model to map natural-language queries and code into one vector space for semantic code search.</td>
+<td>Same task (NL→code search with learned representations), different models: Qwen3-Embedding-8B locally or Nemotron embeddings via OpenRouter, not CodeBERT, and no pre-training. Lineage/background only.</td>
+</tr>
+<tr data-s="Partial" id="p05">
+<td class="pid"><span class="num">05</span></td>
+<td class="paper"><div class="ptitle">GraphCodeBERT</div><span class="venue">ICLR 2021</span><span class="pill s-Partial">Partial</span></td>
+<td>Pre-trains a code model on data flow, the &#x27;where-the-value-comes-from&#x27; relation between variables, instead of the AST; adds edge-prediction and node-alignment objectives.</td>
+<td class="cite">p1 abstract and p1-2 intro: data flow graph whose nodes are variables and edges show where values come from.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:744-771</span></code><span class="what">DATA_FLOW edges: last_write_by_target → reading statement (via=target)</span></li><li><code class="ref">src/symbols/indexer.py<span class="ln">:1383-1586</span></code><span class="what">collect_statement_definitions / writes / calls / reads per statement</span></li></ul></td>
+<td>Extracts def→use (value-origin) edges between statements and stores them in the code graph.</td>
+<td>The code materializes the same relation GraphCodeBERT uses (where a value comes from). GraphCodeBERT feeds it into model pre-training; the code uses it for graph retrieval and slicing. No model training in the code.</td>
+</tr>
+<tr data-s="Context" id="p06">
+<td class="pid"><span class="num">06</span></td>
+<td class="paper"><div class="ptitle">CodeXGLUE</div><span class="venue">arXiv 2102.04664</span><span class="pill s-Context">Context</span></td>
+<td>Benchmark suite of 10 code tasks over 14 datasets with baselines; code search is one task.</td>
+<td class="cite">p9: code search scored with Mean Reciprocal Rank (MRR); Table 9 p10.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/evaluation/harness.py<span class="ln">:643-692, 754-763</span></code><span class="what">score_retrieval: MRR, nDCG, recall@k</span></li></ul></td>
+<td>Scores retrieval quality with standard IR metrics including MRR.</td>
+<td>Shares the evaluation metric (MRR) for code search. The code does not use CodeXGLUE data or tasks.</td>
+</tr>
+<tr data-s="Context" id="p07">
+<td class="pid"><span class="num">07</span></td>
+<td class="paper"><div class="ptitle">UniXcoder</div><span class="venue">arXiv 2203.03850</span><span class="pill s-Context">Context</span></td>
+<td>Unified cross-modal pre-training that adds AST (flattened) and code comments to learn code fragment representations with contrastive learning; enables zero-shot code-to-code search.</td>
+<td class="cite">p1 abstract: AST + comment as extra modalities for code representation.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/search/indexer.py<span class="ln">:509-563, 606-640</span></code><span class="what">symbol documents combine signature, docstring, container, semantic targets; separate doc documents for docstrings</span></li></ul></td>
+<td>Indexes code together with its signature and doc comments so search sees both modalities.</td>
+<td>Shared intuition that comments and structure enrich code representations. The code uses this for lexical/embedding indexing; it does not train a model or use AST sequences as model input.</td>
+</tr>
+<tr data-s="Partial" id="p08">
+<td class="pid"><span class="num">08</span></td>
+<td class="paper"><div class="ptitle">ReAct</div><span class="venue">ICLR 2023</span><span class="pill s-Partial">Partial</span></td>
+<td>LLMs interleave reasoning traces with actions (tool calls to external sources) so reasoning plans actions and actions gather evidence, reducing hallucination.</td>
+<td class="cite">p1 abstract: interleaved reasoning and acting with a Wikipedia API.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:1-1513</span></code><span class="what">discrete tools: find_symbol, search_lexical, callers_of, path_between, get_symbol_body, prepare_answer_bundle …</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:203-230</span></code><span class="what">retrieve_iterative: refines with prior bundle hints</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:139-260</span></code><span class="what">12 read-only MCP tools served to Claude Code over stdio</span></li><li><code class="ref">.mcp.json<span class="ln">:1-13</span></code><span class="what">registers the server with Claude Code</span></li></ul></td>
+<td>Exposes the repository as a set of callable actions, served over MCP to an agent (Claude Code) that runs the reason-act loop.</td>
+<td>The code is the &#x27;act&#x27; side: a tool surface the agent calls between reasoning steps. The server&#x27;s instructions (server.py 61-69) tell the agent which tool to call first and to verify conclusions by reading code. The code itself contains no LLM and no reasoning loop.</td>
+</tr>
+<tr data-s="Context" id="p09">
+<td class="pid"><span class="num">09</span></td>
+<td class="paper"><div class="ptitle">LLMs - Understanding Code Syntax and Semantics for Code Analysis</div><span class="venue">ACM TOSEM (accepted)</span><span class="pill s-Context">Context</span></td>
+<td>Evaluates 21 LLMs on AST generation, CFG construction, data dependency, taint and flaky-test reasoning: strong at syntax, moderate at static analysis, weak at dynamic reasoning.</td>
+<td class="cite">p1 abstract: capability hierarchy syntax &gt; static &gt; dynamic.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/parsers/tree_sitter_backend.py<span class="ln">:15-53, 555-603</span></code><span class="what">deterministic parsing</span></li><li><code class="ref">src/graph/builder.py<span class="ln">:647-771</span></code><span class="what">control/data dependence computed by code, not by an LLM</span></li></ul></td>
+<td>Computes syntax and static dependence deterministically and hands the results to the model.</td>
+<td>The paper&#x27;s finding (LLMs are unreliable at static/dynamic analysis) motivates doing this analysis with parsers. The code does not cite or test this.</td>
+</tr>
+<tr data-s="Context" id="p10">
+<td class="pid"><span class="num">10</span></td>
+<td class="paper"><div class="ptitle">RepoBench</div><span class="venue">arXiv 2306.03091</span><span class="pill s-Context">Context</span></td>
+<td>Benchmark for repository-level completion with three tasks: cross-file retrieval (R), completion (C) and pipeline (P).</td>
+<td class="cite">p1 abstract; p4: RepoBench-R scored with acc@1/3/5.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/evaluation/harness.py<span class="ln">:695-710</span></code><span class="what">recall_at_k over k=1,3,5,10</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:89-273</span></code><span class="what">cross-file retrieval</span></li></ul></td>
+<td>Measures whether the expected cross-file evidence appears in the top-k.</td>
+<td>Both evaluate cross-file retrieval with top-k hit metrics. The code evaluates on its own JSONL cases, not RepoBench, and does no completion.</td>
+</tr>
+<tr data-s="Context" id="p11">
+<td class="pid"><span class="num">11</span></td>
+<td class="paper"><div class="ptitle">RepoFusion</div><span class="venue">arXiv 2306.10998</span><span class="pill s-Context">Context</span></td>
+<td>Trains code models to fuse multiple repository contexts (imports, parent classes, similarly named files) for completion.</td>
+<td class="cite">p1 abstract; p2: repository context types.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:262-313</span></code><span class="what">INHERITS and IMPORTS edges</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:64-200</span></code><span class="what">answer bundle combines several context types</span></li></ul></td>
+<td>Collects several kinds of repository context (imports, inheritance, summaries, bodies) into one bundle.</td>
+<td>Same context types; RepoFusion&#x27;s contribution is model training to fuse them, which the code does not do.</td>
+</tr>
+<tr data-s="Partial" id="p12">
+<td class="pid"><span class="num">12</span></td>
+<td class="paper"><div class="ptitle">CodePlan</div><span class="pill s-Partial">Partial</span></td>
+<td>Frames repository-wide edits as planning: incremental dependency analysis + change may-impact analysis + adaptive planning drive a chain of LLM edits.</td>
+<td class="cite">p1 abstract: dependency analysis, may-impact analysis, adaptive plan.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:14-430</span></code><span class="what">repository dependency graph</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:160-184, 426-435, 595-675</span></code><span class="what">trace_calls, who_imports, path_between</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:17-61, 233-267</span></code><span class="what">plan_query: recipe, seed types, stopping criteria, edge types per intent</span></li></ul></td>
+<td>Builds a dependency graph and a per-query retrieval plan.</td>
+<td>Shares dependency analysis and an explicit plan object. The code&#x27;s plan is a retrieval recipe, not an edit plan; there is no may-impact propagation after edits and no LLM editing.</td>
+</tr>
+<tr data-s="Partial" id="p13">
+<td class="pid"><span class="num">13</span></td>
+<td class="paper"><div class="ptitle">Making Retrieval-Augmented LMs Robust to Irrelevant Context</div><span class="venue">ICLR 2024</span><span class="pill s-Partial">Partial</span></td>
+<td>Irrelevant retrieved passages can hurt RALMs; proposes an NLI filter and fine-tuning on mixed relevant/irrelevant contexts.</td>
+<td class="cite">p1 abstract: retrieval robustness definition, NLI filter, 1,000 training examples suffice.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:68-74, 207-208</span></code><span class="what">GRAPH_NOISE_KINDS removed from graph results</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:965-1027</span></code><span class="what">clean_graph_neighbors drops statement/ref noise and transitive call edges</span></li><li><code class="ref">src/rerank/fusion.py<span class="ln">:152-163</span></code><span class="what">penalties for ref nodes, statements, locals, off-topic markdown</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:91-128</span></code><span class="what">slim(): drops internal fields (ids, hashes, raw search text) before results reach the agent</span></li></ul></td>
+<td>Filters noisy candidates and internal fields by rules before they reach the agent.</td>
+<td>Same goal: keep irrelevant context out. The code uses hand-written filters and penalties; no NLI model and no fine-tuning.</td>
+</tr>
+<tr data-s="Context" id="p14">
+<td class="pid"><span class="num">14</span></td>
+<td class="paper"><div class="ptitle">SWE-bench</div><span class="venue">ICLR 2024</span><span class="pill s-Context">Context</span></td>
+<td>2,294 real GitHub issues from 12 Python repos; the model must edit the codebase and is judged by tests.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">data/eval/cases/ai-tooling.jsonl<span class="ln">:1-3</span></code><span class="what">repository retrieval cases (expected_paths / symbols / terms)</span></li></ul></td>
+<td>Evaluates whether retrieval finds the files and symbols needed for a task.</td>
+<td>SWE-bench is the task setting such tools ultimately serve. The code has no SWE-bench harness and no patch evaluation.</td>
+</tr>
+<tr data-s="Partial" id="p15">
+<td class="pid"><span class="num">15</span></td>
+<td class="paper"><div class="ptitle">RepoCoder</div><span class="venue">EMNLP 2023</span><span class="pill s-Partial">Partial</span></td>
+<td>Iterative retrieval-generation: generated code from one round is used to retrieve better context in the next round.</td>
+<td class="cite">p1 abstract: similarity retriever + code LM in an iterative pipeline.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/planner.py<span class="ln">:203-230</span></code><span class="what">retrieve_iterative: combine prior hints, re-run bundle, iteration_count</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:397-414</span></code><span class="what">extract_prior_hints: top-2 symbols per prior bundle</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:270-274</span></code><span class="what">normalize_task appends hints to the query</span></li></ul></td>
+<td>Re-queries using information from the previous retrieval round.</td>
+<td>Same iterative re-query loop. RepoCoder feeds back generated code; the code feeds back the top symbols of the prior bundle (no generation).</td>
+</tr>
+<tr data-s="Context" id="p16">
+<td class="pid"><span class="num">16</span></td>
+<td class="paper"><div class="ptitle">RepoQA</div><span class="pill s-Context">Context</span></td>
+<td>Long-context benchmark &#x27;Searching Needle Function&#x27;: find a function from its natural-language description; 500 tasks, 50 repos, 5 languages.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">qwen-mlx/server.py<span class="ln">:38-41</span></code><span class="what">query instruction &#x27;Given a code search query, retrieve relevant source code, symbols…&#x27;</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:121-127</span></code><span class="what">find_symbol</span></li><li><code class="ref">src/embeddings/indexer.py<span class="ln">:763-904</span></code><span class="what">query_embedding_index</span></li></ul></td>
+<td>Finds functions/symbols from natural-language descriptions via embeddings and search.</td>
+<td>Same task shape (NL description → function). RepoQA tests long-context LLMs; the code does it with an index instead of a long context.</td>
+</tr>
+<tr data-s="Strong" id="p17">
+<td class="pid"><span class="num">17</span></td>
+<td class="paper"><div class="ptitle">GraphCoder</div><span class="pill s-Strong">Strong</span></td>
+<td>Retrieval-augmented completion over a Code Context Graph (control flow, data and control dependence between statements) with coarse-to-fine retrieval of similar contexts.</td>
+<td class="cite">p1 abstract: CCG of control-flow, data- and control-dependence; coarse-to-fine retrieval.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:647-771</span></code><span class="what">statement graph: CONTROL_FLOW, DEPENDENCE(control), DATA_FLOW</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:118-234</span></code><span class="what">coarse-to-fine: summaries → path scopes → scoped symbols → graph → bodies</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:283-315</span></code><span class="what">derive_summary_scopes</span></li></ul></td>
+<td>Statement-level graph with the same three edge families, queried with a coarse-to-fine retrieval cascade.</td>
+<td>Both the graph schema (control flow + control dependence + data dependence between statements) and the coarse-to-fine retrieval match. GraphCoder matches subgraph similarity for completion; the code expands from seeds for question answering.</td>
+</tr>
+<tr data-s="Partial" id="p18">
+<td class="pid"><span class="num">18</span></td>
+<td class="paper"><div class="ptitle">Hierarchical Context Pruning</div><span class="pill s-Partial">Partial</span></td>
+<td>For repo-level completion, keep topological file dependencies and drop function implementations of dependent files; little accuracy loss, much shorter prompts.</td>
+<td class="cite">p1 abstract: pruning implementations barely hurts; function-level repo modeling.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:275-313</span></code><span class="what">get_symbol_signature vs get_symbol_body</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:217-225, 595-656</span></code><span class="what">body hydration only when the gate allows</span></li><li><code class="ref">src/graph/builder.py<span class="ln">:287-313</span></code><span class="what">IMPORTS edges</span></li></ul></td>
+<td>Returns signatures and previews by default and loads bodies only when needed.</td>
+<td>Same principle of keeping structure and dropping bodies to save tokens. Applied as a retrieval gate, not as prompt construction for a completion model.</td>
+</tr>
+<tr data-s="Strong" id="p19">
+<td class="pid"><span class="num">19</span></td>
+<td class="paper"><div class="ptitle">Repoformer</div><span class="venue">ICML 2024</span><span class="pill s-Strong">Strong</span></td>
+<td>Selective RAG: skip retrieval when it will not help; the LM self-evaluates whether retrieval improves output, giving up to 70% speedup.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:595-656</span></code><span class="what">retrieval_gate decides global search / graph / bodies per query</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:659-687</span></code><span class="what">classify_query intent docs / symbol / exploration</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:39-44, 531-542</span></code><span class="what">benchmark modes selective_on vs selective_off</span></li></ul></td>
+<td>A selective-retrieval gate that turns expensive stages off for docs/path and exact-symbol queries, with an on/off benchmark.</td>
+<td>Same idea and an A/B to measure it. Repoformer&#x27;s gate is learned; the code&#x27;s gate is rule-based on query features. Embedding search is a separate switch: REPO_ANALYSIS_EMBEDDINGS = required (default, every query), optional or off (engine.py 77-86, 227-231); the MCP server defaults it to off (mcp_server/server.py 28).</td>
+</tr>
+<tr data-s="None" id="p20">
+<td class="pid"><span class="num">20</span></td>
+<td class="paper"><div class="ptitle">License Compliance Capability of LLMs in Code Generation</div><span class="pill s-None">None</span></td>
+<td>Benchmark for whether LLMs give correct license information when they emit code strikingly similar to existing open-source code.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No counterpart. The code does no license detection; only the repository&#x27;s own LICENSE file exists.</td>
+</tr>
+<tr data-s="Strong" id="p21">
+<td class="pid"><span class="num">21</span></td>
+<td class="paper"><div class="ptitle">CodexGraph</div><span class="pill s-Strong">Strong</span></td>
+<td>LLM agents query a code graph database (Neo4j + Cypher) built with a unified schema, for structure-aware retrieval and navigation.</td>
+<td class="cite">p1 abstract; p4 graph schema; p7 Neo4j and Cypher.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/backends/ryugraph/loader.py<span class="ln">:17-101</span></code><span class="what">node table + one relationship table per edge type</span></li><li><code class="ref">src/backends/ryugraph/queries.py<span class="ln">:450-498</span></code><span class="what">Cypher MATCH queries per edge type and direction</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:678-713</span></code><span class="what">execute_graph_query / expand_subgraph</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:47-57, 204-218</span></code><span class="what">MCP tools symbol_relations (8 relation types) and path_between</span></li><li><code class="ref">src/cli/main.py<span class="ln">:421</span></code><span class="what">graph-query command</span></li></ul></td>
+<td>Stores the code graph in an embedded Cypher graph database and gives agents graph operations.</td>
+<td>Same architecture: code graph DB + query interface for agents, now reachable from Claude Code over MCP. The code exposes fixed operations (relations, path_between, statement_slice…) instead of letting the LLM write Cypher.</td>
+</tr>
+<tr data-s="None" id="p22">
+<td class="pid"><span class="num">22</span></td>
+<td class="paper"><div class="ptitle">MemLong</div><span class="pill s-None">None</span></td>
+<td>Memory-augmented retrieval inside a partially trainable decoder to extend context length.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No counterpart. The paper changes the model&#x27;s attention/memory; the code is external retrieval and has no model internals.</td>
+</tr>
+<tr data-s="Partial" id="p24">
+<td class="pid"><span class="num">24</span></td>
+<td class="paper"><div class="ptitle">Sufficient Context</div><span class="venue">ICLR 2025</span><span class="pill s-Partial">Partial</span></td>
+<td>Classifies whether retrieved context is sufficient to answer; strong models answer wrongly instead of abstaining when it is not; proposes selective generation.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/evaluation/harness.py<span class="ln">:770-820</span></code><span class="what">score_bundle: path, name, term, provenance, graph and statement credits</span></li><li><code class="ref">src/cli/main.py<span class="ln">:588</span></code><span class="what">score-answer-bundles: &#x27;Score whether prepared answer bundles are sufficient&#x27;</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:252-259</span></code><span class="what">stopping_criteria</span></li></ul></td>
+<td>Scores whether a prepared bundle contains the expected evidence.</td>
+<td>Same question (is the context enough?). The code checks against gold expectations offline; there is no sufficiency classifier at query time and no abstention.</td>
+</tr>
+<tr data-s="Context" id="p25">
+<td class="pid"><span class="num">25</span></td>
+<td class="paper"><div class="ptitle">CodeRepoQA</div><span class="venue">WWW &#x27;25 Companion</span><span class="pill s-Context">Context</span></td>
+<td>Large multi-turn repository QA benchmark (585,687 entries, 30 repos, 5 languages).</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/evaluation/harness.py<span class="ln">:59-148</span></code><span class="what">loads JSONL repository QA cases</span></li></ul></td>
+<td>Repository-question evaluation cases.</td>
+<td>Same evaluation genre. The code uses its own small case file, not CodeRepoQA.</td>
+</tr>
+<tr data-s="Partial" id="p26">
+<td class="pid"><span class="num">26</span></td>
+<td class="paper"><div class="ptitle">CoReQA</div><span class="pill s-Partial">Partial</span></td>
+<td>Repository QA benchmark from GitHub issues of 176 repos, judged by an LLM-as-a-judge on five aspects.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/evaluation/harness.py<span class="ln">:823-844, 1047-1073</span></code><span class="what">score_external_answer / grade_answer_quality</span></li></ul></td>
+<td>Scores answers against expected paths, names and terms.</td>
+<td>Both grade repo-QA answers. CoReQA uses an LLM judge; the code uses string-matching heuristics only.</td>
+</tr>
+<tr data-s="Direct" id="p27">
+<td class="pid"><span class="num">27</span></td>
+<td class="paper"><div class="ptitle">Repository-level Code Search with Neural Retrieval Methods</div><span class="pill s-Direct">Direct</span></td>
+<td>Multi-stage repo-level file search: BM25 initial retrieval, then neural rerankers (CodeBERT) over commit messages and code patches; passage scores aggregated to files with maxp.</td>
+<td class="cite">p5: maxp aggregation performed best; p7: BM25 k1=0.9, b=0.4, retrieve at most k=1000 files; full pipeline CodeReranker at depth 100.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/staged.py<span class="ln">:22-25</span></code><span class="what">DEFAULT_LEXICAL_POOL = 1000, PRE_RANK_POOL = 100, RERANK_POOL = 50, MAX_UNITS_PER_SOURCE = 4</span></li><li><code class="ref">src/retrieval/staged.py<span class="ln">:28-74</span></code><span class="what">retrieve_paper_pipeline: BM25 pool → units → pre-rank → neural rerank → maxp</span></li><li><code class="ref">src/retrieval/staged.py<span class="ln">:215-239</span></code><span class="what">qwen_rerank_in_batches (cross-encoder)</span></li><li><code class="ref">src/retrieval/staged.py<span class="ln">:242-285</span></code><span class="what">aggregate_units_maxp (parent score = best unit, top-3 unit hits kept)</span></li><li><code class="ref">src/embeddings/indexer.py<span class="ln">:863, 876-895</span></code><span class="what">embedding results grouped with maxp</span></li><li><code class="ref">src/cli/main.py<span class="ln">:355-365</span></code><span class="what">search-paper-pipeline command</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:515-518</span></code><span class="what">paper_pipeline benchmark mode</span></li><li><code class="ref">tests/unit/test_staged_retrieval.py<span class="ln">:38</span></code><span class="what">test: large BM25 pool, batched rerank, maxp</span></li></ul></td>
+<td>A dedicated &#x27;paper pipeline&#x27;: large BM25 pool, passage-sized units, neural reranking, maxp aggregation back to files/symbols.</td>
+<td>Closest match in the set. Pool of 1000 BM25 candidates, a ~100 pre-rank depth and maxp aggregation all coincide with the paper. Differences: no commit-message index; reranker is Qwen3-Reranker-8B, not CodeBERT; passages are code windows, not commit diffs; the code adds embedding fusion before reranking. The code calls it &#x27;paper_pipeline&#x27; but never names this paper.</td>
+</tr>
+<tr data-s="Strong" id="p28">
+<td class="pid"><span class="num">28</span></td>
+<td class="paper"><div class="ptitle">LocAgent</div><span class="pill s-Strong">Strong</span></td>
+<td>Code localization with a directed heterogeneous graph (directory, file, class, function; contain, import, invoke, inherit edges), entity and BM25 indexes, and agent tools for multi-hop search.</td>
+<td class="cite">p1 abstract; p4 Figure: node/edge types and BM25 indexes on entity IDs and content.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:30-187</span></code><span class="what">repository/directory/package/file/symbol nodes; CONTAINS/DEFINES/DECLARES</span></li><li><code class="ref">src/graph/builder.py<span class="ln">:262-341</span></code><span class="what">INHERITS, IMPORTS, CALLS edges</span></li><li><code class="ref">src/search/indexer.py<span class="ln">:303-685</span></code><span class="what">BM25 documents for files, symbols, bodies, docs</span></li><li><code class="ref">src/backends/lmdb/store.py<span class="ln">:72-79</span></code><span class="what">resolve_qname / resolve_name entity lookup</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:438-543, 595-713</span></code><span class="what">traversal tools: adjacent_symbols, callers/callees, path_between, expand_subgraph</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:158-218</span></code><span class="what">search_code, find_symbol, find_file, get_symbol_body, symbol_relations, path_between as MCP tools</span></li></ul></td>
+<td>Heterogeneous code graph + BM25 entity index + search and traversal tools for an agent.</td>
+<td>Node types, edge types, the index design and the search/traverse tool split line up almost one-to-one. LocAgent also fine-tunes a localization model; the code provides the graph and tools only.</td>
+</tr>
+<tr data-s="Partial" id="p29">
+<td class="pid"><span class="num">29</span></td>
+<td class="paper"><div class="ptitle">CoSIL</div><span class="pill s-Partial">Partial</span></td>
+<td>Training-free, index-free issue localization: broad search on a module call graph, then deep search on the function call graph, with a pruner and reflection.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:118-210</span></code><span class="what">file/dir scopes first, then symbols, then graph expansion</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:462-483, 965-1008</span></code><span class="what">callers/callees; neighbor pruning</span></li></ul></td>
+<td>Coarse (file/scope) to fine (symbol/call graph) search with pruning.</td>
+<td>Same breadth-then-depth strategy over call graphs. CoSIL is index-free and LLM-driven; the code pre-builds indexes and runs deterministically.</td>
+</tr>
+<tr data-s="Partial" id="p30">
+<td class="pid"><span class="num">30</span></td>
+<td class="paper"><div class="ptitle">GraphCodeAgent</div><span class="pill s-Partial">Partial</span></td>
+<td>Dual graphs (a Requirement Graph and a Structural-Semantic Code Graph) guide an LLM agent&#x27;s multi-hop retrieval for repo-level code generation.</td>
+<td class="cite">p2: Requirement Graph + SSCG.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:14-430</span></code><span class="what">structural code graph</span></li></ul></td>
+<td>Structural code graph for retrieval.</td>
+<td>Matches the code-graph half only. There is no requirement graph and no generation.</td>
+</tr>
+<tr data-s="None" id="p31">
+<td class="pid"><span class="num">31</span></td>
+<td class="paper"><div class="ptitle">SecRepoBench</div><span class="venue">LLM4Code &#x27;26</span><span class="pill s-None">None</span></td>
+<td>Secure code completion benchmark: 318 tasks in 27 C/C++ repos covering 15 CWEs.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No counterpart. The code has no security analysis or completion.</td>
+</tr>
+<tr data-s="Strong" id="p32">
+<td class="pid"><span class="num">32</span></td>
+<td class="paper"><div class="ptitle">Knowledge Graph Based Repository-Level Code Generation</div><span class="venue">arXiv 2505.14394</span><span class="pill s-Strong">Strong</span></td>
+<td>Represents the repository as a knowledge graph and retrieves with a hybrid of full-text/semantic search and graph queries before LLM generation.</td>
+<td class="cite">p1 abstract; p2: hybrid retrieval combining full-text semantic search with graph-based queries.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:89-273</span></code><span class="what">BM25 + embeddings + graph expansion in one ranking</span></li><li><code class="ref">src/backends/ryugraph/queries.py<span class="ln">:242-298</span></code><span class="what">graph neighborhood expansion</span></li></ul></td>
+<td>Hybrid text + vector + graph retrieval over a code graph.</td>
+<td>Same retrieval design. The paper continues to code generation; the code stops at the evidence bundle.</td>
+</tr>
+<tr data-s="Partial" id="p33">
+<td class="pid"><span class="num">33</span></td>
+<td class="paper"><div class="ptitle">Code Researcher</div><span class="pill s-Partial">Partial</span></td>
+<td>Deep-research agent for systems code: actions search_code, search_definition, search_commits; strategies include chasing control and data flow; structured memory filtered before patching.</td>
+<td class="cite">p1 Figure 1 and abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:139-157</span></code><span class="what">search_lexical</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:387-423</span></code><span class="what">where_defined</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:486-507, 546-592</span></code><span class="what">reads_of / writes_of / statement_slice (data/control flow)</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:145-164</span></code><span class="what">evidence list with provenance</span></li></ul></td>
+<td>Search, definition lookup and data/control-flow tools that produce filtered evidence.</td>
+<td>Same tool categories except commit search, which the code lacks. No patch synthesis or validation.</td>
+</tr>
+<tr data-s="Context" id="p34">
+<td class="pid"><span class="num">34</span></td>
+<td class="paper"><div class="ptitle">The SWE-Bench Illusion</div><span class="pill s-Context">Context</span></td>
+<td>Models identify buggy files from issue text alone (up to 76%), suggesting memorization/contamination; calls for contamination-resistant benchmarks.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/evaluation/harness.py<span class="ln">:643-692</span></code><span class="what">retrieval metrics on the user&#x27;s own cases</span></li></ul></td>
+<td>Measures retrieval on locally defined cases.</td>
+<td>A caution for evaluation design. The code has no contamination checks.</td>
+</tr>
+<tr data-s="Partial" id="p36">
+<td class="pid"><span class="num">36</span></td>
+<td class="paper"><div class="ptitle">CoIR</div><span class="venue">ACL 2025</span><span class="pill s-Partial">Partial</span></td>
+<td>Code IR benchmark (10 datasets, 8 tasks, 7 domains) in MTEB/BEIR format; evaluates 10 retrievers with nDCG@10.</td>
+<td class="cite">p1 abstract; p6: nDCG@10 following BEIR.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/evaluation/harness.py<span class="ln">:754-763</span></code><span class="what">ndcg</span></li><li><code class="ref">src/embeddings/providers.py<span class="ln">:34-69</span></code><span class="what">swappable embedding providers: qwen, openai, openrouter, hashing</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:45-47, 503-544</span></code><span class="what">lexical_only / embedding_only / paper_pipeline / staged modes</span></li></ul></td>
+<td>Compares retrieval configurations with nDCG, MRR and recall.</td>
+<td>Same metric family and the same goal of comparing retrievers. Not the CoIR datasets.</td>
+</tr>
+<tr data-s="None" id="p37">
+<td class="pid"><span class="num">37</span></td>
+<td class="paper"><div class="ptitle">RepoST</div><span class="pill s-None">None</span></td>
+<td>Sandbox testing: isolate a target function and its dependencies into a separate script to get execution feedback for repo-level code generation.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No counterpart. The code never executes target code. (Its callees_of query lists dependencies but does not build runnable sandboxes.)</td>
+</tr>
+<tr data-s="None" id="p38">
+<td class="pid"><span class="num">38</span></td>
+<td class="paper"><div class="ptitle">SWE-Exp</div><span class="pill s-None">None</span></td>
+<td>Experience bank distilled from earlier successful and failed agent trajectories, reused on new issues.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No cross-task experience store. The closest element, retrieve_iterative (planner.py 203-230), reuses only the previous bundle of the same task.</td>
+</tr>
+<tr data-s="Partial" id="p39">
+<td class="pid"><span class="num">39</span></td>
+<td class="paper"><div class="ptitle">Impact-driven Context Filtering for Cross-file Code Completion</div><span class="venue">COLM 2025</span><span class="pill s-Partial">Partial</span></td>
+<td>A likelihood-based metric labels each retrieved chunk positive, neutral or negative; a trained filter removes harmful chunks and shortens prompts.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:595-656</span></code><span class="what">gate</span></li><li><code class="ref">src/rerank/fusion.py<span class="ln">:124-163</span></code><span class="what">rule-based penalties</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:965-1027</span></code><span class="what">neighbor cleaning</span></li></ul></td>
+<td>Rule-based filtering and down-ranking of low-value context.</td>
+<td>Same objective (drop harmful context). The paper learns the filter from impact labels; the code uses fixed rules.</td>
+</tr>
+<tr data-s="Partial" id="p40">
+<td class="pid"><span class="num">40</span></td>
+<td class="paper"><div class="ptitle">GRACE</div><span class="pill s-Partial">Partial</span></td>
+<td>Multi-level code graph (file structure, AST, call graph, class hierarchy, data flow); hybrid GNN-structural + textual retriever; GAT reranker; structural fusion into the prompt.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:14-430, 647-771</span></code><span class="what">CONTAINS, CALLS, INHERITS/IMPLEMENTS, DATA_FLOW, CONTROL_FLOW</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:473-500</span></code><span class="what">graph candidates scored by edge type and depth</span></li><li><code class="ref">src/rerank/fusion.py<span class="ln">:133-136</span></code><span class="what">graph_distance bonus in rerank</span></li></ul></td>
+<td>Multi-relation code graph + hybrid text/graph retrieval + rerank.</td>
+<td>Same graph layers and hybrid retrieval. GRACE learns graph similarity (GNN/GAT); the code uses fixed edge bonuses and distance decay.</td>
+</tr>
+<tr data-s="Context" id="p41">
+<td class="pid"><span class="num">41</span></td>
+<td class="paper"><div class="ptitle">SWE-QA</div><span class="pill s-Context">Context</span></td>
+<td>720 repository-level QA pairs from 77,100 issues in 12 repos; taxonomy includes intention understanding, cross-file reasoning, multi-hop dependency analysis.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/planner.py<span class="ln">:64-200</span></code><span class="what">prepare_answer_bundle</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:595-675</span></code><span class="what">path_between for multi-hop dependencies</span></li></ul></td>
+<td>Produces evidence bundles for repo questions, including multi-hop paths.</td>
+<td>Same question types the tool targets. No SWE-QA data in the code.</td>
+</tr>
+<tr data-s="Strong" id="p42">
+<td class="pid"><span class="num">42</span></td>
+<td class="paper"><div class="ptitle">RANGER</div><span class="pill s-Strong">Strong</span></td>
+<td>Repository knowledge graph down to variables, nodes enriched with text and embeddings; entity queries answered by fast Cypher lookups, natural-language queries by MCTS-guided graph exploration.</td>
+<td class="cite">p1 abstract: dual-stage retrieval by query type.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:659-687</span></code><span class="what">classify_query: symbol vs exploration intent</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:628-636</span></code><span class="what">exact-symbol fast path</span></li><li><code class="ref">src/backends/lmdb/store.py<span class="ln">:72-79</span></code><span class="what">exact qualified-name / name lookup</span></li><li><code class="ref">src/symbols/indexer.py<span class="ln">:1103-1141, 1383-1586</span></code><span class="what">local variables and per-statement reads/writes</span></li><li><code class="ref">src/search/indexer.py<span class="ln">:519-541</span></code><span class="what">symbol documents carry semantic targets (calls/reads/writes)</span></li></ul></td>
+<td>Routes entity-like queries to exact lookups and exploratory queries to the hybrid graph+embedding path, over a graph that includes variable-level reads/writes.</td>
+<td>Same dual routing by query type and the same graph depth. Exploration uses BM25/embedding seeds + bounded BFS, not MCTS.</td>
+</tr>
+<tr data-s="Partial" id="p43">
+<td class="pid"><span class="num">43</span></td>
+<td class="paper"><div class="ptitle">Improving Code Localization with Repository Memory</div><span class="pill s-Partial">Partial</span></td>
+<td>Adds non-parametric memory from commit history, linked issues and summaries of actively evolving modules to LocAgent.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/summaries/builder.py<span class="ln">:19-362</span></code><span class="what">project/package/directory/file/symbol summaries</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:226-272</span></code><span class="what">summarize_path / get_summary</span></li><li><code class="ref">src/common/inventory.py<span class="ln">:363</span></code><span class="what">git_metadata records commit and ref only</span></li></ul></td>
+<td>Persistent repository summaries an agent can query.</td>
+<td>Summaries-as-memory matches. Commit history and issues are not used.</td>
+</tr>
+<tr data-s="Context" id="p44">
+<td class="pid"><span class="num">44</span></td>
+<td class="paper"><div class="ptitle">Retrieval-Augmented Code Generation Survey</div><span class="venue">arXiv 2510.04905</span><span class="pill s-Context">Context</span></td>
+<td>Survey framing repository-level RACG as context construction, retrieval optimization, generation and environment interaction; contrasts graph-based and non-graph retrieval.</td>
+<td class="cite">p1 abstract; p2 contents: non-graph vs graph-based RACG.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:89-273</span></code><span class="what">hybrid graph + non-graph retrieval</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:64-200</span></code><span class="what">context construction</span></li></ul></td>
+<td>Implements the context-construction and retrieval stages.</td>
+<td>The code sits in the survey&#x27;s retrieval/context stages, combining both paradigms. No generation stage.</td>
+</tr>
+<tr data-s="Strong" id="p45">
+<td class="pid"><span class="num">45</span></td>
+<td class="paper"><div class="ptitle">Exploratory Study of Code Retrieval Techniques in Coding Agents</div><span class="pill s-Strong">Strong</span></td>
+<td>Compares lexical vs semantic retrieval for coding agents and reviews benchmarks by latency, tokens, context utilization and iteration loops.</td>
+<td class="cite">p2 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/evaluation/harness.py<span class="ln">:574-581</span></code><span class="what">latency_ms, files_opened, prepared_tokens per run</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:1006-1014</span></code><span class="what">estimate_prepared_tokens</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:248-343</span></code><span class="what">benchmark_interactive_commands: per-tool latency + telemetry</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:512-529</span></code><span class="what">lexical_only vs embedding_only modes</span></li><li><code class="ref">src/cli/main.py<span class="ln">:1025-1048</span></code><span class="what">compare-search-backends (Tantivy vs Zoekt)</span></li></ul></td>
+<td>Measures retrieval on the same axes (latency, tokens, files) and compares lexical and semantic modes.</td>
+<td>The harness implements the evaluation dimensions the study recommends. Iteration-loop counts are not measured.</td>
+</tr>
+<tr data-s="Partial" id="p46">
+<td class="pid"><span class="num">46</span></td>
+<td class="paper"><div class="ptitle">Beyond Function-Level Search</div><span class="pill s-Partial">Partial</span></td>
+<td>Change-request-driven repository retrieval across components; dual-tower code/doc encoders with dependency and LLM intent expansion.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/search/indexer.py<span class="ln">:303-685</span></code><span class="what">documents at repo/dir/package/file/symbol/body/doc granularity</span></li><li><code class="ref">src/backends/tantivy/search.py<span class="ln">:176-197</span></code><span class="what">query variants (2- and 3-token windows)</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:473-500</span></code><span class="what">dependency expansion</span></li></ul></td>
+<td>Multi-granularity documents, query expansion and dependency expansion.</td>
+<td>Same move beyond function-level search. No trained dual-tower model; query expansion is lexical n-grams, not LLM intent.</td>
+</tr>
+<tr data-s="None" id="p47">
+<td class="pid"><span class="num">47</span></td>
+<td class="paper"><div class="ptitle">Information Gain-based Policy Optimization</div><span class="pill s-None">None</span></td>
+<td>RL for multi-turn search agents with turn-level information-gain rewards.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No counterpart. The code contains no RL or agent training.</td>
+</tr>
+<tr data-s="Partial" id="p48">
+<td class="pid"><span class="num">48</span></td>
+<td class="paper"><div class="ptitle">Stop-RAG</div><span class="pill s-Partial">Partial</span></td>
+<td>Value-based controller (finite-horizon MDP, Q(λ)) decides when to stop iterative retrieval.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/planner.py<span class="ln">:252-259</span></code><span class="what">stopping_criteria: stop_on_exact_symbol_hit, stop_on_path_hit, max_graph_expansions</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:225-229</span></code><span class="what">iteration_count</span></li></ul></td>
+<td>Declares stopping rules per intent.</td>
+<td>Same concern (when to stop). The code&#x27;s rules are fixed and returned as plan metadata; no loop in the code enforces them and nothing is learned.</td>
+</tr>
+<tr data-s="Context" id="p49">
+<td class="pid"><span class="num">49</span></td>
+<td class="paper"><div class="ptitle">RepoQA-Agent with MCTS-driven RL</div><span class="pill s-Context">Context</span></td>
+<td>Agentic RL with MCTS-generated trajectories to train repository QA agents on multi-turn tool use.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:1-1513</span></code><span class="what">tool surface</span></li></ul></td>
+<td>Tools a repository-QA agent would call.</td>
+<td>The paper&#x27;s contribution is training; the code supplies only tools.</td>
+</tr>
+<tr data-s="Partial" id="p50">
+<td class="pid"><span class="num">50</span></td>
+<td class="paper"><div class="ptitle">SACL</div><span class="pill s-Partial">Partial</span></td>
+<td>Code retrievers rely on surface text (docstrings, identifiers) and favour well-documented code; SACL augments with semantic/structural information to reduce this bias.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/common/retrieval.py<span class="ln">:77-95</span></code><span class="what">semantic_activity_score from calls/reads/writes</span></li><li><code class="ref">src/rerank/fusion.py<span class="ln">:143-148</span></code><span class="what">structure-based score added per symbol kind</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:1291-1293</span></code><span class="what">activity score in symbol resolution</span></li><li><code class="ref">src/rerank/fusion.py<span class="ln">:161-163</span></code><span class="what">penalty for markdown hits on non-doc queries</span></li></ul></td>
+<td>Adds structural evidence (how much a symbol actually does) into ranking.</td>
+<td>Same anti-surface-bias direction. The code still indexes docstrings (search/indexer.py 526, 606-640), so the bias is reduced, not removed.</td>
+</tr>
+<tr data-s="Partial" id="p51">
+<td class="pid"><span class="num">51</span></td>
+<td class="paper"><div class="ptitle">InfCode-C++</div><span class="pill s-Partial">Partial</span></td>
+<td>Two complementary retrieval mechanisms: semantic code-intent retrieval and deterministic AST-structured querying, for language-aware C++ issue resolution.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/embeddings/indexer.py<span class="ln">:763-904</span></code><span class="what">semantic retrieval</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:387-423, 1030-1107</span></code><span class="what">deterministic symbol resolution</span></li><li><code class="ref">src/parsers/ctags_backend.py<span class="ln">:16-33</span></code><span class="what">C/C++ handled via Universal Ctags extensions</span></li></ul></td>
+<td>Semantic retrieval plus deterministic parser-backed lookups.</td>
+<td>Same two-mechanism design. C/C++ support in the code is shallow (ctags or SCIP); deep analysis exists only for Rust.</td>
+</tr>
+<tr data-s="Partial" id="p52">
+<td class="pid"><span class="num">52</span></td>
+<td class="paper"><div class="ptitle">Beyond the Prompt - Cursor Rules</div><span class="venue">MSR &#x27;26</span><span class="pill s-Partial">Partial</span></td>
+<td>Empirical taxonomy of developer-written AI rules files (401 repos): conventions, guidelines, project information, LLM directives, examples.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">data/eval/cases/ai-tooling.jsonl<span class="ln">:1-3</span></code><span class="what">cases expect .rulesync/rules/*.md and commands/*.md as evidence</span></li><li><code class="ref">src/search/indexer.py<span class="ln">:19-43, 807-821</span></code><span class="what">markdown contents are indexed</span></li></ul></td>
+<td>Treats rules/instruction files as retrievable evidence.</td>
+<td>The benchmark cases target rules files directly. No taxonomy or rules analysis in code.</td>
+</tr>
+<tr data-s="None" id="p53">
+<td class="pid"><span class="num">53</span></td>
+<td class="paper"><div class="ptitle">SWE-RM</div><span class="pill s-None">None</span></td>
+<td>Execution-free reward model (MoE) for test-time scaling and RL of SWE agents.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No counterpart.</td>
+</tr>
+<tr data-s="Partial" id="p54">
+<td class="pid"><span class="num">54</span></td>
+<td class="paper"><div class="ptitle">In Line with Context - Context Inlining</div><span class="pill s-Partial">Partial</span></td>
+<td>Draft completion as anchor; upstream inlining into callers and downstream retrieval of callees.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:160-184</span></code><span class="what">trace_calls returns callers and callees together</span></li><li><code class="ref">src/graph/query.py<span class="ln">:11-30</span></code><span class="what">callers_of = incoming CALLS, callees_of = outgoing CALLS</span></li></ul></td>
+<td>Bidirectional call-graph context for a symbol.</td>
+<td>Same upstream/downstream context. No draft generation or inlining.</td>
+</tr>
+<tr data-s="None" id="p55">
+<td class="pid"><span class="num">55</span></td>
+<td class="paper"><div class="ptitle">CodeMEM</div><span class="pill s-None">None</span></td>
+<td>AST-guided session memory for iterative code generation to reduce forgetting.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No conversation/session memory. The persistent symbol store (LMDB) and per-file parse cache (symbols/indexer.py 2610-2712) are repository state, not session memory.</td>
+</tr>
+<tr data-s="Partial" id="p56">
+<td class="pid"><span class="num">56</span></td>
+<td class="paper"><div class="ptitle">RepoShapley</div><span class="pill s-Partial">Partial</span></td>
+<td>Coalition-aware context filtering with Shapley-style marginal contributions; KEEP/DROP and retrieval triggers distilled into the model.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/staged.py<span class="ln">:25, 329-340</span></code><span class="what">MAX_UNITS_PER_SOURCE diversity cap</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:570-588</span></code><span class="what">candidate merge / dedupe</span></li></ul></td>
+<td>Caps redundant units and merges duplicate candidates.</td>
+<td>Same concern about redundant context. No Shapley estimation and no learned keep/drop.</td>
+</tr>
+<tr data-s="Strong" id="p57">
+<td class="pid"><span class="num">57</span></td>
+<td class="paper"><div class="ptitle">Reliable Graph-RAG for Codebases</div><span class="venue">arXiv 2601.08773</span><span class="pill s-Strong">Strong</span></td>
+<td>Compares vector-only RAG, an LLM-generated knowledge graph and a deterministic Tree-sitter AST knowledge graph with bidirectional traversal; deterministic graphs build in seconds with higher coverage.</td>
+<td class="cite">p1-2: DKB vs LLM-KB coverage (0.902 vs 0.641 chunk coverage on Shopizer), build times.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/parsers/tree_sitter_backend.py<span class="ln">:149-252, 361-496</span></code><span class="what">Tree-sitter symbol extraction</span></li><li><code class="ref">src/graph/builder.py<span class="ln">:14-430</span></code><span class="what">graph built from parser output only</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:483-492</span></code><span class="what">graph expansion with direction=&quot;both&quot;</span></li><li><code class="ref">src/summaries/builder.py<span class="ln">:104-362</span></code><span class="what">rule-based summaries (no LLM in indexing)</span></li></ul></td>
+<td>Deterministic, parser-built code graph with bidirectional traversal; no LLM anywhere in indexing.</td>
+<td>Same design choice and the paper&#x27;s evidence supports it. The paper studies Java; the code&#x27;s deep graph is Rust-first. The MCP server&#x27;s own instructions note that call edges are resolved by name, so some links can be wrong (mcp_server/server.py 67-68).</td>
+</tr>
+<tr data-s="Partial" id="p58">
+<td class="pid"><span class="num">58</span></td>
+<td class="paper"><div class="ptitle">SWE-Pruner</div><span class="venue">arXiv 2601.16746</span><span class="pill s-Partial">Partial</span></td>
+<td>Task-aware context pruning: the agent states a goal hint and a 0.6B skimmer keeps relevant lines; 23-54% token savings.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/embeddings/units.py<span class="ln">:8-12, 84-122</span></code><span class="what">350-token code windows</span></li><li><code class="ref">src/embeddings/units.py<span class="ln">:243-247</span></code><span class="what">240-char previews</span></li><li><code class="ref">src/search/indexer.py<span class="ln">:824-828</span></code><span class="what">180-char previews</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:270-274</span></code><span class="what">refinement hints appended to the task</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:98-136</span></code><span class="what">MCP output caps: 600 chars per string, 6000 per code body, 25 list items, 20000 per call</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:236-259</span></code><span class="what">answer bundle trimmed: statement slices dropped, neighbors cut to 8, summaries to 4</span></li></ul></td>
+<td>Bounded previews, windows and hard output caps instead of whole files; hints refine retrieval.</td>
+<td>Same token-saving goal and goal-hint idea. The pruning is fixed caps and field removal, not task-aware neural line selection.</td>
+</tr>
+<tr data-s="Partial" id="p59">
+<td class="pid"><span class="num">59</span></td>
+<td class="paper"><div class="ptitle">FeatureBench</div><span class="pill s-Partial">Partial</span></td>
+<td>Feature-level agent benchmark; tasks derived by tracing from unit tests along a dependency graph; execution-based.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:189-214, 356-370</span></code><span class="what">test nodes and TESTS edges</span></li></ul></td>
+<td>Test→code dependency edges in the graph.</td>
+<td>Provides the test-to-code tracing primitive the benchmark builder uses. No benchmark construction or execution.</td>
+</tr>
+<tr data-s="Context" id="p60">
+<td class="pid"><span class="num">60</span></td>
+<td class="paper"><div class="ptitle">Gistify</div><span class="pill s-Context">Context</span></td>
+<td>Task: produce a minimal self-contained file that reproduces a codebase functionality from an entrypoint; needs execution-flow understanding.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/symbols/indexer.py<span class="ln">:811-885</span></code><span class="what">transitive calls and interprocedural reads/writes</span></li></ul></td>
+<td>Static closure of what a function calls and touches.</td>
+<td>Related need (dependency closure). No execution tracing or file synthesis.</td>
+</tr>
+<tr data-s="Partial" id="p61">
+<td class="pid"><span class="num">61</span></td>
+<td class="paper"><div class="ptitle">IDE-Bench</div><span class="pill s-Partial">Partial</span></td>
+<td>Dockerized harness giving agents IDE-native structured tools (search, editing, testing) on 80 uncontaminated tasks.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:121-157, 275-313</span></code><span class="what">structured search and code-access tools</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:248-343</span></code><span class="what">per-tool latency benchmark</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:45, 139-260</span></code><span class="what">tools exposed to the IDE agent, all annotated read-only</span></li><li><code class="ref">scripts/mcp_smoke_test.py<span class="ln">:19-84</span></code><span class="what">calls every tool over real stdio MCP and reports time and size</span></li></ul></td>
+<td>Structured search tools served to an IDE agent over MCP, with latency checks.</td>
+<td>Same &#x27;structured tools beat raw terminal&#x27; premise for the search side. No editing/testing tools or Docker harness.</td>
+</tr>
+<tr data-s="Strong" id="p62">
+<td class="pid"><span class="num">62</span></td>
+<td class="paper"><div class="ptitle">ContextBench</div><span class="pill s-Strong">Strong</span></td>
+<td>Process-oriented evaluation of context retrieval in coding agents: 1,136 tasks with human gold contexts; context recall, precision and efficiency.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">data/eval/cases/ai-tooling.jsonl<span class="ln">:1-3</span></code><span class="what">gold expected_paths / expected_symbols / expected_terms</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:643-710</span></code><span class="what">recall@k, path/symbol recall, MRR, nDCG, first relevant rank</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:574-581</span></code><span class="what">prepared_tokens, files_opened</span></li></ul></td>
+<td>Scores the retrieved context itself against gold evidence, separately from answers.</td>
+<td>Same evaluation philosophy and metrics family. The harness has no explicit precision metric and its gold set is tiny (3 cases).</td>
+</tr>
+<tr data-s="Context" id="p63">
+<td class="pid"><span class="num">63</span></td>
+<td class="paper"><div class="ptitle">SWE Context Bench</div><span class="pill s-Context">Context</span></td>
+<td>Benchmark of related tasks testing reuse of prior experience; accurately summarized prior context helps, unfiltered context does not.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/planner.py<span class="ln">:203-230</span></code><span class="what">retrieve_iterative with prior bundle</span></li></ul></td>
+<td>Reuse of the previous bundle within one task.</td>
+<td>Related but narrower: no cross-task experience reuse.</td>
+</tr>
+<tr data-s="Strong" id="p64">
+<td class="pid"><span class="num">64</span></td>
+<td class="paper"><div class="ptitle">Do Not Treat Code as Natural Language</div><span class="pill s-Strong">Strong</span></td>
+<td>Structure-aware indexing as a hierarchy of functions/classes/variables instead of chunks; dependency-aware retriever; hybrid with similarity retrieval.</td>
+<td class="cite">p1 abstract: (i) structure-aware indexing, (ii) DAR, (iii) hybrid.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:140-187</span></code><span class="what">symbol containment hierarchy (CONTAINS/DEFINES/DECLARES)</span></li><li><code class="ref">src/search/indexer.py<span class="ln">:565-604, 773-779</span></code><span class="what">symbol-bounded body documents; symbol_body_kind picks function_body or type_body</span></li><li><code class="ref">src/symbols/indexer.py<span class="ln">:726-808</span></code><span class="what">per-symbol dependencies: direct_calls, reads, writes, references</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:89-273</span></code><span class="what">dependency expansion + BM25/embedding similarity</span></li></ul></td>
+<td>Symbol-level structured index with dependency expansion, combined with similarity search.</td>
+<td>All three Hydra components have counterparts. One divergence: the embedding sidecar still splits long code into line windows (embeddings/units.py 84-122).</td>
+</tr>
+<tr data-s="Partial" id="p65">
+<td class="pid"><span class="num">65</span></td>
+<td class="paper"><div class="ptitle">Evaluating AGENTS.md</div><span class="pill s-Partial">Partial</span></td>
+<td>Context files like AGENTS.md generally do not raise task success and add &gt;20% inference cost; repository overviews were not helpful.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:111-118</span></code><span class="what">repo_overview</span></li><li><code class="ref">src/retrieval/planner.py<span class="ln">:170-171</span></code><span class="what">project summary included in every bundle</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:1006-1014</span></code><span class="what">token cost estimate</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:59-70</span></code><span class="what">server instructions sent to the agent: start with repo_overview or search_code</span></li></ul></td>
+<td>Ships a project overview with each bundle, tells the agent to start from it, and measures token cost.</td>
+<td>Relevant as a caution: the paper found overviews unhelpful, and the code adds one to every bundle and recommends it as a first call. The harness can measure the cost but has not reported results.</td>
+</tr>
+<tr data-s="Partial" id="p66">
+<td class="pid"><span class="num">66</span></td>
+<td class="paper"><div class="ptitle">SGAgent</div><span class="pill s-Partial">Partial</span></td>
+<td>Localize-suggest-fix multi-agent repair with a repository knowledge graph and a KG toolkit (3 entity types, 7 relation types, 14 tools).</td>
+<td class="cite">p1 abstract; p3 toolkit size.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:14-430</span></code><span class="what">repository graph</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:1-1513</span></code><span class="what">graph toolkit</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:139-260</span></code><span class="what">12 MCP tools for the agent</span></li></ul></td>
+<td>Repository graph plus a toolkit of graph tools served to an agent.</td>
+<td>Matches the KG + toolkit layer (SGAgent: 14 tools; this server: 12). No repair agents.</td>
+</tr>
+<tr data-s="None" id="p67">
+<td class="pid"><span class="num">67</span></td>
+<td class="paper"><div class="ptitle">Repository-Oriented Long-Horizon Conversational Context Management</div><span class="pill s-None">None</span></td>
+<td>Benchmark and method for managing long multi-turn conversation context in repository development.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No conversation-context management in the code.</td>
+</tr>
+<tr data-s="Context" id="p68">
+<td class="pid"><span class="num">68</span></td>
+<td class="paper"><div class="ptitle">SWE-QA-Pro</div><span class="pill s-Context">Context</span></td>
+<td>Long-tail repo QA where agentic exploration beats direct answering; SFT + RLAIF to train small tool-using models.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:1-1513</span></code><span class="what">exploration tools</span></li></ul></td>
+<td>Exploration tools.</td>
+<td>Supports the premise that exploration tools matter; no training.</td>
+</tr>
+<tr data-s="Context" id="p69">
+<td class="pid"><span class="num">69</span></td>
+<td class="paper"><div class="ptitle">When the Specification Emerges</div><span class="pill s-Context">Context</span></td>
+<td>Faithfulness loss when specs are revealed gradually; an external project-state layer (ProjectGuard) recovers 90% of the gap.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/backends/lmdb/store.py<span class="ln">:16-204</span></code><span class="what">external persistent repository state</span></li></ul></td>
+<td>External, persistent repository state.</td>
+<td>Both are external state layers for agents, but the code tracks code structure, not specifications.</td>
+</tr>
+<tr data-s="Partial" id="p70">
+<td class="pid"><span class="num">70</span></td>
+<td class="paper"><div class="ptitle">TDAD</div><span class="pill s-Partial">Partial</span></td>
+<td>Pre-change impact analysis: a code↔test dependency map tells the agent which tests to run; regressions −70%.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:189-214, 356-370</span></code><span class="what">test nodes, TESTS edges</span></li><li><code class="ref">src/parsers/rust.py<span class="ln">:121</span></code><span class="what">attribute_marks_test</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:438-459, 688-713</span></code><span class="what">adjacent_symbols / expand_subgraph with edge_types filter</span></li></ul></td>
+<td>The graph records which tests reference which code.</td>
+<td>Same code↔test map. No dedicated &#x27;tests affected by this change&#x27; command; an agent must query TESTS edges itself.</td>
+</tr>
+<tr data-s="Strong" id="p71">
+<td class="pid"><span class="num">71</span></td>
+<td class="paper"><div class="ptitle">HCAG</div><span class="pill s-Strong">Strong</span></td>
+<td>Offline recursive abstraction into a multi-resolution knowledge base; online top-down, level-wise retrieval; argues cost-optimality vs flat RAG.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/summaries/builder.py<span class="ln">:19-362</span></code><span class="what">summaries at project, package, directory, file, symbol level</span></li><li><code class="ref">src/summaries/builder.py<span class="ln">:384-477</span></code><span class="what">SUMMARIZED_BY edges into the graph</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:118-170, 283-315</span></code><span class="what">summary stage first, then scoped symbol search</span></li></ul></td>
+<td>Multi-level summaries used for top-down retrieval.</td>
+<td>Same hierarchy-first retrieval. HCAG&#x27;s summaries are LLM abstractions linked to theory texts; the code&#x27;s summaries are deterministic counts and names.</td>
+</tr>
+<tr data-s="None" id="p72">
+<td class="pid"><span class="num">72</span></td>
+<td class="paper"><div class="ptitle">Dynamic analysis enhances issue resolution</div><span class="pill s-None">None</span></td>
+<td>Lightweight tracing turns runtime behavior into structured execution reports for repair agents.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No counterpart. The code is purely static.</td>
+</tr>
+<tr data-s="Strong" id="p73">
+<td class="pid"><span class="num">73</span></td>
+<td class="paper"><div class="ptitle">Bridging Code Property Graphs and Language Models</div><span class="venue">SVM &#x27;26</span><span class="pill s-Strong">Strong</span></td>
+<td>MCP server over Joern&#x27;s Code Property Graph giving LLMs high-level tools (slicing, taint tracking, data flow, navigation) instead of raw CPG queries.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:486-592</span></code><span class="what">reads_of, writes_of, refs_of, implements_of, inherits_of, statement_slice</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:595-675</span></code><span class="what">path_between</span></li><li><code class="ref">src/graph/builder.py<span class="ln">:647-771</span></code><span class="what">statement graph with control/data edges</span></li><li><code class="ref">src/cli/main.py<span class="ln">:367-550</span></code><span class="what">CLI commands for each tool</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:204-225</span></code><span class="what">MCP tools symbol_relations, path_between, statement_slice</span></li></ul></td>
+<td>High-level program-analysis tools over a statement-level graph, served over MCP.</td>
+<td>Same design: an MCP server wraps a program graph in high-level tools so the LLM never writes graph queries. Differences: no taint tracking, and the graph is built by the workbench&#x27;s own parsers instead of Joern.</td>
+</tr>
+<tr data-s="Strong" id="p74">
+<td class="pid"><span class="num">74</span></td>
+<td class="paper"><div class="ptitle">ReCUBE</div><span class="pill s-Strong">Strong</span></td>
+<td>Masked-file reconstruction benchmark plus a Caller-Centric Exploration toolkit of dependency-graph tools that steer agents to relevant caller files.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/agents/toolkit.py<span class="ln">:462-471</span></code><span class="what">callers_of (incoming CALLS)</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:426-435</span></code><span class="what">who_imports (incoming IMPORTS)</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:160-184</span></code><span class="what">trace_calls</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:204-209</span></code><span class="what">symbol_relations(relation=&quot;callers&quot;) as an MCP tool</span></li></ul></td>
+<td>Caller-centric graph tools plugged into an agent framework.</td>
+<td>Matches the toolkit half directly, including integration into an agent (Claude Code via MCP). No benchmark.</td>
+</tr>
+<tr data-s="Partial" id="p75">
+<td class="pid"><span class="num">75</span></td>
+<td class="paper"><div class="ptitle">Repository-Level Code Agents Feature Addition Benchmark</div><span class="pill s-Partial">Partial</span></td>
+<td>Feature-addition benchmark with dual-track evaluation: patch correctness plus intermediate reasoning (incl. file localization) against reference trajectories.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/evaluation/harness.py<span class="ln">:643-692, 823-844</span></code><span class="what">intermediate retrieval scored separately from answers</span></li></ul></td>
+<td>Scores intermediate retrieval separately from final answers.</td>
+<td>Same separation of intermediate vs final quality. No patches or reasoning traces.</td>
+</tr>
+<tr data-s="Partial" id="p76">
+<td class="pid"><span class="num">76</span></td>
+<td class="paper"><div class="ptitle">Time-Consistent Benchmark for Repository-Level SE</div><span class="pill s-Partial">Partial</span></td>
+<td>Snapshot at T0, knowledge only from earlier artifacts, tasks from later PRs; matched A/B with vs without repository-derived knowledge.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/evaluation/harness.py<span class="ln">:39-47, 503-544</span></code><span class="what">same cases across modes (A/B)</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:470-500</span></code><span class="what">score_external_answers for outside agents</span></li><li><code class="ref">src/common/inventory.py<span class="ln">:363</span></code><span class="what">records git commit/ref</span></li></ul></td>
+<td>A/B comparison of configurations on fixed cases, and scoring of external agents.</td>
+<td>Same A/B idea. No temporal split or leakage control.</td>
+</tr>
+<tr data-s="Partial" id="p77">
+<td class="pid"><span class="num">77</span></td>
+<td class="paper"><div class="ptitle">Beyond Code Snippets - Repository-Level QA</div><span class="venue">PROMISE 2026</span><span class="pill s-Partial">Partial</span></td>
+<td>1,318 repo-level Java QA pairs; file-level retrieval plus graph-based structural signals improve accuracy; some high scores are memorized answers.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:89-273</span></code><span class="what">file-level + graph retrieval</span></li></ul></td>
+<td>File-level plus structural retrieval.</td>
+<td>The paper&#x27;s finding (structural signals help) supports the code&#x27;s design. No StackRepoQA data.</td>
+</tr>
+<tr data-s="Strong" id="p78">
+<td class="pid"><span class="num">78</span></td>
+<td class="paper"><div class="ptitle">Codebase-Memory</div><span class="pill s-Strong">Strong</span></td>
+<td>Persistent Tree-Sitter knowledge graph served over MCP (66 languages): call-graph traversal, impact analysis, community discovery; 83% answer quality vs 92% for file exploration at ~10x fewer tokens and 2.1x fewer tool calls.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/parsers/tree_sitter_backend.py<span class="ln">:69-128</span></code><span class="what">Tree-sitter tags for bash, go, js/jsx, python, ts/tsx, yaml</span></li><li><code class="ref">src/backends/ryugraph/loader.py<span class="ln">:17-101</span></code><span class="what">persistent graph database</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:160-184, 462-483</span></code><span class="what">call-graph tools</span></li><li><code class="ref">src/evaluation/harness.py<span class="ln">:1006-1014</span></code><span class="what">token estimate</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:1-268</span></code><span class="what">MCP stdio server over the graph and indexes</span></li><li><code class="ref">.mcp.json<span class="ln">:1-13</span></code><span class="what">Claude Code registration</span></li></ul></td>
+<td>Persistent parser-built code graph with call-graph tools served to coding agents over MCP, with token accounting.</td>
+<td>Closest system-level analogue: both are persistent parser-built graphs served over MCP to replace grep/read loops. Differences: no community detection, no impact-analysis tool, far fewer languages (deep analysis is Rust-only), and no published token/answer-quality results.</td>
+</tr>
+<tr data-s="Context" id="p79">
+<td class="pid"><span class="num">79</span></td>
+<td class="paper"><div class="ptitle">Compressing Code Context for Issue Resolution</div><span class="pill s-Context">Context</span></td>
+<td>Oracle-guided distillation (genetic search + delta debugging) to a minimal sufficient context; a fine-tuned compressor gives ~6x compression.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:240-245</span></code><span class="what">final cut to limit</span></li><li><code class="ref">src/embeddings/units.py<span class="ln">:84-122</span></code><span class="what">bounded units</span></li><li><code class="ref">src/mcp_server/server.py<span class="ln">:131-136</span></code><span class="what">render(): truncates each tool response at 20000 chars</span></li></ul></td>
+<td>Fixed limits, bounded units and response truncation keep context small.</td>
+<td>Shared goal of minimal context. No learned compression.</td>
+</tr>
+<tr data-s="None" id="p80">
+<td class="pid"><span class="num">80</span></td>
+<td class="paper"><div class="ptitle">Are Benchmark Tests Strong Enough</div><span class="venue">ASE &#x27;26</span><span class="pill s-None">None</span></td>
+<td>Program-variant probes generate extra tests; weak SWE-bench tests inflate resolve rates by 4.2-9.0%.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No counterpart.</td>
+</tr>
+<tr data-s="None" id="p81">
+<td class="pid"><span class="num">81</span></td>
+<td class="paper"><div class="ptitle">Beyond Isolated Tasks - Sequential Software Evolution</div><span class="pill s-None">None</span></td>
+<td>Evaluates agents on chains of dependent PRs; isolated-PR evaluation overstates success by up to 20 points.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No counterpart.</td>
+</tr>
+<tr data-s="Partial" id="p82">
+<td class="pid"><span class="num">82</span></td>
+<td class="paper"><div class="ptitle">Executable Repository-Level Code Generation via Environment Alignment</div><span class="pill s-Partial">Partial</span></td>
+<td>Repository executability as environment alignment: external dependency satisfaction + internal reference resolution, with execution-evidence attribution.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/graph/builder.py<span class="ln">:926-956</span></code><span class="what">imports to non-local crates become dependency nodes</span></li><li><code class="ref">src/symbols/indexer.py<span class="ln">:2202-2257</span></code><span class="what">Cargo dependency alias resolution</span></li><li><code class="ref">src/symbols/indexer.py<span class="ln">:668-688</span></code><span class="what">build_resolution_index for internal references</span></li></ul></td>
+<td>Static resolution of internal references and external dependencies.</td>
+<td>Matches the static half. No execution or generation.</td>
+</tr>
+<tr data-s="Partial" id="p83">
+<td class="pid"><span class="num">83</span></td>
+<td class="paper"><div class="ptitle">Graph of Skills</div><span class="pill s-Partial">Partial</span></td>
+<td>Structural retrieval over a skill graph: hybrid semantic-lexical seeding, reverse-aware Personalized PageRank, budgeted hydration; reverse traversal drives the gain.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/retrieval/engine.py<span class="ln">:118-234</span></code><span class="what">lexical + embedding seeds → graph expansion → hydration</span></li><li><code class="ref">src/retrieval/engine.py<span class="ln">:483-498</span></code><span class="what">direction=&quot;both&quot; and depth-decayed scores</span></li></ul></td>
+<td>Seed → bidirectional graph expansion → bounded hydration, over code.</td>
+<td>Same pipeline shape in a different domain (skills vs code). BFS with depth decay instead of PageRank.</td>
+</tr>
+<tr data-s="Context" id="p84">
+<td class="pid"><span class="num">84</span></td>
+<td class="paper"><div class="ptitle">Evaluating Repository-level Software Documentation</div><span class="pill s-Context">Context</span></td>
+<td>Evaluates documentation via functionality detection, localization and completion QA.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/summaries/builder.py<span class="ln">:19-362</span></code><span class="what">generated summaries</span></li></ul></td>
+<td>Generates repository summaries.</td>
+<td>The code produces summaries but never evaluates them.</td>
+</tr>
+<tr data-s="None" id="p85">
+<td class="pid"><span class="num">85</span></td>
+<td class="paper"><div class="ptitle">CodeComp</div><span class="pill s-None">None</span></td>
+<td>Training-free KV-cache compression using Joern CPG priors to keep structural tokens (calls, branches, assignments).</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><span class="muted">No matching code</span></td>
+<td>—</td>
+<td>No model-side compression. The code does classify statement kinds (symbols/indexer.py 1363-1380) but not for inference.</td>
+</tr>
+<tr data-s="Strong" id="p86">
+<td class="pid"><span class="num">86</span></td>
+<td class="paper"><div class="ptitle">Structure-Grounded Knowledge Retrieval via Code Dependencies</div><span class="pill s-Strong">Strong</span></td>
+<td>Graph from function-call dependencies; finds dependency paths between input and output tags; builds a task subgraph with implementations as context.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/backends/ryugraph/queries.py<span class="ln">:346-410</span></code><span class="what">build_shortest_paths BFS between seed and target</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:595-675</span></code><span class="what">path_between tool</span></li><li><code class="ref">src/agents/toolkit.py<span class="ln">:291-313</span></code><span class="what">get_symbol_body</span></li></ul></td>
+<td>Shortest dependency paths between two symbols plus their bodies.</td>
+<td>Same path-finding retrieval primitive. No tag extraction from questions.</td>
+</tr>
+<tr data-s="Strong" id="p87">
+<td class="pid"><span class="num">87</span></td>
+<td class="paper"><div class="ptitle">TypeScript Repository Indexing for Code Agent Retrieval</div><span class="pill s-Strong">Strong</span></td>
+<td>Function-level index (UniAST) preserving call chains; combines lightweight AST parsers with language servers; per-symbol LSP calls are slow, so a compiler-API parser is used.</td>
+<td class="cite">p1 abstract.</td>
+<td class="codecell"><ul class="refs"><li><code class="ref">src/parsers/rust_analyzer_backend.py<span class="ln">:49-208</span></code><span class="what">rust-analyzer LSP: initialize, didOpen, documentSymbol</span></li><li><code class="ref">src/parsers/tree_sitter_backend.py<span class="ln">:555-603</span></code><span class="what">tree-sitter probe</span></li><li><code class="ref">src/parsers/scip_backend.py<span class="ln">:68-377</span></code><span class="what">compiler-grade SCIP indexes</span></li><li><code class="ref">src/symbols/indexer.py<span class="ln">:2346-2452</span></code><span class="what">merge_primary_backend_symbols / merge_backend_symbols</span></li><li><code class="ref">src/symbols/indexer.py<span class="ln">:2610-2712</span></code><span class="what">per-file parse cache</span></li></ul></td>
+<td>Fuses AST parsers, a language server and SCIP into one symbol index, cached per file.</td>
+<td>Same AST + language-server fusion and the same cost concern. Language differs: TypeScript in the paper; in the code TypeScript gets tree-sitter tags only.</td>
+</tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="h-files">
+  <div class="sechead">
+    <h2 id="h-files">Code → papers, every file</h2>
+    <p>All non-markdown files in the branch. Chips link to the paper rows; the chip color is that paper's match strength. Files with no chips have no paper counterpart. Empty .gitkeep files and the empty notebooks/ folder are omitted.</p>
+  </div>
+  <div class="scroller">
+    <table id="files"><thead><tr><th>File</th><th>What it does</th><th>Papers</th></tr></thead><tbody>
+<tr><td><code class="ref">repo-analysis-workbench/src/agents/toolkit.py</code></td><td>Agent-facing Python API: symbol resolution, graph tools, bundles</td><td class="chips"><a class="chip s-Strong" href="#p01" title="Ferrante - The Program Dependence Graph and Its Use in Optimization">01</a> <a class="chip s-Partial" href="#p02" title="Lehnert - A review of software change impact analysis">02</a> <a class="chip s-Partial" href="#p08" title="ReAct">08</a> <a class="chip s-Partial" href="#p12" title="CodePlan">12</a> <a class="chip s-Partial" href="#p13" title="Making Retrieval-Augmented LMs Robust to Irrelevant Context">13</a> <a class="chip s-Context" href="#p16" title="RepoQA">16</a> <a class="chip s-Partial" href="#p18" title="Hierarchical Context Pruning">18</a> <a class="chip s-Strong" href="#p21" title="CodexGraph">21</a> <a class="chip s-Strong" href="#p28" title="LocAgent">28</a> <a class="chip s-Partial" href="#p29" title="CoSIL">29</a> <a class="chip s-Partial" href="#p33" title="Code Researcher">33</a> <a class="chip s-Partial" href="#p39" title="Impact-driven Context Filtering for Cross-file Code Completion">39</a> <a class="chip s-Context" href="#p41" title="SWE-QA">41</a> <a class="chip s-Partial" href="#p43" title="Improving Code Localization with Repository Memory">43</a> <a class="chip s-Context" href="#p49" title="RepoQA-Agent with MCTS-driven RL">49</a> <a class="chip s-Partial" href="#p50" title="SACL">50</a> <a class="chip s-Partial" href="#p51" title="InfCode-C++">51</a> <a class="chip s-Partial" href="#p54" title="In Line with Context - Context Inlining">54</a> <a class="chip s-Partial" href="#p61" title="IDE-Bench">61</a> <a class="chip s-Partial" href="#p65" title="Evaluating AGENTS.md">65</a> <a class="chip s-Partial" href="#p66" title="SGAgent">66</a> <a class="chip s-Context" href="#p68" title="SWE-QA-Pro">68</a> <a class="chip s-Partial" href="#p70" title="TDAD">70</a> <a class="chip s-Strong" href="#p73" title="Bridging Code Property Graphs and Language Models">73</a> <a class="chip s-Strong" href="#p74" title="ReCUBE">74</a> <a class="chip s-Strong" href="#p78" title="Codebase-Memory">78</a> <a class="chip s-Strong" href="#p86" title="Structure-Grounded Knowledge Retrieval via Code Dependencies">86</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/agents/__init__.py</code></td><td>Re-exports six toolkit functions</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/mcp_server/server.py</code></td><td>MCP stdio server: 12 read-only tools for Claude Code, output slimming and caps</td><td class="chips"><a class="chip s-Partial" href="#p08" title="ReAct">08</a> <a class="chip s-Partial" href="#p13" title="Making Retrieval-Augmented LMs Robust to Irrelevant Context">13</a> <a class="chip s-Strong" href="#p21" title="CodexGraph">21</a> <a class="chip s-Strong" href="#p28" title="LocAgent">28</a> <a class="chip s-Partial" href="#p58" title="SWE-Pruner">58</a> <a class="chip s-Partial" href="#p61" title="IDE-Bench">61</a> <a class="chip s-Partial" href="#p65" title="Evaluating AGENTS.md">65</a> <a class="chip s-Partial" href="#p66" title="SGAgent">66</a> <a class="chip s-Strong" href="#p73" title="Bridging Code Property Graphs and Language Models">73</a> <a class="chip s-Strong" href="#p74" title="ReCUBE">74</a> <a class="chip s-Strong" href="#p78" title="Codebase-Memory">78</a> <a class="chip s-Context" href="#p79" title="Compressing Code Context for Issue Resolution">79</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/mcp_server/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/retrieval/engine.py</code></td><td>Staged retrieval: classify, gate, summaries, symbols, graph, bodies, embeddings (switchable), rerank</td><td class="chips"><a class="chip s-Partial" href="#p03" title="Gethers - Integrated Impact Analysis for Managing Software Changes">03</a> <a class="chip s-Context" href="#p10" title="RepoBench">10</a> <a class="chip s-Partial" href="#p13" title="Making Retrieval-Augmented LMs Robust to Irrelevant Context">13</a> <a class="chip s-Strong" href="#p17" title="GraphCoder">17</a> <a class="chip s-Partial" href="#p18" title="Hierarchical Context Pruning">18</a> <a class="chip s-Strong" href="#p19" title="Repoformer">19</a> <a class="chip s-Partial" href="#p29" title="CoSIL">29</a> <a class="chip s-Strong" href="#p32" title="Knowledge Graph Based Repository-Level Code Generation">32</a> <a class="chip s-Partial" href="#p39" title="Impact-driven Context Filtering for Cross-file Code Completion">39</a> <a class="chip s-Partial" href="#p40" title="GRACE">40</a> <a class="chip s-Strong" href="#p42" title="RANGER">42</a> <a class="chip s-Context" href="#p44" title="Retrieval-Augmented Code Generation Survey">44</a> <a class="chip s-Partial" href="#p46" title="Beyond Function-Level Search">46</a> <a class="chip s-Partial" href="#p56" title="RepoShapley">56</a> <a class="chip s-Strong" href="#p57" title="Reliable Graph-RAG for Codebases">57</a> <a class="chip s-Strong" href="#p64" title="Do Not Treat Code as Natural Language">64</a> <a class="chip s-Strong" href="#p71" title="HCAG">71</a> <a class="chip s-Partial" href="#p77" title="Beyond Code Snippets - Repository-Level QA">77</a> <a class="chip s-Context" href="#p79" title="Compressing Code Context for Issue Resolution">79</a> <a class="chip s-Partial" href="#p83" title="Graph of Skills">83</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/retrieval/planner.py</code></td><td>Query plan, answer bundle with provenance, iterative retrieval</td><td class="chips"><a class="chip s-Partial" href="#p08" title="ReAct">08</a> <a class="chip s-Context" href="#p11" title="RepoFusion">11</a> <a class="chip s-Partial" href="#p12" title="CodePlan">12</a> <a class="chip s-Partial" href="#p15" title="RepoCoder">15</a> <a class="chip s-Partial" href="#p24" title="Sufficient Context">24</a> <a class="chip s-Partial" href="#p33" title="Code Researcher">33</a> <a class="chip s-Context" href="#p41" title="SWE-QA">41</a> <a class="chip s-Context" href="#p44" title="Retrieval-Augmented Code Generation Survey">44</a> <a class="chip s-Partial" href="#p48" title="Stop-RAG">48</a> <a class="chip s-Partial" href="#p58" title="SWE-Pruner">58</a> <a class="chip s-Context" href="#p63" title="SWE Context Bench">63</a> <a class="chip s-Partial" href="#p65" title="Evaluating AGENTS.md">65</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/retrieval/staged.py</code></td><td>Paper pipeline: BM25 pool, units, neural rerank, maxp</td><td class="chips"><a class="chip s-Partial" href="#p03" title="Gethers - Integrated Impact Analysis for Managing Software Changes">03</a> <a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a> <a class="chip s-Partial" href="#p56" title="RepoShapley">56</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/retrieval/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/rerank/fusion.py</code></td><td>Heuristic fusion rerank + Qwen cross-encoder rerank</td><td class="chips"><a class="chip s-Partial" href="#p13" title="Making Retrieval-Augmented LMs Robust to Irrelevant Context">13</a> <a class="chip s-Partial" href="#p39" title="Impact-driven Context Filtering for Cross-file Code Completion">39</a> <a class="chip s-Partial" href="#p40" title="GRACE">40</a> <a class="chip s-Partial" href="#p50" title="SACL">50</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/rerank/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/common/retrieval.py</code></td><td>Stage kinds, edge bonuses, rank weights, semantic activity score</td><td class="chips"><a class="chip s-Partial" href="#p50" title="SACL">50</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/common/text.py</code></td><td>Tokenizer and path terms</td><td class="chips"><a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/common/telemetry.py</code></td><td>Operation timing counters</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/common/native_tool.py</code></td><td>Calls the Rust worker (BM25 build/query, inspect-rust); caches repeated BM25 queries</td><td class="chips"><a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/common/inventory.py</code></td><td>File inventory, languages, manifests, git metadata</td><td class="chips"><a class="chip s-Partial" href="#p43" title="Improving Code Localization with Repository Memory">43</a> <a class="chip s-Partial" href="#p76" title="Time-Consistent Benchmark for Repository-Level SE">76</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/common/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/embeddings/units.py</code></td><td>Splits documents into retrieval units with aggregation keys</td><td class="chips"><a class="chip s-Partial" href="#p58" title="SWE-Pruner">58</a> <a class="chip s-Context" href="#p79" title="Compressing Code Context for Issue Resolution">79</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/embeddings/providers.py</code></td><td>Embedding providers: qwen, openai, openrouter (paced, retried), hashing</td><td class="chips"><a class="chip s-Context" href="#p04" title="CodeBERT">04</a> <a class="chip s-Partial" href="#p36" title="CoIR">36</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/embeddings/indexer.py</code></td><td>Builds and queries the embedding sidecar (dense vectors in Qdrant, maxp grouping, resumable builds)</td><td class="chips"><a class="chip s-Context" href="#p16" title="RepoQA">16</a> <a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a> <a class="chip s-Partial" href="#p51" title="InfCode-C++">51</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/qdrant/store.py</code></td><td>Qdrant collections: upsert, resume ids, cosine search with int8 quantization</td><td class="chips"><a class="chip s-Context" href="#p04" title="CodeBERT">04</a> <a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/qdrant/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/embeddings/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/graph/builder.py</code></td><td>Builds the code graph incl. statement-level control/data edges</td><td class="chips"><a class="chip s-Strong" href="#p01" title="Ferrante - The Program Dependence Graph and Its Use in Optimization">01</a> <a class="chip s-Partial" href="#p02" title="Lehnert - A review of software change impact analysis">02</a> <a class="chip s-Partial" href="#p05" title="GraphCodeBERT">05</a> <a class="chip s-Context" href="#p09" title="LLMs - Understanding Code Syntax and Semantics for Code Analysis">09</a> <a class="chip s-Context" href="#p11" title="RepoFusion">11</a> <a class="chip s-Partial" href="#p12" title="CodePlan">12</a> <a class="chip s-Strong" href="#p17" title="GraphCoder">17</a> <a class="chip s-Partial" href="#p18" title="Hierarchical Context Pruning">18</a> <a class="chip s-Strong" href="#p28" title="LocAgent">28</a> <a class="chip s-Partial" href="#p30" title="GraphCodeAgent">30</a> <a class="chip s-Partial" href="#p40" title="GRACE">40</a> <a class="chip s-Strong" href="#p57" title="Reliable Graph-RAG for Codebases">57</a> <a class="chip s-Partial" href="#p59" title="FeatureBench">59</a> <a class="chip s-Strong" href="#p64" title="Do Not Treat Code as Natural Language">64</a> <a class="chip s-Partial" href="#p66" title="SGAgent">66</a> <a class="chip s-Partial" href="#p70" title="TDAD">70</a> <a class="chip s-Strong" href="#p73" title="Bridging Code Property Graphs and Language Models">73</a> <a class="chip s-Partial" href="#p82" title="Executable Repository-Level Code Generation via Environment Alignment">82</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/graph/query.py</code></td><td>Graph operation wrappers and edge defaults</td><td class="chips"><a class="chip s-Partial" href="#p54" title="In Line with Context - Context Inlining">54</a> <a class="chip s-Strong" href="#p74" title="ReCUBE">74</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/graph/store.py</code></td><td>Writes the graph to RyuGraph</td><td class="chips"><a class="chip s-Strong" href="#p21" title="CodexGraph">21</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/graph/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/ryugraph/queries.py</code></td><td>Cypher queries: neighbors, statement slice, shortest paths, summaries</td><td class="chips"><a class="chip s-Strong" href="#p01" title="Ferrante - The Program Dependence Graph and Its Use in Optimization">01</a> <a class="chip s-Strong" href="#p21" title="CodexGraph">21</a> <a class="chip s-Strong" href="#p32" title="Knowledge Graph Based Repository-Level Code Generation">32</a> <a class="chip s-Strong" href="#p86" title="Structure-Grounded Knowledge Retrieval via Code Dependencies">86</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/ryugraph/loader.py</code></td><td>Loads nodes/edges into RyuGraph tables</td><td class="chips"><a class="chip s-Strong" href="#p21" title="CodexGraph">21</a> <a class="chip s-Strong" href="#p78" title="Codebase-Memory">78</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/ryugraph/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/tantivy/search.py</code></td><td>BM25 search adapter, query variants, result rerank</td><td class="chips"><a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a> <a class="chip s-Strong" href="#p28" title="LocAgent">28</a> <a class="chip s-Partial" href="#p46" title="Beyond Function-Level Search">46</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/tantivy/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/lmdb/store.py</code></td><td>LMDB exact lookups: symbols, files, bodies, summaries, eval cache</td><td class="chips"><a class="chip s-Strong" href="#p28" title="LocAgent">28</a> <a class="chip s-Strong" href="#p42" title="RANGER">42</a> <a class="chip s-Context" href="#p69" title="When the Specification Emerges">69</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/lmdb/keys.py</code></td><td>Hashes LMDB keys longer than 480 bytes</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/lmdb/codecs.py</code></td><td>JSON encode/decode</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/lmdb/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/metadata_store.py</code></td><td>MetadataStore protocol + factory</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/search_backend.py</code></td><td>SearchBackend protocol + factory</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/graph_backend.py</code></td><td>GraphBackend protocol + factory</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/backends/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/search/indexer.py</code></td><td>Builds search documents (repo/dir/package/file/symbol/body/doc/statement)</td><td class="chips"><a class="chip s-Context" href="#p07" title="UniXcoder">07</a> <a class="chip s-Strong" href="#p28" title="LocAgent">28</a> <a class="chip s-Strong" href="#p42" title="RANGER">42</a> <a class="chip s-Partial" href="#p46" title="Beyond Function-Level Search">46</a> <a class="chip s-Partial" href="#p52" title="Beyond the Prompt - Cursor Rules">52</a> <a class="chip s-Partial" href="#p58" title="SWE-Pruner">58</a> <a class="chip s-Strong" href="#p64" title="Do Not Treat Code as Natural Language">64</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/search/zoekt_backend.py</code></td><td>Optional Zoekt sidecar for backend comparison</td><td class="chips"><a class="chip s-Strong" href="#p45" title="Exploratory Study of Code Retrieval Techniques in Coding Agents">45</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/search/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/summaries/builder.py</code></td><td>Deterministic multi-level summaries + SUMMARIZED_BY edges</td><td class="chips"><a class="chip s-Partial" href="#p43" title="Improving Code Localization with Repository Memory">43</a> <a class="chip s-Strong" href="#p57" title="Reliable Graph-RAG for Codebases">57</a> <a class="chip s-Strong" href="#p71" title="HCAG">71</a> <a class="chip s-Context" href="#p84" title="Evaluating Repository-level Software Documentation">84</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/summaries/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/symbols/indexer.py</code></td><td>Fused symbol index: symbols, imports, references, statements, semantics</td><td class="chips"><a class="chip s-Strong" href="#p01" title="Ferrante - The Program Dependence Graph and Its Use in Optimization">01</a> <a class="chip s-Partial" href="#p02" title="Lehnert - A review of software change impact analysis">02</a> <a class="chip s-Partial" href="#p05" title="GraphCodeBERT">05</a> <a class="chip s-Strong" href="#p42" title="RANGER">42</a> <a class="chip s-Context" href="#p60" title="Gistify">60</a> <a class="chip s-Strong" href="#p64" title="Do Not Treat Code as Natural Language">64</a> <a class="chip s-Partial" href="#p82" title="Executable Repository-Level Code Generation via Environment Alignment">82</a> <a class="chip s-Strong" href="#p87" title="TypeScript Repository Indexing for Code Agent Retrieval">87</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/symbols/persistence.py</code></td><td>Writes/reads the LMDB metadata bundle</td><td class="chips"><a class="chip s-Context" href="#p69" title="When the Specification Emerges">69</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/symbols/schema.py</code></td><td>Normalizes symbol records (provider, confidence, range, scope)</td><td class="chips"><a class="chip s-Strong" href="#p87" title="TypeScript Repository Indexing for Code Agent Retrieval">87</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/symbols/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/parsers/tree_sitter_backend.py</code></td><td>Tree-sitter Rust probe + multi-language tags</td><td class="chips"><a class="chip s-Context" href="#p09" title="LLMs - Understanding Code Syntax and Semantics for Code Analysis">09</a> <a class="chip s-Strong" href="#p57" title="Reliable Graph-RAG for Codebases">57</a> <a class="chip s-Strong" href="#p78" title="Codebase-Memory">78</a> <a class="chip s-Strong" href="#p87" title="TypeScript Repository Indexing for Code Agent Retrieval">87</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/parsers/scip_backend.py</code></td><td>Imports SCIP indexes (symbols, references, relationships)</td><td class="chips"><a class="chip s-Strong" href="#p87" title="TypeScript Repository Indexing for Code Agent Retrieval">87</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/parsers/ctags_backend.py</code></td><td>Universal Ctags symbols</td><td class="chips"><a class="chip s-Partial" href="#p51" title="InfCode-C++">51</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/parsers/rust.py</code></td><td>Regex/lexer Rust parser</td><td class="chips"><a class="chip s-Partial" href="#p70" title="TDAD">70</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/parsers/rust_analyzer_backend.py</code></td><td>rust-analyzer LSP documentSymbol probe</td><td class="chips"><a class="chip s-Strong" href="#p87" title="TypeScript Repository Indexing for Code Agent Retrieval">87</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/parsers/rustc_backend.py</code></td><td>rustc AST probe (pattern counts)</td><td class="chips"><a class="chip s-Strong" href="#p87" title="TypeScript Repository Indexing for Code Agent Retrieval">87</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/parsers/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/evaluation/harness.py</code></td><td>Benchmarks, IR metrics, bundle and answer scoring, eval cache</td><td class="chips"><a class="chip s-Context" href="#p06" title="CodeXGLUE">06</a> <a class="chip s-Context" href="#p10" title="RepoBench">10</a> <a class="chip s-Strong" href="#p19" title="Repoformer">19</a> <a class="chip s-Partial" href="#p24" title="Sufficient Context">24</a> <a class="chip s-Context" href="#p25" title="CodeRepoQA">25</a> <a class="chip s-Partial" href="#p26" title="CoReQA">26</a> <a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a> <a class="chip s-Context" href="#p34" title="The SWE-Bench Illusion">34</a> <a class="chip s-Partial" href="#p36" title="CoIR">36</a> <a class="chip s-Strong" href="#p45" title="Exploratory Study of Code Retrieval Techniques in Coding Agents">45</a> <a class="chip s-Partial" href="#p61" title="IDE-Bench">61</a> <a class="chip s-Strong" href="#p62" title="ContextBench">62</a> <a class="chip s-Partial" href="#p65" title="Evaluating AGENTS.md">65</a> <a class="chip s-Partial" href="#p75" title="Repository-Level Code Agents Feature Addition Benchmark">75</a> <a class="chip s-Partial" href="#p76" title="Time-Consistent Benchmark for Repository-Level SE">76</a> <a class="chip s-Strong" href="#p78" title="Codebase-Memory">78</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/evaluation/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/cli/main.py</code></td><td>CLI with ~44 subcommands</td><td class="chips"><a class="chip s-Strong" href="#p21" title="CodexGraph">21</a> <a class="chip s-Partial" href="#p24" title="Sufficient Context">24</a> <a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a> <a class="chip s-Strong" href="#p45" title="Exploratory Study of Code Retrieval Techniques in Coding Agents">45</a> <a class="chip s-Strong" href="#p73" title="Bridging Code Property Graphs and Language Models">73</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/cli/__init__.py</code></td><td>Package marker</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/src/adapters/__init__.py</code></td><td>Empty package (docstring only)</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/native/src/main.rs</code></td><td>Rust worker: tree-sitter-rust inspect, Tantivy BM25 build/query/list</td><td class="chips"><a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a> <a class="chip s-Strong" href="#p28" title="LocAgent">28</a> <a class="chip s-Strong" href="#p57" title="Reliable Graph-RAG for Codebases">57</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/native/Cargo.toml</code></td><td>Rust worker dependencies (tantivy, tree-sitter)</td><td class="chips"><a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a> <a class="chip s-Strong" href="#p57" title="Reliable Graph-RAG for Codebases">57</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/native/Cargo.lock</code></td><td>Locked Rust dependency versions</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/configs/retriever.yaml</code></td><td>Declared retriever settings (not loaded by any code)</td><td class="chips"><a class="chip s-Strong" href="#p19" title="Repoformer">19</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/configs/indexer.yaml</code></td><td>Declared parser list (not loaded by any code)</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/configs/summarizer.yaml</code></td><td>Declared summary levels (not loaded by any code)</td><td class="chips"><a class="chip s-Strong" href="#p71" title="HCAG">71</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/configs/benchmarks.yaml</code></td><td>Declared benchmark modes (not loaded by any code)</td><td class="chips"><a class="chip s-Strong" href="#p19" title="Repoformer">19</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/data/eval/cases/ai-tooling.jsonl</code></td><td>3 retrieval benchmark cases for repo &#x27;agent-kit&#x27;</td><td class="chips"><a class="chip s-Context" href="#p14" title="SWE-bench">14</a> <a class="chip s-Partial" href="#p52" title="Beyond the Prompt - Cursor Rules">52</a> <a class="chip s-Strong" href="#p62" title="ContextBench">62</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/scripts/bootstrap.sh</code></td><td>Creates data directories, checks toolchain</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/scripts/parse_repos.sh</code></td><td>Runs parse-repos</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/scripts/build_index.sh</code></td><td>Runs build-index; resume state file .build_index.resume.sqlite3</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/scripts/build_search.sh</code></td><td>Runs build-search</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/scripts/export_summaries.sh</code></td><td>Runs build-summaries</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/scripts/build_embeddings.sh</code></td><td>Runs build-embeddings</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/scripts/precompute_eval_cache.sh</code></td><td>Runs export-benchmark-prompts</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/scripts/run_benchmarks.sh</code></td><td>Chains all build stages, then run-benchmarks</td><td class="chips"><a class="chip s-Strong" href="#p45" title="Exploratory Study of Code Retrieval Techniques in Coding Agents">45</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/scripts/sync_repos.sh</code></td><td>Prints workspace layout guidance</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/pyproject.toml</code></td><td>Python deps (lmdb, ryugraph, qdrant-client, mcp, tree-sitter extras)</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/scripts/mcp_smoke_test.py</code></td><td>Calls every MCP tool over real stdio and reports time and size</td><td class="chips"><a class="chip s-Partial" href="#p61" title="IDE-Bench">61</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_mcp_server.py</code></td><td>Tests MCP tool registration, dispatch, truncation, embeddings modes</td><td class="chips"><a class="chip s-Strong" href="#p19" title="Repoformer">19</a> <a class="chip s-Strong" href="#p21" title="CodexGraph">21</a> <a class="chip s-Strong" href="#p73" title="Bridging Code Property Graphs and Language Models">73</a> <a class="chip s-Strong" href="#p78" title="Codebase-Memory">78</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_openrouter_streaming.py</code></td><td>Tests OpenRouter streaming into Qdrant, resume, quota, retries</td><td class="chips"><a class="chip s-Context" href="#p04" title="CodeBERT">04</a> <a class="chip s-Partial" href="#p36" title="CoIR">36</a></td></tr>
+<tr><td><code class="ref">.mcp.json</code></td><td>Registers the MCP server with Claude Code (embeddings off, heuristic rerank)</td><td class="chips"><a class="chip s-Partial" href="#p08" title="ReAct">08</a> <a class="chip s-Strong" href="#p78" title="Codebase-Memory">78</a></td></tr>
+<tr><td><code class="ref">qdrant/docker-compose.yml</code></td><td>Local Qdrant vector database container</td><td class="chips"><a class="chip s-Context" href="#p04" title="CodeBERT">04</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/package.json</code></td><td>Package metadata only</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/.env.example</code></td><td>Env template (embedding provider, data dir)</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/.gitignore</code></td><td>Ignore rules</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/LICENSE</code></td><td>License text</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_staged_retrieval.py</code></td><td>Tests the paper pipeline (BM25 pool, batched rerank, maxp)</td><td class="chips"><a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_embedding_units.py</code></td><td>Tests unit splitting, checkpoint resume, maxp grouping</td><td class="chips"><a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_search_and_summaries.py</code></td><td>Tests search, rerank, summaries, harness, planner</td><td class="chips"><a class="chip s-Strong" href="#p19" title="Repoformer">19</a> <a class="chip s-Strong" href="#p21" title="CodexGraph">21</a> <a class="chip s-Strong" href="#p62" title="ContextBench">62</a> <a class="chip s-Strong" href="#p71" title="HCAG">71</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_symbol_semantics.py</code></td><td>Tests trait inheritance, self-member resolution, semantic caps</td><td class="chips"><a class="chip s-Partial" href="#p05" title="GraphCodeBERT">05</a> <a class="chip s-Context" href="#p60" title="Gistify">60</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_symbol_index.py</code></td><td>Tests symbol index, provider merge, cache reuse</td><td class="chips"><a class="chip s-Strong" href="#p87" title="TypeScript Repository Indexing for Code Agent Retrieval">87</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_symbol_snapshot.py</code></td><td>Golden snapshot + LMDB persistence tests</td><td class="chips"><a class="chip s-Strong" href="#p01" title="Ferrante - The Program Dependence Graph and Its Use in Optimization">01</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_parser_fusion.py</code></td><td>Tests parser backend fusion and cross-crate calls</td><td class="chips"><a class="chip s-Strong" href="#p87" title="TypeScript Repository Indexing for Code Agent Retrieval">87</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_tree_sitter_backend.py</code></td><td>Tests tree-sitter tags</td><td class="chips"><a class="chip s-Strong" href="#p57" title="Reliable Graph-RAG for Codebases">57</a> <a class="chip s-Strong" href="#p78" title="Codebase-Memory">78</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_scip_backend.py</code></td><td>Tests SCIP import</td><td class="chips"><a class="chip s-Strong" href="#p87" title="TypeScript Repository Indexing for Code Agent Retrieval">87</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_ctags_backend.py</code></td><td>Tests ctags import</td><td class="chips"><a class="chip s-Strong" href="#p87" title="TypeScript Repository Indexing for Code Agent Retrieval">87</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_rust_parser.py</code></td><td>Tests the Rust parser</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_zoekt_backend.py</code></td><td>Tests the Zoekt sidecar</td><td class="chips"><a class="chip s-Strong" href="#p45" title="Exploratory Study of Code Retrieval Techniques in Coding Agents">45</a></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_inventory.py</code></td><td>Tests inventory</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_progress_logging.py</code></td><td>Tests progress/heartbeat logging</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_native_tool_timeouts.py</code></td><td>Tests no subprocess timeouts</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/unit/test_runtime_boundaries.py</code></td><td>Tests modules use backend interfaces</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/fixtures/rust/semantic_sample.rs</code></td><td>Rust fixture for the semantic snapshot</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">repo-analysis-workbench/tests/golden/rust/semantic_sample.snapshot.json</code></td><td>Expected snapshot output</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">qwen-mlx/server.py</code></td><td>Local Qwen3 embedding + reranker HTTP server (MLX)</td><td class="chips"><a class="chip s-Context" href="#p04" title="CodeBERT">04</a> <a class="chip s-Context" href="#p16" title="RepoQA">16</a></td></tr>
+<tr><td><code class="ref">qwen-mlx/test_embedding.py</code></td><td>Standalone embedding sanity check</td><td class="chips"><a class="chip s-Context" href="#p04" title="CodeBERT">04</a> <a class="chip s-Context" href="#p16" title="RepoQA">16</a></td></tr>
+<tr><td><code class="ref">qwen-mlx/check_remote_weights.py</code></td><td>Checks model weights for untrained norms</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">qwen-mlx/download_models.sh</code></td><td>Downloads Qwen3-Embedding-8B and Qwen3-Reranker-8B</td><td class="chips"><a class="chip s-Context" href="#p04" title="CodeBERT">04</a> <a class="chip s-Direct" href="#p27" title="Repository-level Code Search with Neural Retrieval Methods">27</a></td></tr>
+<tr><td><code class="ref">qwen-mlx/start.sh</code></td><td>Starts the server</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">qwen-mlx/requirements.txt</code></td><td>MLX/transformers deps</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+<tr><td><code class="ref">.gitignore</code></td><td>Ignore rules</td><td class="chips"><span class="muted">Infrastructure or packaging; no paper describes this mechanism.</span></td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<section aria-labelledby="h-guide">
+  <div class="sechead">
+    <h2 id="h-guide">Guide claims checked against the code</h2>
+    <p>The repo-analysis-workbench guide you supplied was used only as a map. Every claim used here was checked in the source; corrections are listed.</p>
+  </div>
+  <div class="scroller">
+    <table id="guide"><thead><tr><th>Guide claim</th><th>Status</th><th>Evidence in the code</th></tr></thead><tbody>
+<tr><td>Three runtime engines: Tantivy (BM25), LMDB (exact lookups), RyuGraph (graph)</td><td><span class="gst g-ok">Verified</span></td><td>backends/tantivy/search.py, backends/lmdb/store.py, backends/ryugraph/queries.py; factories in backends/*_backend.py.</td></tr>
+<tr><td>Native Rust worker (~790 lines) offers helpers InspectRust, SearchFields, Span, NativeSymbol</td><td><span class="gst g-fix">Corrected</span></td><td>native/src/main.rs is 787 lines. Its commands are WorkerInfo, InspectRust, BuildBm25, QueryBm25, ListBm25Docs (L23-58). SearchFields, Span and NativeSymbol are structs, not helpers.</td></tr>
+<tr><td>build-index is resumable through a SQLite state file</td><td><span class="gst g-fix">Corrected</span></td><td>The SQLite resume file (.build_index.resume.sqlite3) is set in scripts/build_index.sh L8. Inside Python, resumability comes from a per-file JSON parse cache keyed by SHA-1/mtime (symbols/indexer.py 2610-2712); main.py L795 deletes an old symbols.sqlite3.</td></tr>
+<tr><td>Multiple symbol providers tagged with provider and confidence</td><td><span class="gst g-ok">Verified</span></td><td>rust_static 1.0 (symbols/indexer.py 3055), scip 0.95 (scip_backend.py 328), tree_sitter_tags 0.78 (tree_sitter_backend.py 496), ctags 0.65 (ctags_backend.py 242).</td></tr>
+<tr><td>Graph edge types: CONTAINS, DEFINES, DECLARES, CALLS, IMPORTS, REFERENCES/REFS, READS, WRITES, IMPLEMENTS, INHERITS, OVERRIDES, USES_TYPE, TYPE_DEFINITION, CONTROL_FLOW, DATA_FLOW, DEPENDENCE, TESTS</td><td><span class="gst g-ok">Verified (incomplete)</span></td><td>All present in graph/builder.py. The list omits USES (L328), NEIGHBOR (L859-891) and SUMMARIZED_BY (summaries/builder.py L384-477).</td></tr>
+<tr><td>Search index splits identifiers so &#x27;retryHandler&#x27; matches &#x27;retry handler&#x27;</td><td><span class="gst g-fix">Corrected</span></td><td>Not in the index: Tantivy fields use the default TEXT tokenizer (native/src/main.rs 385-399) and common/text.py tokenize() does not split camelCase. CamelCase splitting exists only in the reranker (rerank/fusion.py identifier_terms L38-43).</td></tr>
+<tr><td>Optional Zoekt sidecar used to compare search backends</td><td><span class="gst g-ok">Verified</span></td><td>search/zoekt_backend.py; compare_search_backends in cli/main.py L1025.</td></tr>
+<tr><td>Summaries are deterministic, not LLM-generated; non-Rust repos get inventory fallback</td><td><span class="gst g-ok">Verified</span></td><td>summaries/builder.py builds text from counts/names; &#x27;inventory_fallback&#x27; at L249-250 and L501-528.</td></tr>
+<tr><td>Embedding unit &#x27;line_window&#x27; = code windows of at least 80 tokens</td><td><span class="gst g-fix">Corrected</span></td><td>Code windows are capped at 350 tokens (CODE_EMBED_TOKEN_LIMIT, embeddings/units.py L9) with an overlap of max(80, 350//3) = 116 tokens (L199-209). 80 is only the overlap floor.</td></tr>
+<tr><td>Units roll up to file/symbol with maxp</td><td><span class="gst g-ok">Verified</span></td><td>embeddings/indexer.py 863, 876-895; staged.py 242-285.</td></tr>
+<tr><td>Embedding providers are qwen (default, 127.0.0.1:18200), openai and hashing</td><td><span class="gst g-fix">Outdated</span></td><td>Commit 416efcf1 adds openrouter (providers.py 48-53, 80-140; default model nvidia/nemotron-3.5-embed-8b:free). &#x27;auto&#x27; still maps to qwen (L38-39). Dense vectors from qwen/openai/openrouter are now stored in Qdrant, not in the JSON index (embeddings/indexer.py 156-167; backends/qdrant/store.py).</td></tr>
+<tr><td>Checkpoint/resume and heartbeat progress for Qwen embedding builds</td><td><span class="gst g-ok">Verified</span></td><td>embeddings/indexer.py 489-761 (checkpoint JSONL + meta), heartbeat 510-554. Commit 416efcf1 adds a resumable OpenRouter build that skips units already in Qdrant (embeddings/indexer.py 383-486).</td></tr>
+<tr><td>Query classification flags and docs/symbol/exploration intents</td><td><span class="gst g-ok">Verified</span></td><td>retrieval/engine.py 659-687.</td></tr>
+<tr><td>Selective gate table (path-or-docs / exact-symbol / statement-query / exploration-generic)</td><td><span class="gst g-ok">Verified</span></td><td>retrieval/engine.py 595-656. For exploration/generic, graph and bodies also run when the query has graph/body hints or exact symbol results.</td></tr>
+<tr><td>Embeddings are queried in every case</td><td><span class="gst g-fix">Outdated</span></td><td>True by default only. Commit 416efcf1 adds REPO_ANALYSIS_EMBEDDINGS = required (default) / optional / off (retrieval/engine.py 77-86, 227-231). The MCP server and .mcp.json set it to off. In &#x27;required&#x27; mode a missing index still raises (embeddings/indexer.py 770-775).</td></tr>
+<tr><td>Graph expansion uses max_depth 2 and max_fanout 32 from configs/retriever.yaml</td><td><span class="gst g-fix">Corrected</span></td><td>No .py/.sh/.rs file loads any configs/*.yaml. Runtime defaults are depth=1 and max_graph_fanout=32 (engine.py L97, L103). The YAML is declarative only.</td></tr>
+<tr><td>Graph expansion skips noisy node kinds</td><td><span class="gst g-ok">Verified</span></td><td>engine.py 68-74 and 207-208 (unless the query targets statements).</td></tr>
+<tr><td>Qwen reranker on top 5; fails loudly unless REPO_ANALYSIS_ALLOW_HEURISTIC_RERANK_FALLBACK=1</td><td><span class="gst g-ok">Verified</span></td><td>rerank/fusion.py L32, L181-229. The MCP server sets REPO_ANALYSIS_RERANK_PROVIDER=heuristic by default (mcp_server/server.py L29, .mcp.json), so agents using it get no Qwen rerank.</td></tr>
+<tr><td>Paper-style staged mode: large BM25 pool, units, fusion with penalties, diverse pre-rank pool, batched Qwen rerank, maxp with top-3 unit hits</td><td><span class="gst g-ok">Verified</span></td><td>retrieval/staged.py 22-74, 329-340, 384-392, 215-239, 258.</td></tr>
+<tr><td>Benchmark metrics (MRR, nDCG, first relevant rank, path/symbol recall, prepared tokens, files opened, latency, bundle/answer score)</td><td><span class="gst g-ok">Verified</span></td><td>evaluation/harness.py 574-692, 754-763, 1006-1014.</td></tr>
+<tr><td>Answer quality in the harness is heuristic, not an LLM judge; results cached in LMDB by fingerprint</td><td><span class="gst g-ok">Verified</span></td><td>harness.py 1047-1092; 864-969.</td></tr>
+<tr><td>16 unit-test files plus a Rust golden snapshot</td><td><span class="gst g-fix">Outdated</span></td><td>Commit 416efcf1 adds test_mcp_server.py and test_openrouter_streaming.py: tests/unit now has 18 files. The golden snapshot is unchanged.</td></tr>
+<tr><td>No MCP server shipped; an agent must call the CLI or toolkit.py</td><td><span class="gst g-fix">Outdated</span></td><td>Commit 416efcf1 adds src/mcp_server/server.py: a stdio MCP server with 12 read-only tools (L139-260) registered for Claude Code in .mcp.json, plus scripts/mcp_smoke_test.py.</td></tr>
+<tr><td>Design principles, commit history, status and target architecture (guide sections 2, 10, 11)</td><td><span class="gst g-skip">Not used</span></td><td>These come from the repository&#x27;s markdown docs and git history. You asked not to read or trust repo markdown, so none of it is used here.</td></tr>
+<tr><td>Guide source is github.com/prmartinow/repo-analysis-workbench</td><td><span class="gst g-skip">Note</span></td><td>Your backend branch (dusy4/tech_eu_hack, commit 416efcf1) contains repo-analysis-workbench/ plus qwen-mlx/, qdrant/ and .mcp.json, which the guide does not cover. All checks above were run against that commit.</td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<section aria-labelledby="h-method">
+  <div class="sechead"><h2 id="h-method">How this was built</h2></div>
+  <ul class="notes">
+    <li>Code: the backend branch was downloaded from GitHub and every source, script, config, test and data file was read. Markdown files in the repository were not read.</li>
+    <li>Papers: text was extracted from all 85 PDFs. For each paper the abstract and introduction were read, and specific claims (parameters, metrics, schemas) were confirmed by searching the full text. Page numbers come from the extracted text.</li>
+    <li>Line numbers point to backend commit 416efcf1 (latest at the time of analysis). References were first mapped against commit 2e6f6f37, then remapped through the diff and re-checked against 416efcf1. Paper 23 and paper 35 are not in the folder (numbering skips them).</li>
+    <li>Limits: a match says the code contains the mechanism. It does not say the code was derived from the paper, and no benchmark results exist in the branch to show either side's performance claims.</li>
+  </ul>
+</section>
+</div>
+
+<script>
+(function () {
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#map tbody tr'));
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('.lg'));
+  var q = document.getElementById('q');
+  var shown = document.getElementById('shown');
+  var active = null;
+  function apply() {
+    var term = (q.value || '').trim().toLowerCase();
+    var n = 0;
+    rows.forEach(function (tr) {
+      var ok = (!active || tr.getAttribute('data-s') === active) && (!term || tr.textContent.toLowerCase().indexOf(term) !== -1);
+      tr.hidden = !ok; if (ok) n++;
+    });
+    shown.textContent = n + ' of ' + rows.length + ' papers shown';
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-f') === active)); });
+  }
+  buttons.forEach(function (b) { b.addEventListener('click', function () { var f = b.getAttribute('data-f'); active = active === f ? null : f; apply(); }); });
+  q.addEventListener('input', apply);
+  document.getElementById('reset').addEventListener('click', function () { active = null; q.value = ''; apply(); });
+  apply();
+})();
+</script>
+
+</body>
+</html>
