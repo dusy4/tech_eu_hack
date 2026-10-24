@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_ROOT = ROOT / "repo-analysis-workbench" / "data"
-FRONTEND_DATA = ROOT / "frontend" / "src" / "data"
+FRONTEND_DATA = ROOT / "vis" / "src" / "data"
 REPO = "rust-agent-framework"
 
 
