@@ -1,11 +1,13 @@
-# Spelunk (tech_eu_hack)
+# repo-analysis + Spelunk (tech_eu_hack)
 
-**Your team talks about the code. Spelunk listens, shows what you mean on a live graph of the real code, and hands
-the decisions you accept to your coding agent.**
+**Code intelligence under your coding agent.** Parse a repository once into a code graph, then give Claude Code
+the smallest set of evidence that answers its question, through 12 MCP tools. **Spelunk** is the visual layer on
+top: it draws that evidence as a live graph of the real code and turns a team's conversation into decisions the
+agent can act on.
 
-This README is the whole project in one place: the idea, the agentic loop, the architecture, who owns what, what
-works today, the contracts between the pieces, the demo, and how to run everything. If something here is wrong,
-fix it here. The only other docs are deep references owned by one piece (see [Reference docs](#21-reference-docs)).
+This README is the whole project in one place: the pitch, the architecture, who owns what, what works today, the
+contracts between the pieces, the demo, and how to run everything. If something here is wrong, fix it here. The
+only other docs are deep references owned by one piece (see [Reference docs](#21-reference-docs)).
 
 _Last updated: 24 Oct 2026._
 
@@ -13,7 +15,7 @@ _Last updated: 24 Oct 2026._
 
 **The product**
 1. [What we're building](#1-what-were-building)
-2. [The agentic loop](#2-the-agentic-loop)
+2. [Spelunk: the agentic loop on top](#2-spelunk-the-agentic-loop-on-top)
 3. [What the user sees](#3-what-the-user-sees)
 
 **The system**
@@ -56,31 +58,47 @@ _Last updated: 24 Oct 2026._
 
 ## 1. What we're building
 
-Code discussions lose their decisions. People talk through a change ("the click goes into the reconciler", "if we
-refactor performWorkOnRoot, what breaks?"), someone half-remembers it, and the coding agent never hears it.
+Two layers. The core is what the pitch deck presents; Spelunk sits on top of it.
 
-Spelunk sits in that conversation and is **agentic** end to end:
+### The core: repo-analysis
 
-- It **listens**. Reson8 transcribes the room live.
-- It **understands**. Claude Haiku 5.5 pulls the decisions and questions out of the transcript and grounds them in
-  the real code through our MCP server.
-- It **shows**. Each one appears on the graph as a proposal: highlight this function, answer this question,
-  draw this flow.
-- **People decide.** Every proposal is accepted or dismissed by a human. Nothing moves without a yes.
-- It **hands off**. The accepted decisions become one handoff document, with what was decided, who said it, and
-  the exact code it touches. Any agent (Claude Code, Cursor, …) picks it up through MCP.
-
-Two parts make it work, and each is useful on its own:
-
-| Part | What it is |
+| | |
 |---|---|
-| **repo-analysis MCP server** (backend) | Pre-indexes a repo into symbols, a call graph, keyword search and summaries. Gives any coding agent tools like "who calls this?" and "how does A reach B?" instead of grepping |
-| **Spelunk app** (frontend) | The room: live transcript, the graph of the code, proposals to accept, and the handoff to the agent |
+| **Problem** | Coding agents read code like text. Structural questions ("who calls this?", "how does A reach B?") get answered by repeated search-and-open loops |
+| **Insight** | Treat code as structure, not prose. Parse once with real parsers, answer from the graph, return only what the question needs. No LLM builds the index |
+| **Product** | A local layer **under** the agent, built once per repository and queried many times. It is not an agent and not a chat interface |
+| **Grounded in research** | 18 of the 85 papers we reviewed are implemented directly or in their core idea, each mapped to a file and line range ([paper-to-code dashboard](docs/paper-code-mapping/papers-to-code.html)) |
+| **Built to be measured** | Recall at k, MRR, nDCG, tokens prepared, files opened and latency, with A/B of retrieval modes and scoring of an outside agent's answers (`src/evaluation/harness.py`) |
 
-The backend's benchmark (does Claude Code with these tools understand a codebase better than Claude Code alone,
-Cursor or Antigravity?) is our evidence that the MCP helps. It isn't a separate product.
+How a repository becomes evidence:
 
-## 2. The agentic loop
+```
+repository ──▶ parsers ──────────────────▶ stores ───────────────────▶ retrieval ──────────────▶ MCP server
+files,         Rust in depth (rust-analyzer  Tantivy keyword index,     classify · gate · scope ·   12 read-only
+manifests,     SCIP); tree-sitter tags for   LMDB exact lookups,        find · expand · load ·     tools for
+git            6 more languages; Ctags       RyuGraph code graph        bundle (each item says     Claude Code
+                                             (21 edge types), summaries why it's there)
+```
+
+The graph goes down to the statement: calls, imports, type uses, implements/inherits/overrides, reads and writes,
+control and data flow, and which tests touch what.
+
+### On top: Spelunk
+
+A visual layer and a team loop over the same MCP tools ([section 2](#2-spelunk-the-agentic-loop-on-top)). While
+the agent gets text evidence, people see it as a graph of the real code. And when a team talks a change through,
+Spelunk turns what they say into proposals on that graph, then hands the accepted decisions to the agent.
+
+### Pitch rules
+
+From the deck's own checklist, checked against the code:
+
+- **No performance numbers for our product.** None exist yet. Figures on the problem slides come from the cited
+  papers (Codebase-Memory, ContextBench, the code-analysis study), not from us.
+- **Say "Rust in depth".** Python, TypeScript and Go get symbol tags and search only, no call graph.
+- **The default MCP setup uses no embeddings and no neural reranker.** Ranking is rule-based.
+
+## 2. Spelunk: the agentic loop on top
 
 ```
   ① LISTEN          ② EXTRACT              ③ PROPOSE             ④ DECIDE          ⑤ HAND OFF
@@ -185,8 +203,6 @@ tech_eu_hack/
 ├── bridge/                    # stopgap HTTP API from the app to the index (section 13)
 ├── repo-analysis-workbench/   # indexing + retrieval engine and the MCP server
 ├── repo_analyse/              # target repos being analysed (clones are gitignored)
-├── qdrant/                    # optional local vector DB (unused, embeddings dropped)
-├── qwen-mlx/                  # optional local Qwen3 server (unused, embeddings dropped)
 ├── knowledge/                 # notes on the upstream workbench
 ├── docs/                      # architecture diagram + research reading list
 └── .mcp.json                  # registers the MCP server for Claude Code sessions opened here
@@ -199,6 +215,8 @@ tech_eu_hack/
 | Indexing engine (vendored workbench + our changes) | `repo-analysis-workbench/` | Aneeth | Works on Rust. Python/TS/Go get symbols and search only |
 | MCP server | `repo-analysis-workbench/src/mcp_server/` | Aneeth | Works over stdio in Claude Code. 12 tools, smoke-tested |
 | Target repo | `repo_analyse/` | Aneeth | `rust-agent-framework` (67k lines of Rust) indexed |
+| Paper-to-code dashboard | `docs/paper-code-mapping/` | Aram | 85 papers mapped to file and line |
+| Pitch deck | not in the repo | ? | 14 slides drafted; team, event and ask still blank (open decision 5) |
 | Spelunk app | `app/` | frontend (dusy4) | All screens built, running on **sample data** for facebook/react |
 | Haiku extraction and graph building (loop ② ③) | none yet | **nobody** | Not started. The biggest missing piece |
 | Handoff through MCP (loop ⑤) | none yet | **nobody** | UI and payload built; publishing not started |
@@ -220,15 +238,19 @@ tech_eu_hack/
 
 ## 8. Decided
 
-- **Agentic loop:** listen → extract → propose → decide → hand off ([section 2](#2-the-agentic-loop)). Humans accept
-  every proposal.
+- **The pitch:** repo-analysis is the core (the deck's story: code intelligence under your coding agent).
+  Spelunk is the visual layer and team loop on top.
+- **Demo repo:** `rust-agent-framework` (Rust, 67k lines, 19 crates). Only Rust gets the full call graph.
+- **Agentic loop on top:** listen → extract → propose → decide → hand off ([section 2](#2-spelunk-the-agentic-loop-on-top)).
+  Humans accept every proposal.
 - **Voice:** Reson8.
 - **Extraction:** Claude Haiku 5.5 (`claude-haiku-5-5`) reads the transcript. It may also build the graphs.
 - **Handoff goes out through MCP**, so it works with whatever agent people already use.
 - **Code facts come from the repo-analysis MCP server.** Keyword search (BM25) plus the code graph.
 - **Rust call graph from rust-analyzer (SCIP).** Compiler-grade references now catch method calls, trait dispatch
   and cross-crate calls: real callers found on Aneeth's check set went from 0/12 to 12/12 (`39a9c81`).
-- **No embeddings.** Qdrant, OpenRouter and Qwen are built but switched off and nothing depends on them.
+- **No embeddings.** Off by default (`REPO_ANALYSIS_EMBEDDINGS=off`) and nothing depends on them. Pierre removed the
+  `qdrant/` and `qwen-mlx/` folders; the optional embedding code inside the workbench is still there.
 - **The graph's contract is `ViewSpec`**, owned by the frontend ([section 10](#10-viewspec-what-the-graph-draws)).
 - **Domain:** software codebases. Earlier ideas (bio, finance visualisations) are dropped.
 - **No jev / json-render.** The placeholder was removed.
@@ -238,13 +260,13 @@ tech_eu_hack/
 
 Each needs one owner and one answer.
 
-### 1. Which repo do we demo on?
+### 1. Move the app off React
 
-- **The clash:** the app's sample answers, demo script and suggested questions are about facebook/react
-  (JavaScript). The backend indexed `rust-agent-framework`, because only Rust gets a call graph. On React the graph
-  views would come out nearly empty.
-- **Recommendation:** demo on `rust-agent-framework` (or another Rust repo). Re-record 3 answers and rewrite the
-  suggested questions for it. Keep React only as screenshots.
+- **The gap:** the demo repo is decided (`rust-agent-framework`), but the app's sample answers, suggested
+  questions and the keyword matcher are all about facebook/react.
+- **To do:** record 3 answers on `rust-agent-framework` from the real index (for example the deck's demo calls:
+  tool approval, `ApprovalRequiredTool` callers, `ChatClientBuilder::build` → `IChatClient`), and rewrite the
+  suggested questions. Keep React only as screenshots.
 
 ### 2. How does the app reach the MCP server?
 
@@ -276,6 +298,14 @@ Each needs one owner and one answer.
   - Add `list_handoffs` / `get_handoff` tools (or an MCP resource) to the repo-analysis server, so Claude Code or
     Cursor pull it with the MCP connection they already have.
 - **Owner needed.** It spans the app and the server.
+
+### 5. The benchmark and the deck's blanks
+
+- **The gap:** the deck promises "Claude Code alone vs. Claude Code with this tool", but the case file holds 3
+  questions, all about another repo (`agent-kit` in `data/eval/cases/ai-tooling.jsonl`), and no run exists.
+- **To do:** write 10–20 questions with expected files and symbols for `rust-agent-framework`, run both setups,
+  and report recall, tokens and time. Until then, the pitch rules apply: no numbers for our product.
+- **Also blank in the deck:** team name, event and date, names and roles, the ask, contact.
 
 ---
 
@@ -399,21 +429,29 @@ server over HTTP (open decision 2).
 
 ## 14. Demo script
 
-About 3 minutes. The beats are written for React because that's what the recordings show; they move to the demo
-repo once open decision 1 is settled.
+About 3 minutes on `rust-agent-framework`. Part 1 is the deck's live demo (slide 7); part 2 is Spelunk on top.
+
+**Part 1: the core, in Claude Code** (the agent calls the MCP tools; every response is capped at 20k chars)
+
+| Time | Beat | Tool call |
+|---|---|---|
+| 0:00 | "How does human-in-the-loop tool approval work?" One call returns the evidence, each item saying why it's there | `prepare_answer_bundle` |
+| 0:30 | "Who calls `ApprovalRequiredTool`?" Exact callers, across crates, from the compiler's references | `symbol_relations` (callers) |
+| 0:50 | "How does `ChatClientBuilder::build` reach `IChatClient`?" The path through the code | `path_between` |
+| 1:10 | "What does `build` read, write and call, line by line?" | `statement_slice` |
+
+**Part 2: Spelunk on top** (the same tools, drawn)
 
 | Time | Beat | Shows |
 |---|---|---|
-| 0:00 | Open the repo; the code city flies in | Scale |
-| 0:20 | Two people talk: "the click starts at setCount and goes into the reconciler…" | The transcript fills live |
-| 0:40 | Proposals appear: "Show scheduleUpdateOnFiber" lights the node on the graph | Haiku understood the room |
-| 1:00 | Accept two proposals; press ▶ and the flow plays step by step, code following | Grounded in real code |
-| 1:40 | "If we refactor performWorkOnRoot, what breaks?" → BlastRadius ripples out to callers and tests | Practical value |
-| 2:10 | Send to the agent: the handoff doc lands in Claude Code through MCP, which starts the change | Agentic: talk → decision → agent |
-| 2:40 | One benchmark number: Claude Code with our MCP vs without | Proof it helps |
+| 1:30 | The same approval question in Spelunk: the flow builds on the graph as the tool calls return; ▶ plays it step by step with the code following | The evidence, visible |
+| 2:00 | Two people talk about changing approval; proposals appear and light up `ApprovalRequiredTool` | The room, understood |
+| 2:20 | "What breaks if we change it?" → BlastRadius: callers in rings, then tests | Impact before the change |
+| 2:40 | Accept, send: the handoff lands in Claude Code through MCP | Talk → decision → agent |
 
 **Safety net:** scripted questions are pre-recorded (`ViewSpec` plus the tool calls) and replay at real speed.
-One question is asked live and unscripted.
+One question is asked live and unscripted. Part 2's live pieces (Haiku, the MCP handoff) are not built yet; until
+they are, part 2 runs on recordings (open decisions 1, 3, 4).
 
 ## 15. Risks and fallbacks
 
@@ -537,4 +575,3 @@ Everything about the project is in this README. These are deep references for on
 | [`docs/ilograph.yaml`](docs/ilograph.yaml) | Architecture diagram of the Spelunk app ([Ilograph](https://www.ilograph.com)) |
 | [`docs/Research Sources.md`](docs/Research%20Sources.md), [`Research Summaries.md`](docs/Research%20Summaries.md) | Reading list: dependence graphs, impact analysis, code retrieval |
 | [`docs/paper-code-mapping/`](docs/paper-code-mapping/papers-to-code.html) | Which of the 85 papers each workbench file implements or approximates: an HTML dashboard, plus the same tables as `.xlsx` and `.csv` (line numbers from backend `416efcf`) |
-| [`qwen-mlx/README.md`](qwen-mlx/README.md) | The local Qwen server (unused since embeddings were dropped) |
