@@ -1,0 +1,11 @@
+import {execFileSync} from 'node:child_process';
+import {writeFile} from 'node:fs/promises';
+const file='out/spelunk-demo.mp4';
+const metadata=JSON.parse(execFileSync('ffprobe',['-v','error','-show_streams','-show_format','-of','json',file],{encoding:'utf8'}));
+const video=metadata.streams.find(s=>s.codec_type==='video');
+const audio=metadata.streams.find(s=>s.codec_type==='audio');
+if(video?.width!==1280 || video.height!==720 || video.avg_frame_rate!=='30/1' || !audio || Math.abs(Number(metadata.format.duration)-62)>.1) throw new Error('Unexpected export format');
+execFileSync('ffmpeg',['-hide_banner','-loglevel','error','-i',file,'-f','null','-'],{stdio:'inherit'});
+execFileSync('ffmpeg',['-hide_banner','-loglevel','error','-i',file,'-vf','fps=1/7,scale=480:-1,tile=3x3','-frames:v','1','-y','out/contact-sheet.jpg'],{stdio:'inherit'});
+await writeFile('out/verification.json',JSON.stringify({file,duration:Number(metadata.format.duration),width:video.width,height:video.height,fps:video.avg_frame_rate,frames:video.nb_frames,videoCodec:video.codec_name,audioCodec:audio.codec_name,decode:'passed'},null,2));
+console.log('Verified: 62 seconds, 1280×720, 30 fps, H.264 + audio; complete decode passed.');

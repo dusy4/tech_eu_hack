@@ -1,0 +1,6 @@
+{
+  "model_id": "music_v2_5",
+  "music_length_ms": 62000,
+  "force_instrumental": true,
+  "prompt": "Compose an original 62-second instrumental soundtrack for Spelunk, a refined software product demo about engineers discussing code, a live code graph, human decisions, and a coding-agent handoff. Modern minimal electronic, sophisticated and optimistic, 104 BPM, warm rounded analog bass, glassy plucked synth arpeggios, subtle crisp percussion, airy restrained pads. Clean professional mix with space for reading interface captions. No vocals, no choir, no spoken words. First 0-3 seconds: intriguing sparse pulse. 3-8 seconds: elegant brief rising logo reveal, gentle impact. 8-26 seconds: establish a confident steady groove with light playful plucks as the conversation appears. 26-34 seconds: small rhythmic lift for accepted decisions. 34-37 seconds: short restrained breakdown creating anticipation. 37-48 seconds: add a brighter arpeggio and satisfying forward momentum for a code impact graph. 48-56 seconds: pull drums back slightly for a focused handoff. 56-62 seconds: final uplifting brand resolve, musical cadence and a clean gentle ending at 62 seconds. No huge cinematic trailer hits, no aggressive EDM drop, no stock corporate ukulele."
+}

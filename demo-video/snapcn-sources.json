@@ -1,0 +1,67 @@
+[
+  {
+    "name": "snap-cn-ui",
+    "url": "https://snapcn.dev/r/snap-cn-ui.json",
+    "path": "src\\lib\\snap-cn-ui\\timeline.ts"
+  },
+  {
+    "name": "snap-cn-ui",
+    "url": "https://snapcn.dev/r/snap-cn-ui.json",
+    "path": "src\\lib\\snap-cn-ui\\theme.ts"
+  },
+  {
+    "name": "snap-cn-ui",
+    "url": "https://snapcn.dev/r/snap-cn-ui.json",
+    "path": "src\\lib\\snap-cn-ui\\fonts.ts"
+  },
+  {
+    "name": "snap-cn-ui",
+    "url": "https://snapcn.dev/r/snap-cn-ui.json",
+    "path": "src\\lib\\snap-cn-ui\\color.ts"
+  },
+  {
+    "name": "snap-cn-ui",
+    "url": "https://snapcn.dev/r/snap-cn-ui.json",
+    "path": "src\\lib\\snap-cn-ui\\motion.ts"
+  },
+  {
+    "name": "snap-cn-ui",
+    "url": "https://snapcn.dev/r/snap-cn-ui.json",
+    "path": "src\\lib\\snap-cn-ui\\item.tsx"
+  },
+  {
+    "name": "snap-cn-ui",
+    "url": "https://snapcn.dev/r/snap-cn-ui.json",
+    "path": "src\\lib\\snap-cn-ui\\types.ts"
+  },
+  {
+    "name": "snap-cn-ui",
+    "url": "https://snapcn.dev/r/snap-cn-ui.json",
+    "path": "src\\lib\\snap-cn-ui\\index.ts"
+  },
+  {
+    "name": "text-reveal",
+    "url": "https://snapcn.dev/r/text-reveal.json",
+    "path": "src\\components\\snap-cn\\text-reveal.tsx"
+  },
+  {
+    "name": "text-build",
+    "url": "https://snapcn.dev/r/text-build.json",
+    "path": "src\\components\\snap-cn\\text-build.tsx"
+  },
+  {
+    "name": "block-wordmark",
+    "url": "https://snapcn.dev/r/block-wordmark.json",
+    "path": "src\\components\\snap-cn\\block-wordmark.tsx"
+  },
+  {
+    "name": "screen-recording",
+    "url": "https://snapcn.dev/r/screen-recording.json",
+    "path": "src\\components\\snap-cn\\screen-recording.tsx"
+  },
+  {
+    "name": "terminal-simulator",
+    "url": "https://snapcn.dev/r/terminal-simulator.json",
+    "path": "src\\components\\snap-cn\\terminal-simulator.tsx"
+  }
+]
