@@ -1,15 +1,15 @@
 /* Canvas */
 .canvas-frame { position: relative; min-height: 0; min-width: 0; background: #f3f5f7; }
-.toolstrip { display: flex; gap: 2px; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 3px; box-shadow: 0 1px 2px rgba(16, 24, 32, 0.06); }
+.toolstrip { display: flex; gap: 4px; background: #fff; border-radius: 8px; padding: 4px; box-shadow: var(--elev-1); }
 .tool { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 54px; padding: 5px 0 4px; border: 0; background: transparent; border-radius: 4px; color: #33404b; font-size: 11px; }
 .tool:hover { background: #f1f4f6; }
 .tool.on { background: #2d72d2; color: #fff; }
-.legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 14px; max-width: 58%; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; box-shadow: 0 1px 2px rgba(16, 24, 32, 0.06); font-size: 12.5px; }
+.legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 14px; max-width: 58%; background: #fff; border-radius: 8px; padding: 8px 12px; box-shadow: var(--elev-1); font-size: 12px; }
 .legend-head { font: 600 12px/1 var(--display); color: #55606b; margin-bottom: 6px; }
 .legend-row { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; padding: 3px 8px 3px 4px; border-radius: 999px; background: color-mix(in srgb, var(--c) 12%, #fff); color: color-mix(in srgb, var(--c) 60%, #1c2024); font-weight: 600; }
 .legend-row .num { color: inherit; opacity: 0.75; }
 .sw { width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid; }
-.react-flow__controls { box-shadow: 0 1px 2px rgba(16, 24, 32, 0.06) !important; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.react-flow__controls { box-shadow: var(--elev-1) !important; border: 0; border-radius: 6px; overflow: hidden; }
 .react-flow__minimap { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 
 /* Graph nodes: solid pills coloured by group, outline when off-path or not reached */
@@ -33,7 +33,7 @@
 /* taste-skill-ignore: a hatch marks a skipped subtree */
 .gp.s-skipped { background: repeating-linear-gradient(45deg, #eef1f4 0 6px, #e0e5ea 6px 12px); color: #55606b; border: 1px dashed #a9b3bc; box-shadow: none; }
 .gp.s-flagged { box-shadow: 0 0 0 2px #c93a6a; }
-.gp-badge { margin-left: auto; background: #c93a6a; color: #fff; font: 600 11.5px/1 var(--font); padding: 3px 6px; border-radius: 3px; flex: none; }
+.gp-badge { margin-left: auto; background: #c93a6a; color: #fff; font: 600 12px/1 var(--font); padding: 3px 6px; border-radius: 3px; flex: none; }
 .gp.dim { opacity: 0.22; }
 .gp.sel { outline: 2px solid #1f2933; outline-offset: 2px; }
 .grp { border: 1.5px dashed #9aa6b1; border-radius: 8px; background: rgba(255, 255, 255, 0.5); }
@@ -48,7 +48,7 @@
 .de-line { fill: none; stroke-width: 1.5; opacity: 0.6; }
 .de-dots { fill: none; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 0 12; }
 .de-dots.run { animation: t-dots 0.9s linear infinite; }
-.de-dots.cur { stroke-width: 6.5; animation-duration: 0.55s; }
+.de-dots.cur { stroke-width: 6; animation-duration: 1.2s; }
 .dedge { transition: opacity var(--duration-fast) var(--ease-in-out); }
 .dedge.dim { opacity: 0.12; }
 @keyframes t-dots { to { stroke-dashoffset: -12; } }
@@ -73,6 +73,8 @@
 
 /* A node the live conversation points at: a soft ring that breathes until it's applied or dismissed */
 .gp.sug { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #8e4ec6; }
-.gp-sug { position: absolute; inset: -9px; border-radius: 12px; border: 2px solid #8e4ec6; pointer-events: none; animation: sug-breathe 1.6s ease-in-out infinite; }
-@keyframes sug-breathe { 0%, 100% { opacity: 0.15; transform: scale(0.98); } 50% { opacity: 0.7; transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .gp-sug { animation: none; opacity: 0.5; } }
+.gp-sug { position: absolute; inset: -8px; border-radius: 12px; border: 2px dashed #8e4ec6; opacity: 0.6; pointer-events: none; }
+
+/* When the layout changes (panel opens, window resizes), nodes glide to their new place in step with the camera */
+.rf-wrap .react-flow__node { transition: transform 300ms cubic-bezier(0.77, 0, 0.175, 1); }
+@media (prefers-reduced-motion: reduce) { .rf-wrap .react-flow__node { transition: none; } }

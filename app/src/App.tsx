@@ -8,6 +8,7 @@ import ConnectScreen from "./screens/ConnectScreen";
 import HomeScreen from "./screens/HomeScreen";
 import AnswerScreen from "./screens/AnswerScreen";
 import AtlasScreen from "./screens/AtlasScreen";
+import ChatScreen from "./screens/ChatScreen";
 import AskBox from "./ui/AskBox";
 import Modal from "./ui/Modal";
 import ConnectAgent, { HarnessLogo } from "./ui/ConnectAgent";
@@ -21,7 +22,7 @@ import {
 
 export type Pin = { id: string; recId: string; question: string; view: string; symbols: number; files: number; when: string };
 
-type Screen = "connect" | "repo" | "answer" | "atlas";
+type Screen = "connect" | "repo" | "answer" | "atlas" | "chat";
 
 const VIEW_NAME: Record<string, string> = { flowTrace: "Flow trace", algoStepper: "Algorithm stepper", blastRadius: "Blast radius" };
 
@@ -45,7 +46,7 @@ const store = {
 
 const readHash = (): Screen => {
   const h = location.hash.replace("#/", "");
-  return (["connect", "repo", "answer", "atlas"] as Screen[]).includes(h as Screen) ? (h as Screen) : "connect";
+  return (["connect", "repo", "answer", "atlas", "chat"] as Screen[]).includes(h as Screen) ? (h as Screen) : "connect";
 };
 
 function recById(id: string): Recording {
@@ -131,7 +132,9 @@ export default function App() {
     }
   };
 
-  const voice = useVoice(ask);
+  // On the chat screen, a spoken question goes into the chat rather than straight to a graph.
+  const [chatInbox, setChatInbox] = useState<{ text: string; n: number }>();
+  const voice = useVoice((text) => (screen === "chat" ? setChatInbox({ text, n: Date.now() }) : ask(text)));
 
   const pinned = !!rec && pins.some((p) => p.recId === rec.spec.id);
   const togglePin = () => {
@@ -186,6 +189,9 @@ export default function App() {
                   <AnimatedSidebarMenuButton icon={<Icon name="flow" />} isActive={screen === "answer"} disabled={!rec} onSelect={() => go("answer")}>Current answer</AnimatedSidebarMenuButton>
                 </AnimatedSidebarMenuItem>
                 <AnimatedSidebarMenuItem>
+                  <AnimatedSidebarMenuButton icon={<Icon name="sparkles" />} isActive={screen === "chat"} disabled={!indexed} onSelect={() => go("chat")}>Chat</AnimatedSidebarMenuButton>
+                </AnimatedSidebarMenuItem>
+                <AnimatedSidebarMenuItem>
                   <AnimatedSidebarMenuButton icon={<Icon name="atlas" />} isActive={screen === "atlas"} badge={pins.length || undefined} onSelect={() => go("atlas")}>Atlas</AnimatedSidebarMenuButton>
                 </AnimatedSidebarMenuItem>
               </AnimatedSidebarMenu>
@@ -219,6 +225,14 @@ export default function App() {
         <main className="sheet" id="main">
           {screen === "connect" && <ConnectScreen onIndexed={onIndexed} agent={agent} onAgent={connectAgent} />}
           {screen === "repo" && <HomeScreen onAsk={ask} pins={pins} onOpenPin={(p) => show(recById(p.recId), p.question, false)} />}
+          {screen === "chat" && (
+            <ChatScreen
+              inbox={chatInbox}
+              onOpenView={(id, q) => show(recById(id), q)}
+              onMic={() => (voice.status === "listening" ? voice.stop() : voice.start())}
+              listening={voice.status === "listening"}
+            />
+          )}
           {screen === "atlas" && <AtlasScreen pins={pins} onOpen={(p) => show(recById(p.recId), p.question)} onAsk={() => voice.start()} />}
           {screen === "answer" && rec && (
             <ErrorBoundary resetKey={`${rec.spec.id}:${runKey}`}>
@@ -236,6 +250,7 @@ export default function App() {
               onAskBlast={(sym) => ask(`What breaks if I change ${sym}?`)}
               onAsk={ask}
               agentName={agent}
+              chat={<ChatScreen compact inbox={chatInbox} onOpenView={(id, q) => show(recById(id), q)} onMic={() => (voice.status === "listening" ? voice.stop() : voice.start())} listening={voice.status === "listening"} />}
             />
             </ErrorBoundary>
           )}

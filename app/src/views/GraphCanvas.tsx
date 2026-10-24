@@ -69,9 +69,9 @@ function Pill({ data }: NodeProps<Node<PillData>>) {
       className={cls}
       style={{ width: data.width, ["--fill" as string]: data.swatch.fill, ["--ink" as string]: data.swatch.ink }}
       initial={false}
-      animate={{ transform: data.state === "now" ? "scale(1.06)" : shown || reduce ? "scale(1)" : "scale(0.94)" }}
+      animate={{ transform: shown || reduce ? "scale(1)" : "scale(0.96)" }}
       whileTap={{ transform: "scale(0.97)", transition: { duration: 0.12 } }}
-      transition={{ duration: 0.24, ease: EASE_OUT, delay: shown && data.state !== "now" ? Math.min(data.order, 8) * 0.04 : 0 }}
+      transition={{ duration: 0.24, ease: EASE_OUT, delay: shown ? Math.min(data.order, 8) * 0.04 : 0 }}
     >
       <Handle type="target" id="l" position={Position.Left} />
       <Handle type="target" id="t" position={Position.Top} />
@@ -139,9 +139,9 @@ function Rings({ data }: NodeProps<Node<RingsData>>) {
           cy={data.cy}
           className="ripple"
           style={{ stroke: RING_SW[data.reached]?.fill }}
-          initial={{ rx: 20 * data.xs, ry: 20, opacity: 0.7 }}
+          initial={{ rx: 20 * data.xs, ry: 20, opacity: 0.35 }}
           animate={{ rx: r * data.xs, ry: r, opacity: 0 }}
-          transition={{ duration: 0.9, ease: EASE_OUT }}
+          transition={{ duration: 1.1, ease: EASE_OUT }}
         />
       )}
     </svg>
@@ -160,7 +160,7 @@ function DotEdge(p: EdgeProps<Edge<DotData>>) {
     <g className={`dedge${d.dim ? " dim" : ""}`}>
       <path d={path} className="de-line" stroke="#c3cad1" strokeDasharray={d.context ? "3 4" : undefined} />
       {d.lit && !d.context && (
-        <motion.path d={path} className="de-line lit" stroke={d.color} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.45, ease: EASE_OUT }} />
+        <motion.path d={path} className="de-line lit" stroke={d.color} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3, ease: EASE_OUT }} />
       )}
       {d.lit && d.context && <path d={path} className="de-line lit" stroke={d.color} strokeDasharray="3 4" />}
       {d.lit && !d.context && <path d={path} className={`de-dots${d.flowing ? " run" : ""}${d.current ? " cur" : ""}`} stroke={d.color} />}
@@ -332,6 +332,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
     if (!el) return;
     const ro = new ResizeObserver(([e]) => {
       const { width, height } = e.contentRect;
+      // Laid out for the space actually left beside the panel; nodes glide there (see .react-flow__node in CSS).
       const a = (width - rightInset - 48) / Math.max(200, height - 172);
       setAspect(Math.round(Math.max(1, a) * 4) / 4);
       setAvailW(Math.round((width - rightInset - 48) / 50) * 50);
@@ -469,7 +470,8 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
         data: {
           color: swatchFor(spec, spec.archetype === "blastRadius" ? to : from).fill,
           lit,
-          flowing: flowing && flowOn,
+          // Constant motion everywhere pulls the eye from the step being explained: only the current hop moves.
+          flowing: flowing && current && flowOn,
           current,
           dim: !!neighbours && !(neighbours.has(from) && neighbours.has(to)),
           context: !!e.context,
@@ -488,7 +490,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
     const fit = () => {
       clearTimeout(t);
       t = window.setTimeout(() => {
-        rf.fitView({ ...FIT, duration: fitted.current ? 320 : 0 });
+        rf.fitView({ ...FIT, duration: fitted.current ? 300 : 0 });
         fitted.current = true;
       }, 60);
     };
@@ -511,14 +513,24 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
   useEffect(() => {
     if (!follow || !ready || !focus[0] || !pos[focus[0]]) return;
     const [x, y] = pos[focus[0]];
-    rf.setCenter(x + FLOW_W / 2 + rightInset / 2 / 1.3, y + PILL_H / 2, { zoom: 1.3, duration: 450 });
+    rf.setCenter(x + FLOW_W / 2 + rightInset / 2 / 1.3, y + PILL_H / 2, { zoom: Math.max(rf.getZoom(), 0.9), duration: 400 });
   }, [follow, ready, step, focus, pos, rf]);
 
+  // Bringing a node into view: if it's already on screen, the highlight is enough; otherwise
+  // pan at the current zoom. Zooming in on a click is disorienting and loses the surroundings.
   useEffect(() => {
-    if (!flyTo || !pos[flyTo.id]) return;
+    if (!flyTo || !pos[flyTo.id] || !wrap.current) return;
     const [x, y] = pos[flyTo.id];
     const n = spec.nodes.find((v) => v.id === flyTo.id);
-    rf.setCenter(x + pillWidth(n?.label ?? "") / 2 + rightInset / 2 / 1.4, y + PILL_H / 2, { zoom: 1.4, duration: 500 });
+    const w = pillWidth(n?.label ?? "");
+    const { width, height } = wrap.current.getBoundingClientRect();
+    const a = rf.flowToScreenPosition({ x, y });
+    const b = rf.flowToScreenPosition({ x: x + w, y: y + PILL_H });
+    const box = wrap.current.getBoundingClientRect();
+    const inView = a.x - box.left > 24 && b.x - box.left < width - rightInset - 24 && a.y - box.top > 72 && b.y - box.top < height - 90;
+    if (inView) return;
+    const zoom = rf.getZoom();
+    rf.setCenter(x + w / 2 + rightInset / 2 / zoom, y + PILL_H / 2, { zoom, duration: 400 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flyTo]);
 
@@ -578,7 +590,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
           <span key={label} className="legend-row" style={{ ["--c" as string]: v.swatch.fill }}>
             <i className={v.outline ? "sw outline" : "sw"} style={{ background: v.outline ? "#fff" : v.swatch.fill, borderColor: v.swatch.fill }} />
             {label}
-            <NumberTicker value={v.found} startOnView={false} duration={0.5} stagger={0} className="num" />
+            <NumberTicker value={v.found} startOnView={false} duration={0.35} stagger={0} className="num" />
           </span>
         ))}
       </Panel>
