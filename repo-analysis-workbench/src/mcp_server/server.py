@@ -1,6 +1,9 @@
-"""MCP (stdio) server over the repo-analysis-workbench artifacts.
+"""MCP server over the repo-analysis-workbench artifacts, plus Spelunk handoffs.
 
-Run:  .venv/bin/python src/mcp_server/server.py
+Run:  .venv/bin/python src/mcp_server/server.py                       # stdio (Claude Code launches it)
+      .venv/bin/python src/mcp_server/server.py --transport http        # http://127.0.0.1:8787/mcp
+HTTP mode also serves the app: POST /handoffs (a ProposalBatch), GET /handoffs,
+GET /handoffs/{id} and GET /health, with CORS open to local dev servers.
 Env:
   REPO_ANALYSIS_DATA_DIR       artifact root (default: <workbench>/data)
   REPO_ANALYSIS_DEFAULT_REPO   repo used when a tool call omits `repo`
@@ -12,6 +15,7 @@ Env:
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -35,12 +39,15 @@ from mcp.server.mcpserver import MCPServer  # noqa: E402
 from mcp.types import ToolAnnotations  # noqa: E402
 
 from agents import toolkit  # noqa: E402
+from backends.metadata_store import get_metadata_store  # noqa: E402
+from mcp_server.handoffs import HandoffError, HandoffStore, handoff_markdown  # noqa: E402
 
 
 DATA_ROOT = Path(os.environ.get("REPO_ANALYSIS_DATA_DIR", WORKBENCH_ROOT / "data")).resolve()
 SEARCH_ROOT = DATA_ROOT / "search"
 GRAPH_ROOT = DATA_ROOT / "graph"
 PARSED_ROOT = DATA_ROOT / "parsed"
+HANDOFF_ROOT = Path(os.environ.get("REPO_ANALYSIS_HANDOFF_DIR", DATA_ROOT / "handoffs")).resolve()
 MAX_CHARS = int(os.environ.get("REPO_ANALYSIS_MCP_MAX_CHARS", "20000"))
 READ_ONLY = ToolAnnotations(readOnlyHint=True, idempotentHint=True, openWorldHint=False)
 
@@ -64,8 +71,10 @@ mcp = MCPServer(
         "tools over reading many files: start with repo_overview or search_code, resolve names with "
         "find_symbol, read code with get_symbol_body, and follow structure with symbol_relations / "
         "path_between. Results come from the last index build and may lag uncommitted edits. "
-        "Call graph edges are resolved by name, so occasional wrong links are possible; verify "
-        "important conclusions by reading the code."
+        "For Rust repos indexed with SCIP, call edges come from rust-analyzer (method calls, trait "
+        "dispatch, cross-crate); a few extra name-matched callers can still appear, so verify "
+        "important conclusions by reading the code. Decisions a team accepted in Spelunk arrive as "
+        "handoffs: list_handoffs, then get_handoff, then update_handoff_status when done."
     ),
 )
 
@@ -95,7 +104,7 @@ DROP_KEYS = {
     "tags", "provider", "confidence", "candidates", "source_candidates", "target_candidates",
     "stage_context", "selected_context", "refinement_hints", "normalized_task",
 }
-LONG_TEXT_KEYS = {"body", "text", "source", "code", "snippet"}
+LONG_TEXT_KEYS = {"body", "text", "source", "code", "snippet", "instructions"}
 MAX_STRING_CHARS = 600
 MAX_CODE_CHARS = 6000
 MAX_LIST_ITEMS = 25
@@ -260,8 +269,139 @@ def prepare_answer_bundle(question: str, repo: Optional[str] = None, limit: int 
     return render(payload)
 
 
+# ---- handoffs ---------------------------------------------------------------
+
+
+def resolve_code_ref(repo: str, node_id: str) -> Optional[Dict[str, object]]:
+    """Best-effort file/line location for a proposal's nodeId (a symbol name or path::name)."""
+    store = get_metadata_store(str(PARSED_ROOT), repo)
+    candidates = [node_id, node_id.split("::")[-1], node_id.rsplit(".", 1)[-1]]
+    for name in dict.fromkeys(candidate for candidate in candidates if candidate):
+        matches = toolkit.where_defined(SEARCH_ROOT, PARSED_ROOT, repo, name, limit=1).get("matches") or []
+        if matches:
+            symbol = store.get_symbol(str(matches[0].get("symbol_id"))) or matches[0]
+            span = symbol.get("span") or symbol.get("range") or {}
+            return {
+                "qualified_name": symbol.get("qualified_name"),
+                "kind": symbol.get("kind"),
+                "path": symbol.get("path"),
+                "start_line": span.get("start_line"),
+                "end_line": span.get("end_line"),
+                "signature": symbol.get("signature"),
+            }
+    return None
+
+
+HANDOFFS = HandoffStore(HANDOFF_ROOT, resolve_code_ref=resolve_code_ref)
+HANDOFF_WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+
+
+@mcp.tool(annotations=READ_ONLY)
+def list_handoffs(repo: Optional[str] = None, status: Optional[str] = "open", limit: int = 20) -> str:
+    """Handoffs a team accepted in Spelunk, newest first. Defaults to status "open";
+    pass status=None for all (open, in_progress, done, dismissed)."""
+    handoffs = HANDOFFS.list(repo=repo, status=status, limit=limit)
+    return render({"count": len(handoffs), "status_filter": status, "handoffs": handoffs})
+
+
+@mcp.tool(annotations=READ_ONLY)
+def get_handoff(handoff_id: str) -> str:
+    """One handoff: the decisions, who said them, why, and the code each touches
+    (file and lines), plus `instructions` as ready-to-follow markdown."""
+    try:
+        doc = HANDOFFS.get(handoff_id)
+    except HandoffError as exc:
+        return render({"error": str(exc)})
+    return render({**doc, "instructions": handoff_markdown(doc)})
+
+
+@mcp.tool(annotations=HANDOFF_WRITE)
+def update_handoff_status(handoff_id: str, status: Literal["open", "in_progress", "done", "dismissed"], note: str = "") -> str:
+    """Record progress on a handoff: in_progress when you start, done (with a short note of
+    what changed) when finished, dismissed if it can't or shouldn't be done."""
+    try:
+        doc = HANDOFFS.update_status(handoff_id, status, note)
+    except HandoffError as exc:
+        return render({"error": str(exc)})
+    return render({"id": doc["id"], "status": doc["status"], "updated_at": doc["updated_at"]})
+
+
+@mcp.tool(annotations=HANDOFF_WRITE)
+def publish_handoff(handoff: Dict[str, object]) -> str:
+    """Publish accepted decisions as a new handoff. `handoff` is a ProposalBatch:
+    {repo, answer: {id, title, asked}, proposals: [{title, why, said, action: {kind: "focus", nodeId} |
+    {kind: "ask", question}}]}. Used by the Spelunk app / extraction step, not by coding agents."""
+    try:
+        doc = HANDOFFS.publish(handoff, source="mcp")
+    except HandoffError as exc:
+        return render({"error": str(exc)})
+    return render({"id": doc["id"], "status": doc["status"], "proposals": len(doc["proposals"])})
+
+
+# ---- HTTP routes for the app (same process as the MCP endpoint) ----------------
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def http_health(request):
+    from starlette.responses import JSONResponse
+
+    return JSONResponse({"ok": True, "repos": indexed_repos(), "mcp": "/mcp"})
+
+
+@mcp.custom_route("/handoffs", methods=["GET", "POST"])
+async def http_handoffs(request):
+    from starlette.responses import JSONResponse
+
+    if request.method == "GET":
+        params = request.query_params
+        return JSONResponse({"handoffs": HANDOFFS.list(repo=params.get("repo"), status=params.get("status"),
+                                                        limit=int(params.get("limit", 20)))})
+    try:
+        doc = HANDOFFS.publish(await request.json(), source="app")
+    except (HandoffError, json.JSONDecodeError) as exc:
+        return JSONResponse({"error": str(exc)}, status_code=400)
+    return JSONResponse({"id": doc["id"], "status": doc["status"], "proposals": len(doc["proposals"])}, status_code=201)
+
+
+@mcp.custom_route("/handoffs/{handoff_id}", methods=["GET"])
+async def http_handoff(request):
+    from starlette.responses import JSONResponse
+
+    try:
+        doc = HANDOFFS.get(request.path_params["handoff_id"])
+    except HandoffError as exc:
+        return JSONResponse({"error": str(exc)}, status_code=404)
+    return JSONResponse({**doc, "instructions": handoff_markdown(doc)})
+
+
+def http_app(host: str):
+    """Streamable-HTTP MCP at /mcp plus the routes above, with CORS for local dev servers."""
+    from starlette.middleware.cors import CORSMiddleware
+
+    app = mcp.streamable_http_app(host=host)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=os.environ.get("REPO_ANALYSIS_CORS_ORIGIN_REGEX", r"https?://(localhost|127\.0\.0\.1)(:\d+)?"),
+        allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+        expose_headers=["mcp-session-id"],
+    )
+    return app
+
+
 def main() -> None:
-    mcp.run("stdio")
+    parser = argparse.ArgumentParser(description="repo-analysis MCP server")
+    parser.add_argument("--transport", choices=("stdio", "http"), default=os.environ.get("REPO_ANALYSIS_MCP_TRANSPORT", "stdio"))
+    parser.add_argument("--host", default=os.environ.get("REPO_ANALYSIS_MCP_HOST", "127.0.0.1"))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("REPO_ANALYSIS_MCP_PORT", "8787")))
+    args = parser.parse_args()
+    if args.transport == "stdio":
+        mcp.run("stdio")
+        return
+    import uvicorn
+
+    print(f"[repo-analysis] MCP over HTTP at http://{args.host}:{args.port}/mcp", file=sys.stderr, flush=True)
+    uvicorn.run(http_app(args.host), host=args.host, port=args.port, log_level="warning")
 
 
 if __name__ == "__main__":

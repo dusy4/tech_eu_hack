@@ -114,7 +114,7 @@ From the deck's own checklist, checked against the code:
 | ② Extract | Haiku 5.5 reads each new utterance with the recent context and pulls out decisions and questions. It calls MCP tools (`find_symbol`, `symbol_relations`, …) so each one points at real code | Claude Haiku 5.5 (`claude-haiku-5-5`) | **Not built.** A keyword matcher stands in (`app/src/engine/suggest.ts`) |
 | ③ Propose | Each extraction becomes a proposal on screen: **focus** a node, **ask** a question, or a whole new **graph** (`ViewSpec`) Haiku builds from the MCP results | Haiku 5.5 → app | Focus and ask: **built** (from the keyword matcher). New graph: **not built** |
 | ④ Decide | Accept or dismiss each proposal. Accepted ones apply to the graph and wait in "Ready for the agent" | app (`app/src/ui/LivePanel.tsx`) | **Built** |
-| ⑤ Hand off | One click turns the accepted batch into a handoff doc: decisions, who said them, code refs, the graph. It's published through the MCP server so the team's agent can pull it and act | app → MCP server → any agent | UI and payload **built** (`app/src/engine/agent.ts`). Publishing through MCP: **not built** |
+| ⑤ Hand off | One click turns the accepted batch into a handoff doc: decisions, who said them, code refs, the graph. It's published through the MCP server so the team's agent can pull it and act | app → MCP server → any agent | UI and payload **built** (`app/src/engine/agent.ts`). Server side **built**: `POST /handoffs` + `list_handoffs` / `get_handoff`; the app still needs `VITE_AGENT_URL` set |
 
 **Why Haiku 5.5:** extraction runs on every sentence, live, so it has to be fast and cheap. Haiku is enough to spot
 "we should…" and map a spoken name to a symbol with the MCP tools. If its graphs aren't good enough, a bigger
@@ -213,13 +213,13 @@ tech_eu_hack/
 | Piece | Folder | Owner | State |
 |---|---|---|---|
 | Indexing engine (vendored workbench + our changes) | `repo-analysis-workbench/` | Aneeth | Works on Rust. Python/TS/Go get symbols and search only |
-| MCP server | `repo-analysis-workbench/src/mcp_server/` | Aneeth | Works over stdio in Claude Code. 12 tools, smoke-tested |
+| MCP server | `repo-analysis-workbench/src/mcp_server/` | Aneeth | stdio (Claude Code) and HTTP (`:8787/mcp`). 16 tools incl. handoffs, smoke-tested; skills in `.claude/skills/` |
 | Target repo | `repo_analyse/` | Aneeth | `rust-agent-framework` (67k lines of Rust) indexed |
 | Paper-to-code dashboard | `docs/paper-code-mapping/` | Aram | 85 papers mapped to file and line |
 | Pitch deck | not in the repo | ? | 14 slides drafted; team, event and ask still blank (open decision 5) |
 | Spelunk app | `app/` | frontend (dusy4) | All screens built, running on **sample data** for facebook/react |
 | Haiku extraction and graph building (loop ② ③) | none yet | **nobody** | Not started. The biggest missing piece |
-| Handoff through MCP (loop ⑤) | none yet | **nobody** | UI and payload built; publishing not started |
+| Handoff through MCP (loop ⑤) | `repo-analysis-workbench/src/mcp_server/handoffs.py` + `app/` | Aneeth (server), frontend (app) | Server built and tested; app needs `VITE_AGENT_URL` |
 | HTTP bridge | `bridge/` | frontend | Stopgap so the chat can reach the index (open decision 2) |
 
 ## 7. What actually works today
@@ -230,11 +230,11 @@ tech_eu_hack/
 | Index a Rust repo and query callers, callees, paths, bodies | **Real.** With the SCIP step, callers include method calls, trait dispatch and cross-crate calls (12/12 on the check set) |
 | Talk and see the live transcript (Reson8) | **Real** (needs `RESON8_API_KEY`) |
 | Get proposals from what was said | Real time, but a **keyword matcher** against the sample symbols, not Haiku |
-| Accept proposals and send them to the agent | UI real; sending only logs to the console unless `VITE_AGENT_URL` is set |
+| Accept proposals and send them to the agent | **Real** with `VITE_AGENT_URL=http://127.0.0.1:8787/handoffs` and the server in HTTP mode: stored as a handoff that Claude Code/Cursor pull via `list_handoffs` / `get_handoff`. Logs to the console when unset |
 | Watch an answer build on the graph, with the agent run listing tool calls | **Replay**: recorded answers played on timers (`app/src/engine/useReplay.ts`), nothing streams yet |
 | Play FlowTrace, BlastRadius, AlgoStepper and the code city | Sample: recorded React answers in `app/src/data/` |
 | Ask the chat a question | Sample data by default; real index if the bridge runs and `VITE_KNOWLEDGE_URL` is set |
-| "Connect your agent" screen | Shows config for an MCP server that doesn't exist in that form (open decision 2) |
+| "Connect your agent" screen | **Real** when the server runs with `--transport http`: its `http://localhost:8787/mcp` config connects |
 
 ## 8. Decided
 
@@ -280,6 +280,10 @@ Each needs one owner and one answer.
     `localhost:8787/mcp`.
   - Haiku and the app use that; the Connect screen shows the real config.
   - Delete `bridge/` once that works.
+- **Status (24 Oct): server side done.** `server.py --transport http` serves MCP at `http://127.0.0.1:8787/mcp`
+  (tested with an MCP client: all 16 tools work over HTTP) with CORS for local dev servers. The Connect screen's
+  config now points at a real server (the client-side name `spelunk` is fine). Left for the frontend: switch the chat
+  from `bridge/` to MCP over HTTP, then delete `bridge/`.
 
 ### 3. What exactly does Haiku do?
 
@@ -297,7 +301,11 @@ Each needs one owner and one answer.
   - Extend the batch into a full doc: decisions, who said each one, code refs (file, symbol, lines), and the graph.
   - Add `list_handoffs` / `get_handoff` tools (or an MCP resource) to the repo-analysis server, so Claude Code or
     Cursor pull it with the MCP connection they already have.
-- **Owner needed.** It spans the app and the server.
+- **Status (24 Oct): server side done (Aneeth).** The app POSTs its `ProposalBatch` to `/handoffs`; the server stores
+  it as a handoff doc (decisions, what was said, why, `code_ref` with file and lines resolved from the index) and
+  serves it through `list_handoffs` / `get_handoff` / `update_handoff_status` (section 12). The `spelunk-handoff`
+  skill walks an agent through picking one up. **Left for the frontend:** set `VITE_AGENT_URL`, and add the speaker
+  and the graph to the batch (`proposals[].speaker` is already accepted).
 
 ### 5. The benchmark and the deck's blanks
 
@@ -387,8 +395,11 @@ Today `sendToAgent()` POSTs this to `VITE_AGENT_URL`, or logs it to the console 
 
 ## 12. MCP tools
 
-The `repo-analysis` server (stdio, read-only, JSON responses capped at 20k chars). Full reference with parameters,
-latencies and limits: [MCP Server.md](repo-analysis-workbench/docs/MCP%20Server.md).
+The `repo-analysis` server, over **stdio** (Claude Code, via `.mcp.json`) or **streamable HTTP** at
+`http://127.0.0.1:8787/mcp` (`server.py --transport http`, for the app, Haiku and remote agents). JSON responses are
+capped at 20k chars. Full reference with parameters, latencies and limits:
+[MCP Server.md](repo-analysis-workbench/docs/MCP%20Server.md). Claude Code skills that teach agents to use it:
+`.claude/skills/repo-analysis`, `spelunk-handoff`, `index-repo`.
 
 | Tool | Use it for |
 |---|---|
@@ -404,8 +415,22 @@ latencies and limits: [MCP Server.md](repo-analysis-workbench/docs/MCP%20Server.
 | `path_between` | How two symbols connect |
 | `statement_slice` | Statements in a function, with what each reads, writes and calls |
 | `prepare_answer_bundle` | One-shot evidence for a broad "how does X work?" question |
+| `list_handoffs` | Handoffs the team accepted, newest first (default: `open`) |
+| `get_handoff` | One handoff: decisions, who said them, why, code refs (file, lines), plus ready-to-follow `instructions` |
+| `update_handoff_status` | Agent marks a handoff `in_progress`, `done` (with a note) or `dismissed` (writes) |
+| `publish_handoff` | Publish a `ProposalBatch` as a handoff (for the app / Haiku; writes) |
 
-To add for the loop: `list_handoffs` / `get_handoff` (open decision 4), and an HTTP transport (open decision 2).
+**HTTP routes for the app** (same process, CORS open to `localhost`/`127.0.0.1` dev servers):
+
+| Endpoint | Request | Response |
+|---|---|---|
+| `POST /handoffs` | a `ProposalBatch` (section 11) | `201 { id, status: "open", proposals }`; `400 { error }` if invalid |
+| `GET /handoffs` | `?repo=&status=&limit=` | `{ handoffs: [{ id, status, repo, created_at, title, decisions[] }] }` |
+| `GET /handoffs/{id}` | | the full handoff document plus `instructions` (markdown); `404 { error }` |
+| `GET /health` | | `{ ok, repos, mcp: "/mcp" }` |
+
+Point the app at it with `VITE_AGENT_URL=http://127.0.0.1:8787/handoffs`. Handoffs are stored as JSON under
+`repo-analysis-workbench/data/handoffs/` (one file each); focus decisions get `code_ref` resolved from the index.
 
 ## 13. Bridge API (stopgap)
 

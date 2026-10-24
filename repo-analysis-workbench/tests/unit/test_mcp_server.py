@@ -26,7 +26,9 @@ class McpServerTest(unittest.TestCase):
         tools = {tool.name: tool for tool in asyncio.run(server.mcp.list_tools())}
         self.assertIn("symbol_relations", tools)
         self.assertIn("prepare_answer_bundle", tools)
-        self.assertTrue(all(tool.annotations.read_only_hint for tool in tools.values()))
+        writers = {"publish_handoff", "update_handoff_status"}
+        self.assertTrue(all(tool.annotations.read_only_hint for name, tool in tools.items() if name not in writers))
+        self.assertFalse(any(tools[name].annotations.read_only_hint for name in writers))
 
     def test_symbol_relations_dispatches_to_toolkit(self) -> None:
         fake = mock.Mock(return_value={"operation": "callers_of", "results": [{"name": "caller"}]})
