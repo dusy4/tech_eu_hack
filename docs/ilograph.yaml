@@ -1,0 +1,813 @@
+resources:
+- name: Package
+  abstract: true
+  style: dashed
+  backgroundColor: "#fafafa"
+
+- name: React Package
+  abstract: true
+  style: dashed
+  icon: Dev/react.svg
+  backgroundColor: "#f7fafb"
+
+- name: React Component
+  abstract: true
+  color: "#3d8ea4"
+  icon: Dev/react.svg
+
+- name: Typescript Module
+  abstract: true
+  color: "#3178c6"
+  icon: Dev/typescript.svg
+
+- name: External Service
+  abstract: true
+  color: DimGray
+
+- name: Planned Service
+  abstract: true
+  color: Firebrick
+  style: dashed
+
+- name: User
+  subtitle: Engineer exploring a codebase
+  icon: Networking/user.svg
+  description: |
+    An engineer (or a pair of engineers talking) who asks questions about a large codebase by voice or text and watches the answer build as a playable graph.
+
+- name: Spelunk App
+  instanceOf: React Package
+  subtitle: React + Vite + TypeScript prototype
+  description: |
+    Single-page prototype in `app/`. Answers are recorded replays of what the harness would stream; the knowledge, suggestion and agent seams are mocked behind stable shapes so real backends can be swapped in.
+  children:
+  - name: Shell
+    instanceOf: Package
+    description: |
+      The application shell: hash routing between screens, the top ask box and the shared voice input.
+    children:
+    - name: App
+      instanceOf: React Component
+      subtitle: App.tsx
+      description: |
+        Root component. Owns the current `Recording`, routes typed and spoken questions through `route()`, switches screens, and persists pins and the connected agent in `localStorage`. Passes a compact `ChatScreen` into `AnswerScreen` as its `chat` prop.
+    - name: AskBox
+      instanceOf: React Component
+      subtitle: AskBox.tsx
+      description: |
+        Top-bar question input with suggested questions and a mic toggle; hands submitted text to `App`.
+
+  - name: Screens
+    instanceOf: Package
+    description: |
+      Full-page views selected by the hash route.
+    children:
+    - name: AnswerScreen
+      instanceOf: React Component
+      subtitle: AnswerScreen.tsx
+      description: |
+        The three-pane room: `ConversationPanel` on the left, `GraphCanvas` with its header and playbar in the centre, and beUI `Tabs` on the right holding `ProposalsPanel`, the compact chat and `Inspector`. Drives replay and step playback, auto-starts the demo conversation once an answer is ready, applies approved suggestions to the graph and sends accepted proposals to the coding agent. Below 1280 px the conversation folds into a Talk tab.
+    - name: ChatScreen
+      instanceOf: React Component
+      subtitle: ChatScreen.tsx
+      description: |
+        Chat with the codebase built from beUI agent parts, shown full-page on the chat route and in `compact` form in the room's Ask tab. Consumes the `answer()` event stream, shows tool activity, the read symbol, the streamed narration and sources, and offers to open a matching recording as a graph.
+
+  - name: UI
+    instanceOf: Package
+    description: |
+      Components rendered inside the answer screen.
+    children:
+    - name: GraphCanvas
+      instanceOf: React Component
+      subtitle: views/GraphCanvas.tsx
+      description: |
+        Draws a `ViewSpec` as a graph, revealing nodes as the replay makes them visible, highlighting the current step, marking suggested nodes and flying the camera to a requested node.
+    - name: ConversationPanel
+      instanceOf: React Component
+      subtitle: ui/LivePanel.tsx
+      description: |
+        Left pane of the room: the transcript with speaker names, the voice orb, the interim speaking row, and the Listen to the room and Play demo buttons.
+    - name: ProposalsPanel
+      instanceOf: React Component
+      subtitle: ui/LivePanel.tsx
+      description: |
+        First tab of the room's right pane: an `ApprovalCard` per suggestion quoting the sentence that prompted it, the accepted tray and the send-to-agent button.
+    - name: Inspector
+      instanceOf: React Component
+      subtitle: ui/Inspector.tsx
+      description: |
+        Code tab of the room's right pane: shows the source of the selected node, or of the node the current step focuses.
+    - name: AgentRun
+      instanceOf: React Component
+      subtitle: ui/AgentRun.tsx
+      description: |
+        Bottom sheet that shows the recorded MCP tool calls running and returning while the answer builds, timed to match `useReplay`.
+
+  - name: Engine
+    instanceOf: Package
+    description: |
+      Non-visual logic: intent routing, voice capture, replay timing, live transcription, suggestion matching and the agent hand-off.
+    children:
+    - name: router.ts
+      instanceOf: Typescript Module
+      description: |
+        `route()` stands in for the harness intent step. Maps text to a recorded answer, a playback-speed change, a node focus, or unknown.
+    - name: useVoice
+      instanceOf: Typescript Module
+      subtitle: useVoice.ts
+      description: |
+        One-shot voice question hook using browser speech recognition plus a mic level meter for the waveform.
+    - name: useReplay
+      instanceOf: Typescript Module
+      subtitle: useReplay.ts
+      description: |
+        Replays a `Recording` on timers: each tool call runs, returns and reveals its nodes, then the summary and playback become ready.
+    - name: useLiveTranscript
+      instanceOf: Typescript Module
+      subtitle: useLiveTranscript.ts
+      description: |
+        Conversation feed for live suggestions. Modes are `demo` (scripted lines), and `mic` (Reson8 realtime when a token is available, otherwise browser speech). Emits one `Utterance` per finished sentence.
+    - name: reson8.ts
+      instanceOf: Typescript Module
+      description: |
+        Reson8 client: fetches a short-lived token from the dev-server route, converts mic audio to 16 kHz PCM16 in an `AudioWorklet`, and streams it over a WebSocket, receiving diarised interim and final transcripts.
+    - name: suggest.ts
+      instanceOf: Typescript Module
+      description: |
+        Keyword matcher that turns an utterance into `focus` and `ask` suggestions against the graph on screen; also builds the demo conversation script. Stands in for jev or the harness.
+    - name: agent.ts
+      instanceOf: Typescript Module
+      description: |
+        `toBatch()` shapes accepted suggestions into a `ProposalBatch`; `sendToAgent()` POSTs it to `VITE_AGENT_URL` or logs it when unset.
+
+  - name: Knowledge
+    instanceOf: Package
+    description: |
+      The single seam between the UI and whatever indexes the repository.
+    children:
+    - name: knowledge
+      instanceOf: Typescript Module
+      subtitle: knowledge/index.ts
+      description: |
+        Defines `KnowledgeBackend` and the `AnswerEvent` stream. `answer()` calls the backend tools, templates a narration from their results and yields tool, text, sources and view events. `setBackend()` swaps in a real backend.
+      children:
+      - name: Mock Backend
+        instanceOf: Typescript Module
+        subtitle: mock KnowledgeBackend
+        description: |
+          In-file mock implementing `searchCode` (search-code), `findSymbol` (find-symbol) and `callersOf` (callers-of) over the sample index, with artificial latency and cosine-like scores.
+    - name: jev seam
+      instanceOf: Typescript Module
+      subtitle: jev/index.ts
+      description: |
+        Seam for jev (json-render). `readJev()` narrows untrusted JSON into either a whole `ViewSpec` or a list of `Suggestion` proposals. Not yet wired into any screen.
+
+  - name: Data
+    instanceOf: Package
+    description: |
+      Static sample data that stands in for a live index and live harness output.
+    children:
+    - name: answers.ts
+      instanceOf: Typescript Module
+      description: |
+        Recorded answers (`RECORDINGS`) for the setState flow and render tree, plus `blastRecording()` which builds a blast-radius recording for any known symbol.
+    - name: repo.ts
+      instanceOf: Typescript Module
+      description: |
+        Sample index of the React repository: `SYMBOLS` with file, code, callers and tests, and `CALLERS_OF_CALLERS`.
+
+- name: Vite Dev Server
+  instanceOf: Package
+  subtitle: vite.config.ts
+  description: |
+    Development server; also hosts a small middleware so the Reson8 secret key never reaches the browser.
+  children:
+  - name: reson8-token route
+    instanceOf: Typescript Module
+    subtitle: GET /api/reson8-token
+    description: |
+      Middleware that mints a short-lived Reson8 access token with `RESON8_API_KEY`, returning 503 when no key is configured.
+
+- name: Browser
+  instanceOf: External Service
+  description: |
+    Platform APIs used for audio capture and fallback recognition.
+  children:
+  - name: Web Speech API
+    icon: Networking/browser-search.svg
+    description: |
+      `SpeechRecognition` in Chrome and Edge; used for typed-question voice input and as the live-transcript fallback.
+  - name: Web Audio
+    icon: Networking/computer-link.svg
+    description: |
+      `getUserMedia`, `AudioContext` at 16 kHz and an `AudioWorklet` that emits PCM16 chunks.
+
+- name: Reson8 API
+  instanceOf: External Service
+  subtitle: api.reson8.dev
+  icon: Networking/cloud-server.svg
+  description: |
+    Realtime speech-to-text with speaker diarisation.
+  children:
+  - name: Auth Token Endpoint
+    subtitle: POST /v1/auth/token
+    description: |
+      Exchanges the API key for a short-lived browser token.
+  - name: Realtime STT
+    subtitle: WSS /v1/speech-to-text/realtime
+    description: |
+      WebSocket that accepts PCM16 audio and returns interim and final transcripts with a speaker id.
+
+- name: Code Knowledge Backend
+  instanceOf: Planned Service
+  subtitle: Embeddings / MCP (currently mocked)
+  icon: Networking/database.svg
+  description: |
+    Planned repository index (embeddings, an MCP server, or both) implementing `KnowledgeBackend`. Today the in-file mock answers from the sample index.
+
+- name: jev
+  instanceOf: Planned Service
+  subtitle: json-render (planned)
+  icon: Networking/data-structure.svg
+  description: |
+    Planned service that turns the room's conversation into JSON views or proposals, replacing the keyword matcher in `suggest.ts`.
+
+- name: Coding Agent Endpoint
+  instanceOf: Planned Service
+  subtitle: VITE_AGENT_URL
+  icon: Networking/web-server.svg
+  description: |
+    Harness endpoint that receives accepted proposals as a `ProposalBatch`. Not yet deployed; without the variable set the batch is logged.
+
+perspectives:
+- name: Ask Recorded Answer
+  notes: |
+    This perspective shows a spoken or typed question being routed to a recorded answer and replayed on the graph canvas. Recordings stand in for the live harness stream, so the replay timing mirrors how MCP tool calls would arrive.
+    #### Other Perspectives
+    [Run Live Suggestions] - room conversation to approval cards to accepted proposals sent to the coding agent
+
+    [Chat With Codebase] - chat question answered through the knowledge tools, then opened as a graph
+
+    [Module Dependencies] - import relationships between the app's modules
+
+    [Integration Seams] - external and planned services and the modules that front them
+  sequence:
+    start: User
+    steps:
+    - to: AskBox
+      label: Speak or type question
+      description: |
+        The user types into the ask box, picks a suggested question, or presses the mic button.
+    - subSequence:
+        name: Capture voice
+        color: "#1525c0"
+        notes: |
+          Voice is optional; typed questions skip straight to routing. The browser recogniser is a stand-in for Reson8 on this path.
+        steps:
+        - to: App
+          label: Toggle voice capture
+          description: |
+            The mic button asks the shell to start listening.
+            ##### /app/src/ui/AskBox.tsx:70
+        - to: useVoice
+          label: Start listening
+          description: |
+            The shell starts the shared voice hook, which opens the mic for the waveform levels.
+            ##### /app/src/App.tsx:222
+        - to: Web Speech API
+          label: Recognize one utterance
+          description: |
+            A non-continuous recognition session runs until the speaker pauses.
+            ##### /app/src/engine/useVoice.ts:96
+        - to: useVoice
+          label: Final transcript
+          color: gray
+        - to: App
+          label: Question text
+          description: |
+            On recognition end the final text is handed to the shell, which treats it exactly like a typed question.
+    - subSequence:
+        name: Route question
+        color: "#e62100"
+        notes: |
+          Routing is a regex stand-in for the harness intent step; it can also return a speed change or a focus request that patches the current view instead of loading a new answer.
+        steps:
+        - to: router.ts
+          label: Route question
+          description: |
+            The question and the currently focused node are classified into answer, speed, focus or unknown.
+            ##### /app/src/App.tsx:123
+        - to: answers.ts
+          label: Get matching recording
+          description: |
+            Impact questions build a blast-radius recording for the named symbol; flow and tree questions return one of the fixed recordings.
+            ##### /app/src/engine/router.ts:30
+        - to: router.ts
+          label: Recording
+          color: gray
+        - to: App
+          label: Routed answer
+          description: |
+            The shell stores the recording and question, bumps the run key and navigates to the answer screen.
+    - subSequence:
+        name: Replay answer
+        color: "#1b5e20"
+        notes: |
+          The replay reproduces the order in which a live harness would stream tool calls and node reveals, so the canvas behaves the same once the stream is real.
+        steps:
+        - to: AnswerScreen
+          label: Show recording
+          description: |
+            The answer screen mounts with the recording, run key and playback speed.
+            ##### /app/src/App.tsx:239
+        - to: useReplay
+          label: Start timed replay
+          description: |
+            Timers mark each recorded tool call running then done and add the nodes it reveals to the visible set.
+            ##### /app/src/screens/AnswerScreen.tsx:71
+        - to: AnswerScreen
+          label: Visible nodes and ready flag
+          color: gray
+        - to: AgentRun
+          label: Show tool-call run
+          description: |
+            While the answer builds, a bottom sheet over the centre canvas narrates each tool call; it folds away when the replay is ready.
+            ##### /app/src/screens/AnswerScreen.tsx:263
+        - to: AnswerScreen
+          label: Run sheet rendered
+          color: gray
+        - to: GraphCanvas
+          label: Draw graph
+          description: |
+            The centre pane draws the `ViewSpec`, revealing nodes as they become visible and highlighting the current step.
+            ##### /app/src/screens/AnswerScreen.tsx:251
+        - to: AnswerScreen
+          label: Canvas rendered
+          color: gray
+        - to: AnswerScreen
+          label: Auto-play steps
+          description: |
+            Once the replay is ready, playback advances one step every 1.6 s divided by the speed, moving the canvas focus each time.
+            ##### /app/src/screens/AnswerScreen.tsx:150
+        - to: Inspector
+          label: Show focused code
+          description: |
+            The Code tab in the right pane shows the source of the selected node, or of the node the current step focuses.
+            ##### /app/src/screens/AnswerScreen.tsx:335
+        - to: AnswerScreen
+          label: Code shown
+          color: gray
+    - to: App
+      label: Answer on screen
+      color: gray
+    - to: AskBox
+      label: Answer on screen
+      color: gray
+    - to: User
+      label: Playable graph answer
+      description: |
+        The user can play, step, inspect nodes, pin the answer to the atlas, or ask a follow-up.
+
+- name: Run Live Suggestions
+  notes: |
+    This perspective details live suggestions in the room: a conversation about the answer on screen becomes approval cards, approved cards change the graph, and accepted proposals are sent to the coding agent. The transcript source is interchangeable (demo script, browser speech, or Reson8 realtime), and the matcher produces the same `Suggestion` shape jev will produce later.
+  sequence:
+    start: User
+    steps:
+    - subSequence:
+        name: Auto-start conversation
+        color: "#1525c0"
+        notes: |
+          The first time an answer is ready, the scripted demo conversation starts by itself so the room is never silent and the feature works without a microphone.
+        steps:
+        - to: AnswerScreen
+          label: Watch answer land
+          description: |
+            The user has asked a question and the room is showing the answer replay.
+        - to: suggest.ts
+          label: Build demo script
+          description: |
+            A short two-speaker discussion is generated from the nodes of the current view.
+            ##### /app/src/screens/AnswerScreen.tsx:96
+        - to: AnswerScreen
+          label: Scripted lines
+          color: gray
+        - to: useLiveTranscript
+          label: Start demo feed
+          description: |
+            About 0.9 s after the replay is ready, and only once per mount, the feed starts in `demo` mode, typing each scripted line into the interim slot at speaking pace and emitting it as an utterance.
+            ##### /app/src/screens/AnswerScreen.tsx:114
+        - to: AnswerScreen
+          label: Demo feed running
+          color: gray
+        - to: ConversationPanel
+          label: Render conversation pane
+          description: |
+            The left pane shows the transcript, the current speaker and the mode buttons. Below 1280 px wide it renders inside a Talk tab in the right pane instead.
+            ##### /app/src/screens/AnswerScreen.tsx:223
+        - to: AnswerScreen
+          label: Pane rendered
+          color: gray
+        - to: User
+          label: Conversation playing
+          color: gray
+    - to: ConversationPanel
+      label: Listen to the room
+      description: |
+        The user switches the feed from the demo script to live listening.
+    - to: AnswerScreen
+      label: Change feed mode
+      description: |
+        The pane reports the selected mode to the room.
+        ##### /app/src/ui/LivePanel.tsx:128
+    - to: useLiveTranscript
+      label: Start mic mode
+      description: |
+        The feed restarts in `mic` mode; any previous session is cleaned up.
+        ##### /app/src/screens/AnswerScreen.tsx:203
+    - subSequence:
+        name: Get Reson8 token
+        color: "#8a1bba"
+        notes: |
+          The secret key stays on the dev server; the browser only receives a short-lived token. Without a key the route answers 503 and the feed falls back to the browser recogniser.
+        steps:
+        - to: reson8.ts
+          label: Request token
+          description: |
+            The feed asks the Reson8 client for a browser token.
+            ##### /app/src/engine/useLiveTranscript.ts:153
+        - to: reson8-token route
+          label: GET token
+          description: |
+            Same-origin request to the dev-server middleware.
+            ##### /app/src/engine/reson8.ts:15
+        - to: Auth Token Endpoint
+          label: Mint access token
+          description: |
+            The middleware posts to Reson8 with the API key from the environment and relays the response.
+            ##### /app/vite.config.ts:22
+        - to: reson8-token route
+          label: Access token
+          color: gray
+        - to: reson8.ts
+          label: Access token
+          color: gray
+        - to: useLiveTranscript
+          label: Token or none
+          description: |
+            When no token is returned, the feed uses `SpeechRecognition` in continuous mode instead, which hears a single speaker named You.
+    - subSequence:
+        name: Stream conversation
+        color: "#f57f17"
+        notes: |
+          Reson8 provides diarisation, so each voice in the room is attributed to its own speaker; only final segments become utterances.
+        steps:
+        - to: reson8.ts
+          label: Start realtime session
+          description: |
+            The feed opens a session and passes callbacks for transcripts and errors.
+            ##### /app/src/engine/useLiveTranscript.ts:158
+        - to: Web Audio
+          label: Open mic and PCM worklet
+          description: |
+            The mic is captured into a 16 kHz audio context and an inline worklet converts samples to PCM16 chunks of about 0.25 s.
+            ##### /app/src/engine/reson8.ts:42
+        - to: reson8.ts
+          label: Audio graph and analyser
+          color: gray
+        - to: Realtime STT
+          label: Open WebSocket and stream audio
+          description: |
+            The socket is opened with the bearer token, interim results and diarisation enabled; worklet chunks are sent as binary frames.
+            ##### /app/src/engine/reson8.ts:59
+        - to: reson8.ts
+          label: Interim and final transcripts
+          description: |
+            Transcript messages carry text, a finality flag and a speaker id.
+        - to: useLiveTranscript
+          label: Transcript callback
+          description: |
+            Each transcript is passed to the feed, which shows interim text and names the speaker.
+            ##### /app/src/engine/reson8.ts:64
+        - to: AnswerScreen
+          label: Emit final utterance
+          description: |
+            A finished sentence is emitted as an `Utterance` with its speaker label.
+            ##### /app/src/engine/useLiveTranscript.ts:165
+    - subSequence:
+        name: Suggest from utterance
+        color: "#1b918a"
+        notes: |
+          Matching runs per utterance against the graph that is on screen, so suggestions point at nodes the user can see or at questions the current view does not answer.
+        steps:
+        - to: suggest.ts
+          label: Match utterance to graph
+          description: |
+            Named nodes become `focus` suggestions; phrases about changes, paths or trees become `ask` suggestions.
+            ##### /app/src/screens/AnswerScreen.tsx:100
+        - to: AnswerScreen
+          label: Focus and ask suggestions
+          color: gray
+        - to: GraphCanvas
+          label: Mark suggested nodes
+          description: |
+            Pending focus suggestions are highlighted on the centre canvas.
+            ##### /app/src/screens/AnswerScreen.tsx:258
+        - to: AnswerScreen
+          label: Highlights drawn
+          color: gray
+        - to: ProposalsPanel
+          label: Render approval cards
+          description: |
+            The Proposals tab, whose label counts pending suggestions, shows each one as an `ApprovalCard` under a quote of the sentence that prompted it.
+            ##### /app/src/screens/AnswerScreen.tsx:329
+        - to: AnswerScreen
+          label: Cards rendered
+          color: gray
+        - to: ConversationPanel
+          label: Transcript with proposal tags
+          description: |
+            The utterance joins the conversation pane, tagged with the number of proposals it produced.
+        - to: User
+          label: Transcript and approval cards
+          description: |
+            The user sees the live transcript on the left and a card per suggestion on the right.
+    - subSequence:
+        name: Approve suggestion
+        color: "#1b5e20"
+        notes: |
+          Approval acts immediately on the canvas and also marks the suggestion as accepted for the agent hand-off.
+        steps:
+        - to: ProposalsPanel
+          label: Approve a card
+          description: |
+            The user accepts one suggestion.
+        - to: AnswerScreen
+          label: Apply suggestion
+          description: |
+            The suggestion is marked approved; an `ask` suggestion is routed like a typed question instead.
+            ##### /app/src/ui/LivePanel.tsx:167
+        - to: GraphCanvas
+          label: Fly to node
+          description: |
+            The node is selected, playback jumps to the step that focuses it and the camera flies to it.
+            ##### /app/src/screens/AnswerScreen.tsx:122
+        - to: AnswerScreen
+          label: Node in view
+          color: gray
+        - to: ProposalsPanel
+          label: Card approved
+          color: gray
+        - to: User
+          label: Accepted proposal listed
+          description: |
+            The approved card joins the Ready for the agent tray with the send button enabled.
+    - subSequence:
+        name: Send to agent
+        color: "#e62100"
+        notes: |
+          Accepted proposals carry the sentence that prompted them, so the agent receives the room's intent along with the action.
+        steps:
+        - to: ProposalsPanel
+          label: Send to agent
+          description: |
+            The user sends all accepted proposals to the connected agent.
+        - to: AnswerScreen
+          label: Send accepted proposals
+          description: |
+            The panel passes the accepted suggestions to the room.
+            ##### /app/src/ui/LivePanel.tsx:203
+        - to: agent.ts
+          label: Build and send batch
+          description: |
+            The suggestions, the conversation's utterances, the repo slug and the current answer are shaped into a `ProposalBatch`.
+            ##### /app/src/screens/AnswerScreen.tsx:88
+        - to: Coding Agent Endpoint
+          label: POST proposal batch
+          description: |
+            The batch is posted as JSON to `VITE_AGENT_URL`; when the variable is unset it is logged and a short delay simulates the call.
+            ##### /app/src/engine/agent.ts:35
+        - to: agent.ts
+          label: Response status
+          color: gray
+        - to: AnswerScreen
+          label: Batch sent
+          color: gray
+        - to: ProposalsPanel
+          label: Mark proposals sent
+          description: |
+            Sent suggestions change state and the send button shows success or error.
+        - to: User
+          label: Sent confirmation
+          color: gray
+
+- name: Chat With Codebase
+  notes: |
+    This perspective shows a chat question answered through the knowledge seam: the mock backend's search-code, find-symbol and callers-of tools run in turn, the narration streams in, and a matching recording can be opened as a graph. The async generator lets the chat render each tool result as soon as it lands.
+  sequence:
+    start: User
+    steps:
+    - to: ChatScreen
+      label: Ask a question
+      description: |
+        The user submits from the prompt input or a starter chip, either on the chat screen or in the compact chat in the room's Ask tab, or by voice (the shell forwards spoken text to the chat inbox while the chat screen is open).
+    - to: knowledge
+      label: Stream answer
+      description: |
+        The chat iterates the `answer()` async generator for the question.
+        ##### /app/src/screens/ChatScreen.tsx:80
+    - subSequence:
+        name: Call knowledge tools
+        color: "#8a1bba"
+        notes: |
+          These three calls are the tool contract a real index must implement; swapping the backend with `setBackend()` changes nothing above this seam.
+        steps:
+        - to: Mock Backend
+          label: Run search-code
+          description: |
+            Semantic search over code chunks, returning the top hits with scores.
+            ##### /app/src/knowledge/index.ts:83
+        - to: repo.ts
+          label: Score sample symbols
+          description: |
+            The mock scores each sample symbol by word overlap with the question.
+            ##### /app/src/knowledge/index.ts:45
+        - to: Mock Backend
+          label: Symbols
+          color: gray
+        - to: knowledge
+          label: Code hits
+          color: gray
+        - toAsync: ChatScreen
+          label: Yield search-code event
+          description: |
+            The chat shows the search as agent activity with each hit's file and score.
+            ##### /app/src/knowledge/index.ts:84
+        - to: Mock Backend
+          label: Run find-symbol
+          description: |
+            Resolves the symbol named in the question, or the top hit, to its file, code, callers and tests.
+            ##### /app/src/knowledge/index.ts:87
+        - to: knowledge
+          label: Symbol info
+          color: gray
+        - toAsync: ChatScreen
+          label: Yield read-symbol event
+          description: |
+            The chat shows the symbol's source as a collapsible tool result.
+            ##### /app/src/knowledge/index.ts:88
+        - to: Mock Backend
+          label: Run callers-of
+          description: |
+            Looks up the callers of the resolved symbol.
+            ##### /app/src/knowledge/index.ts:90
+        - to: knowledge
+          label: Callers
+          color: gray
+        - toAsync: ChatScreen
+          label: Yield callers-of event
+          description: |
+            The chat adds a completed step with the number of callers found.
+            ##### /app/src/knowledge/index.ts:91
+    - subSequence:
+        name: Stream narration
+        color: "#f57f17"
+        notes: |
+          Narration is templated from tool results here; in the product an LLM writes it, but the event stream stays the same.
+        steps:
+        - toAsync: ChatScreen
+          label: Stream text deltas
+          description: |
+            Short chunks of the narration are yielded every 28 ms and appended to the streaming response.
+            ##### /app/src/knowledge/index.ts:109
+        - toAsync: ChatScreen
+          label: Yield sources
+          description: |
+            The resolved symbol and the next best hits become the answer's source list.
+            ##### /app/src/knowledge/index.ts:112
+        - to: router.ts
+          label: Find matching recording
+          description: |
+            The question is routed with the resolved symbol as context to see whether a graph answer exists.
+            ##### /app/src/knowledge/index.ts:117
+        - to: knowledge
+          label: Routed answer
+          color: gray
+        - to: ChatScreen
+          label: View and done events
+          description: |
+            A view event carries the recording id and title when one matched; the done event completes the turn.
+    - to: User
+      label: Activity, answer and sources
+      description: |
+        The completed turn shows what was searched and read, the narration, sources and an Open as a graph button.
+    - subSequence:
+        name: Open as graph
+        color: "#1b5e20"
+        notes: |
+          Chat and graph share the same recordings, so a chat answer hands off to the same replay path as a direct question.
+        steps:
+        - to: ChatScreen
+          label: Open as graph
+          description: |
+            The user presses the button on the completed answer.
+        - to: App
+          label: Open recording view
+          description: |
+            The chat passes the recording id and original question to the shell.
+            ##### /app/src/screens/ChatScreen.tsx:166
+        - to: answers.ts
+          label: Look up recording
+          description: |
+            The id resolves to a fixed recording or a freshly built blast-radius recording.
+            ##### /app/src/App.tsx:53
+        - to: App
+          label: Recording
+          color: gray
+        - to: AnswerScreen
+          label: Show recording
+          description: |
+            The shell navigates to the answer screen with replay enabled.
+            ##### /app/src/App.tsx:239
+        - to: GraphCanvas
+          label: Replay graph
+          description: |
+            The canvas replays the answer as in the Ask Recorded Answer flow.
+            ##### /app/src/screens/AnswerScreen.tsx:251
+        - to: AnswerScreen
+          label: Canvas rendered
+          color: gray
+        - to: App
+          label: Answer on screen
+          color: gray
+        - to: ChatScreen
+          label: Navigated to answer
+          color: gray
+        - to: User
+          label: Playable graph answer
+          color: gray
+
+- name: Module Dependencies
+  color: SteelBlue
+  defaultArrowLabel: Imports
+  notes: |
+    Import relationships between modules in different packages. Arrows point from the importing module to the imported one.
+  relations:
+  - from: App
+    to: router.ts, useVoice, answers.ts, AnswerScreen, ChatScreen, AskBox
+  - from: AnswerScreen
+    to: useReplay, useLiveTranscript, suggest.ts, agent.ts, GraphCanvas, ConversationPanel, ProposalsPanel, AgentRun, Inspector
+  - from: ChatScreen
+    to: knowledge
+  - from: knowledge
+    to: repo.ts, router.ts
+  - from: router.ts
+    to: answers.ts, repo.ts
+  - from: suggest.ts
+    to: repo.ts
+  - from: useLiveTranscript
+    to: reson8.ts
+  - from: jev seam
+    to: suggest.ts
+    label: Imports Suggestion type
+
+- name: Integration Seams
+  color: Firebrick
+  notes: |
+    External and planned services and the modules that front them. Each seam keeps a stable shape (`KnowledgeBackend`, `Suggestion`, `ViewSpec`, `ProposalBatch`) so the mock can be replaced without changing the screens.
+  relations:
+  - from: reson8.ts
+    to: reson8-token route
+    label: Fetches token
+  - from: reson8-token route
+    to: Auth Token Endpoint
+    label: Mints token with API key
+  - from: reson8.ts
+    to: Realtime STT
+    label: Streams PCM16 audio
+  - from: reson8.ts
+    to: Web Audio
+    label: Captures mic
+  - from: useVoice
+    to: Web Speech API
+    label: Recognizes speech
+  - from: useLiveTranscript
+    to: Web Speech API
+    label: Fallback recognition
+  - from: Code Knowledge Backend
+    to: knowledge
+    label: Implements KnowledgeBackend (planned)
+  - from: jev
+    to: jev seam
+    label: Sends views and proposals (planned)
+  - from: jev seam
+    to: GraphCanvas
+    label: Supplies ViewSpec
+  - from: agent.ts
+    to: Coding Agent Endpoint
+    label: POSTs ProposalBatch
+
+# PLEASE DO NOT REMOVE
+# REPO URL: <none, local>
+# COMMIT HASH: 2770043
