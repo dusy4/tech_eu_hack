@@ -13,8 +13,10 @@ Then build its index from `repo-analysis-workbench/`, pointing the workspace roo
 cd repo-analysis-workbench
 export PYTHON_BIN="$PWD/.venv/bin/python"
 WS="$PWD/../repo_analyse"
+./scripts/build_scip.sh       --repo rust-agent-framework --workspace-root "$WS"   # Rust: ~1 min
 ./scripts/parse_repos.sh      --repo rust-agent-framework --workspace-root "$WS"
-./scripts/build_index.sh      --repo rust-agent-framework --workspace-root "$WS"
+./scripts/build_index.sh      --repo rust-agent-framework --workspace-root "$WS" \
+                              --scip-index "$WS/.scip/rust-agent-framework.scip.json"
 ./scripts/build_search.sh     --repo rust-agent-framework --workspace-root "$WS"
 ./scripts/export_summaries.sh --repo rust-agent-framework
 ```

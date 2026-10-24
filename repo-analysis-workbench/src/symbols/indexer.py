@@ -27,6 +27,7 @@ from parsers.rust_analyzer_backend import aggregate_rust_analyzer_probes, probe_
 from parsers.rustc_backend import aggregate_rustc_probes, probe_rust_ast
 from parsers.ctags_backend import probe_universal_ctags
 from parsers.scip_backend import probe_scip_indexes
+from symbols.scip_bridge import bridge_scip_records
 from parsers.tree_sitter_backend import aggregate_tree_sitter_probes, probe_tree_sitter, probe_tree_sitter_tags
 from symbols.schema import normalize_symbol_record
 
@@ -67,7 +68,9 @@ VARIANT_RE = re.compile(
 )
 
 FUNCTION_LIKE_KINDS = {"function", "method"}
-CACHE_SCHEMA_VERSION = "rust-file-cache-v1"
+# Bump whenever parsing/merging changes, or cached per-file results keep the old behaviour.
+# v3: rust-analyzer flat SymbolInformation ranges + overlap matching (no phantom duplicates).
+CACHE_SCHEMA_VERSION = "rust-file-cache-v3"
 MAX_SEMANTIC_TARGETS = 50
 MAX_SEMANTIC_FRONTIER = 100
 KEYWORDS = {
@@ -342,6 +345,15 @@ def build_symbol_index(
     )
     scip_symbol_records = list(scip_probe.get("symbol_records", []))
     scip_reference_records = list(scip_probe.get("reference_records", []))
+    if scip_symbol_records and symbol_records:
+        # Attach SCIP references to the primary parser's symbols (prefer the Rust parser's).
+        primary_symbols = [record for record in symbol_records if record.get("provider") == "rust_static"] or [
+            record for record in symbol_records if record.get("provider") != "scip"
+        ]
+        scip_symbol_records, scip_reference_records, bridge_stats = bridge_scip_records(
+            primary_symbols, reference_records, scip_symbol_records, scip_reference_records
+        )
+        emit_stage_progress("bridged_scip_references", **bridge_stats)
     if scip_symbol_records:
         symbol_records.extend(scip_symbol_records)
         merge_provider_document_file_records(
@@ -2422,6 +2434,13 @@ def merge_backend_symbols(
             used_backend = True
             continue
 
+        backend_span = backend_range_to_span(backend_symbol)
+        if backend_span.start_line == backend_span.end_line == 1 and any(
+            symbol.name == backend_symbol["name"] for symbol in parsed.symbols
+        ):
+            # No usable position from the backend: it would only duplicate a parsed symbol.
+            continue
+
         container_local_id = None
         if container_qualified_name:
             container_symbol = symbols_by_qname.get(container_qualified_name)
@@ -2503,11 +2522,13 @@ def find_backend_symbol_match(
         if container_qualified_name and symbol.container_qualified_name != container_qualified_name:
             continue
         if backend_span is not None:
-            same_start = (
-                symbol.span.start_line == backend_span.start_line
-                and symbol.span.start_column == backend_span.start_column
+            # Backend and parser disagree on where an item starts (name vs `pub fn` vs
+            # leading doc comments), so match on overlapping line ranges, not equality.
+            overlaps = (
+                symbol.span.start_line <= backend_span.end_line
+                and backend_span.start_line <= symbol.span.end_line
             )
-            if not same_start and aliased_callable_kind:
+            if not overlaps and aliased_callable_kind:
                 continue
         return symbol
     return None
