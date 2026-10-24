@@ -1,5 +1,7 @@
 # Backend ↔ frontend contract
 
+> **Stopgap.** This HTTP bridge duplicates the `repo-analysis` MCP server's tools. It goes away once the app talks to the MCP server directly. See decision 3 in [PROJECT.md](PROJECT.md#3-how-does-the-app-reach-the-mcp-server).
+
 This is the one agreement between the UI (`app/`) and the code-understanding backend
 (`repo-analysis-workbench/` + `qwen-mlx/`). If either side changes shape, update this file
 first.

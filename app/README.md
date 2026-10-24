@@ -18,7 +18,7 @@ Open http://localhost:5173. Add `?still` to the URL to skip the code-city entran
 | Screens: connect, overview, answer, atlas | Built |
 | Views: FlowTrace, AlgoStepper, BlastRadius, code city | Built, driven by `src/data` |
 | Blast radius for any symbol in the sample index | Built (`blastRecording`) |
-| Voice | Browser speech recognition (Chrome/Edge); Reason8 adapter goes in `src/engine/useVoice.ts` |
+| Voice | Reson8 speech-to-text (`src/engine/reson8.ts`, needs `RESON8_API_KEY`); browser speech recognition as fallback |
 | Local folder picker | Real (`showDirectoryPicker`); indexing stages are simulated |
 | Agent connection | Real install snippets and deep links; "I've added it" is a manual toggle |
 | Repo index, symbols, code excerpts, caller lists | Sample data in `src/data/repo.ts`, to be replaced by MCP calls |

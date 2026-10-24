@@ -1,5 +1,7 @@
 # tech_eu_hack: backend
 
+> **New here? Start with [docs/PROJECT.md](docs/PROJECT.md):** what the whole project is (backend + Spelunk app), who owns what, and the open decisions. This README covers the backend.
+
 Code-understanding backend for coding agents. It indexes a repository into parsed symbols, a code graph,
 keyword search and summaries, and exposes all of it to **Claude Code through an MCP server**, so the agent can
 answer "who calls this?" or "how does A reach B?" directly instead of grepping and opening files blindly.

@@ -1,5 +1,7 @@
 # Ideation A v2: Ask the codebase, watch it build the answer
 
+> **Background only.** This is the early, domain-agnostic brainstorm. The plan we're building is [swe-demo-plan.md](swe-demo-plan.md); the overview is [PROJECT.md](PROJECT.md).
+
 ## The wow loop
 
 1. **You ask the codebase out loud** (through Reason8): *"How does this repo do protein translation?"*
