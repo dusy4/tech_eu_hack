@@ -9,14 +9,13 @@ import { Icon } from "../ui/Icon";
 import { Dock, DockItem, DockSeparator } from "@/components/motion/dock";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/motion/tabs";
 import { ConversationPanel, ProposalsPanel, type LiveProps, type SuggestionState, type RoomAnswer } from "../ui/LivePanel";
-import { anchorsOf, demoScript, liveScript, suggestFrom, type Suggestion, type Utterance } from "../engine/suggest";
+import { anchorsOf, liveScript, type Suggestion, type Utterance } from "../engine/suggest";
 import { useLiveTranscript } from "../engine/useLiveTranscript";
 import { useListener } from "../engine/useListener";
 import { forAgent, sendToAgent, toBatch } from "../engine/agent";
 import { handoffState, LIVE_REPO, type HandoffState } from "../engine/live";
 import type { RoomItem, RoomStatus, ViewRequest } from "../engine/roomTypes";
 import type { GraphProposal } from "../views/GraphCanvas";
-import { REPO } from "../data/repo";
 import type { ButtonState } from "@/components/motion/button";
 
 type Props = {
@@ -116,10 +115,9 @@ export default function AnswerScreen(p: Props) {
   const [handoffOf, setHandoffOf] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState<Record<string, HandoffState>>({});
 
-  // The listener reads the room only when the graph is the real repo: grounding talk about one
-  // codebase in another would put nonsense on screen. Otherwise the keyword matcher stands in.
-  const listenerOn = !!rec.live && !!p.status?.haiku;
-  const repo = rec.live ? LIVE_REPO : REPO.slug;
+  // Without the listener (no Anthropic key on the dev server) the conversation is transcribed but nothing is proposed.
+  const listenerOn = !!p.status?.haiku;
+  const repo = LIVE_REPO;
   const specRef = useRef(rec.spec);
   specRef.current = rec.spec;
   const suggestionsRef = useRef(suggestions);
@@ -171,7 +169,7 @@ export default function AnswerScreen(p: Props) {
     try {
       const id = await sendToAgent(
         toBatch(repo, { id: rec.spec.id, title: rec.spec.title, asked: p.asked }, work, utterances),
-        // Live: the MCP server's store, where the team's agent reads it. Sample: VITE_AGENT_URL or the console.
+        // The MCP server's store, where the team's agent reads it; otherwise VITE_AGENT_URL.
         p.status?.mcp ? "/api/handoffs" : undefined,
       );
       setSgState((st) => ({ ...st, ...Object.fromEntries(work.map((s) => [s.id, "sent" as const])) }));
@@ -213,19 +211,13 @@ export default function AnswerScreen(p: Props) {
     };
   }, [watching]);
 
-  const script = useMemo(() => (rec.live ? liveScript(rec.spec) : demoScript(rec.spec)), [rec.spec, rec.live]);
+  const script = useMemo(() => liveScript(rec.spec), [rec.spec]);
   const onUtterance = useCallback(
     (u: Utterance) => {
       setUtterances((us) => [...us, u]);
-      if (listenerOn) return listener.push(u);
-      // A node or question already on the list isn't proposed again when someone repeats it.
-      const key = (s: Suggestion) => (s.kind === "focus" ? `f:${s.nodeId}` : s.kind === "ask" ? `a:${s.question}` : `t:${norm(s.title)}`);
-      setSuggestions((ss) => {
-        const seen = new Set(ss.map(key));
-        return [...ss, ...suggestFrom(u, rec.spec).filter((s) => !seen.has(key(s)))];
-      });
+      if (listenerOn) listener.push(u);
     },
-    [rec.spec, listenerOn, listener.push],
+    [listenerOn, listener.push],
   );
   const live = useLiveTranscript(script, onUtterance);
 
@@ -420,7 +412,7 @@ export default function AnswerScreen(p: Props) {
           <div style={{ minWidth: 0, flex: 1 }}>
             <div className="asked">
               <Icon name="mic" size={14} /> <span>“{p.asked}”</span>
-              <span className="pill">{rec.live ? `Live · ${LIVE_REPO}` : "Recorded answer"}</span>
+              <span className="pill">Live · {LIVE_REPO}</span>
               <span>{rec.spec.nodes.length} {rec.spec.archetype === "algoStepper" ? "fibers" : "symbols"} from {files} {files === 1 ? "file" : "files"}</span>
             </div>
             <h1>{rec.spec.title}</h1>
@@ -528,7 +520,7 @@ export default function AnswerScreen(p: Props) {
             {p.chat}
           </TabsContent>
           <TabsContent value="code" className="room-tab room-code">
-            <Inspector spec={rec.spec} nodeId={inspected} step={step} ready={replay.ready} live={rec.live} />
+            <Inspector spec={rec.spec} nodeId={inspected} />
           </TabsContent>
           <TabsContent value="pins" className="room-tab room-code">
             {p.pins}

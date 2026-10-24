@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import { RECORDINGS, blastRecording } from "./data/answers";
 import type { Recording } from "./data/types";
-import { REPO } from "./data/repo";
-import { route } from "./engine/router";
 import { useVoice } from "./engine/useVoice";
 import { LIVE_REPO, liveView, roomStatus } from "./engine/live";
 import type { RoomStatus, ViewRequest } from "./engine/roomTypes";
@@ -16,8 +13,8 @@ import { Icon } from "./ui/Icon";
 import ErrorBoundary from "./ui/ErrorBoundary";
 import { Button } from "@/components/motion/button";
 
-/** `live` pins re-draw from the index when opened; recorded ones replay. */
-export type Pin = { id: string; recId: string; question: string; view: string; symbols: number; files: number; when: string; live?: ViewRequest };
+/** A pin re-draws its view from the index when opened. */
+export type Pin = { id: string; recId: string; question: string; view: string; symbols: number; files: number; when: string; live: ViewRequest };
 
 const VIEW_NAME: Record<string, string> = { flowTrace: "Flow trace", algoStepper: "Algorithm stepper", blastRadius: "Blast radius", swimlane: "Call tree" };
 
@@ -45,8 +42,12 @@ const store = {
   },
 };
 
-function recById(id: string): Recording {
-  return RECORDINGS.find((r) => r.spec.id === id) ?? blastRecording(id.replace(/^blast-/, ""));
+/** Playback commands typed or spoken into the ask box; everything else is a question. */
+function speedOf(text: string): number | undefined {
+  const t = text.toLowerCase().trim();
+  if (/\b(slow(er)?|half speed)\b/.test(t)) return 0.5;
+  if (/\b(fast(er)?|speed (it )?up|double speed)\b/.test(t)) return 2;
+  if (/normal speed/.test(t)) return 1;
 }
 
 function Mark() {
@@ -59,22 +60,22 @@ function Mark() {
   );
 }
 
-const FIRST_QUESTION = "How does setState reach the DOM?";
-
 /**
  * One screen. The top bar names the repo and takes questions; below it, the room:
  * the conversation, the graph answering it, and what to do about it. Setup opens in modals.
  */
 export default function App() {
   const [agent, setAgent] = useState<string | null>(() => store.get("agent", null));
-  const [pins, setPins] = useState<Pin[]>(() => store.get("pins", []));
-  // The room opens on a live answer, so there is never an empty screen to explain.
-  const [rec, setRec] = useState<Recording>(RECORDINGS[0]);
-  const [asked, setAsked] = useState(FIRST_QUESTION);
+  // Pins saved before every answer came from the index have nothing to re-draw.
+  const [pins, setPins] = useState<Pin[]>(() => store.get<Pin[]>("pins", []).filter((p) => p.live));
+  // Undefined until the index draws the first view; there is no sample to fall back on.
+  const [rec, setRec] = useState<Recording>();
+  const [bootError, setBootError] = useState<string>();
+  const [boot, setBoot] = useState(0);
+  const [asked, setAsked] = useState(FIRST_LIVE.question);
   const [runKey, setRunKey] = useState(0);
   const [instant, setInstant] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [focusRequest, setFocusRequest] = useState<{ id: string; n: number }>();
   const [toast, setToast] = useState<string | null>(null);
   const [agentOpen, setAgentOpen] = useState(false);
   const [repoOpen, setRepoOpen] = useState(false);
@@ -87,6 +88,8 @@ export default function App() {
 
   useEffect(() => {
     let alive = true;
+    setStatus(undefined);
+    setBootError(undefined);
     (async () => {
       const st = await roomStatus();
       if (!alive) return;
@@ -97,8 +100,8 @@ export default function App() {
           setRec(r);
           setAsked(FIRST_LIVE.question);
           setLiveReq(FIRST_LIVE.view);
-        } catch {
-          // The index is up but this view failed: the recorded sample keeps the room usable.
+        } catch (e) {
+          if (alive) setBootError((e as Error).message);
         }
       }
       if (alive) setStatus(st);
@@ -106,7 +109,7 @@ export default function App() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [boot]);
 
   useEffect(() => {
     if (!toast) return;
@@ -121,8 +124,7 @@ export default function App() {
     setRunKey((k) => k + 1);
   };
 
-  const live = !!rec.live;
-  const repoSlug = live ? LIVE_REPO : REPO.slug;
+  const repoSlug = LIVE_REPO;
 
   /** Draws a view of the real index; the previous one stays up until the new one arrives. */
   const openView = async (view: ViewRequest, question: string, replay = true) => {
@@ -140,28 +142,21 @@ export default function App() {
   };
 
   const ask = (text: string) => {
-    const r = route(text, focusRequest?.id);
-    // Playback commands stay local; with the index live, every question goes to the listener.
-    if (live && r.kind !== "speed") {
-      if (status?.haiku) setAskRequest({ text, n: Date.now() });
-      else setToast("The listener is off (no Anthropic key on the dev server), so questions can't be answered live.");
-      return;
-    }
-    if (r.kind === "answer") show(r.recording, text);
-    else if (r.kind === "speed") {
-      setSpeed(r.value);
-      setToast(`Playback speed ${r.value}×`);
-    } else if (r.kind === "focus") {
-      setFocusRequest({ id: r.nodeId, n: Date.now() });
-    } else {
-      setToast(`No recording matches “${text}”. This demo replays three answers; pick one from the ask box.`);
-    }
+    // Playback commands stay local; every question goes to the listener.
+    const value = speedOf(text);
+    if (value !== undefined) {
+      setSpeed(value);
+      setToast(`Playback speed ${value}×`);
+    } else if (!rec) setToast("The code index isn't connected, so there is nothing to ask yet.");
+    else if (status?.haiku) setAskRequest({ text, n: Date.now() });
+    else setToast("The listener is off (no Anthropic key on the dev server), so questions can't be answered live. The Ask tab still searches the index.");
   };
 
   const voice = useVoice(ask);
 
-  const pinned = pins.some((p) => p.recId === rec.spec.id);
+  const pinned = !!rec && pins.some((p) => p.recId === rec.spec.id);
   const togglePin = () => {
+    if (!rec || !liveReq) return;
     const next = pinned
       ? pins.filter((p) => p.recId !== rec.spec.id)
       : [
@@ -169,7 +164,7 @@ export default function App() {
             id: `${rec.spec.id}-${Date.now()}`,
             recId: rec.spec.id,
             question: asked,
-            live: live ? liveReq : undefined,
+            live: liveReq,
             view: VIEW_NAME[rec.spec.archetype] ?? rec.spec.archetype,
             symbols: rec.spec.nodes.length,
             files: new Set(rec.spec.sources.map((s) => s.file)).size,
@@ -196,7 +191,7 @@ export default function App() {
         <ul>
           {pins.map((p) => (
             <li key={p.id}>
-              <button className="pin-row" onClick={() => (p.live ? openView(p.live, p.question, false) : show(recById(p.recId), p.question, false))}>
+              <button className="pin-row" onClick={() => openView(p.live, p.question, false)}>
                 <b>{p.question}</b>
                 <span>
                   {p.view} · {p.symbols} symbols · {p.when}
@@ -233,6 +228,16 @@ export default function App() {
           <div className="booting" role="status">
             <i className="ar-spin" /> Connecting to the code index…
           </div>
+        ) : !rec ? (
+          <div className="booting offline" role="alert">
+            <b>{status.graph ? `The index is up but couldn't draw ${repoSlug}` : "The code index isn't connected"}</b>
+            <span className="muted">
+              {status.graph
+                ? bootError
+                : "Start repo-graph-api (SPELUNK_GRAPH_URL, default 127.0.0.1:18790) with an indexed repo, and the MCP server for the listener. Nothing is shown until they answer."}
+            </span>
+            <button className="btn primary" onClick={() => setBoot((b) => b + 1)}>Retry</button>
+          </div>
         ) : (
         <ErrorBoundary resetKey={`${rec.spec.id}:${runKey}`}>
           <AnswerScreen
@@ -242,11 +247,10 @@ export default function App() {
             asked={asked}
             speed={speed}
             onSpeed={setSpeed}
-            focusRequest={focusRequest}
             pinned={pinned}
             onPin={togglePin}
             onOpenInClaude={() => setClaudeOpen(true)}
-            onAskBlast={(sym) => (live ? openView({ view: "blast-radius", symbol: sym }, `What breaks if we change ${rec.spec.nodes.find((n) => n.id === sym)?.label ?? sym}?`) : ask(`What breaks if I change ${sym}?`))}
+            onAskBlast={(sym) => openView({ view: "blast-radius", symbol: sym }, `What breaks if we change ${rec.spec.nodes.find((n) => n.id === sym)?.label ?? sym}?`)}
             status={status}
             onOpenView={(view, question) => openView(view, question)}
             askRequest={askRequest}
@@ -255,7 +259,7 @@ export default function App() {
             chat={
               <ChatScreen
                 compact
-                onOpenView={(id, q) => show(recById(id), q)}
+                onOpenView={(view, q) => openView(view, q)}
                 onMic={() => (voice.status === "listening" ? voice.stop() : voice.start())}
                 listening={voice.status === "listening"}
               />
@@ -296,11 +300,11 @@ export default function App() {
         </div>
       )}
 
-      <Modal open={repoOpen} onClose={() => setRepoOpen(false)} title="Add a repository">
+      <Modal open={repoOpen} onClose={() => setRepoOpen(false)} title="Repositories">
         <ConnectScreen
           onIndexed={() => {
             setRepoOpen(false);
-            setToast(`${REPO.slug} is indexed. Ask anything.`);
+            setToast(`${repoSlug} is open. Ask anything.`);
           }}
           agent={agent}
           onAgent={connectAgent}
@@ -312,6 +316,7 @@ export default function App() {
         <ConnectAgent connected={agent} onConnected={(n) => { connectAgent(n); setAgentOpen(false); }} />
       </Modal>
 
+      {rec && (
       <Modal open={claudeOpen} onClose={() => setClaudeOpen(false)} title="Open this answer in Claude">
         <p className="lead">The same view ships as an MCP App. In Claude Desktop, ChatGPT or VS Code it renders inside the chat, with play and step still working.</p>
         <div className="panel-body" style={{ paddingTop: 0 }}>
@@ -338,6 +343,7 @@ export default function App() {
           </div>
         </div>
       </Modal>
+      )}
 
       {toast && (
         <div className="toast" role="status">

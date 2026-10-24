@@ -7,8 +7,9 @@ import { StreamingResponse } from "@/components/agents/streaming-response";
 import { PromptInput } from "@/components/agents/prompt-input";
 import { Button } from "@/components/motion/button";
 import { EASE_OUT } from "@/lib/ease";
-import { answer, isMock, type AnswerEvent, type SymbolInfo } from "../knowledge";
-import { REPO } from "../data/repo";
+import { answer, type AnswerEvent, type SymbolInfo } from "../knowledge";
+import { LIVE_REPO } from "../engine/live";
+import type { ViewRequest } from "../engine/roomTypes";
 import { Icon } from "../ui/Icon";
 
 type Turn =
@@ -21,15 +22,16 @@ type Turn =
       read?: SymbolInfo;
       text: string;
       sources: { file: string; symbol: string; line: number }[];
-      view?: { recordingId: string; title: string };
+      view?: { view: ViewRequest; title: string };
+      error?: string;
       status: "working" | "streaming" | "complete";
       started: number;
       took?: number;
     };
 
 type Props = {
-  /** Open a recorded answer as a graph. */
-  onOpenView: (recordingId: string, question: string) => void;
+  /** Draw a view of the index as a graph. */
+  onOpenView: (view: ViewRequest, question: string) => void;
   onMic: () => void;
   listening: boolean;
   /** Narrow layout, for the room's side pane. */
@@ -37,8 +39,6 @@ type Props = {
   /** A question that arrived by voice. */
   inbox?: { text: string; n: number };
 };
-
-const STARTERS = ["Where does dispatchSetState get called from?", "What breaks if I change commitRoot?", "How does setState reach the DOM?"];
 
 /** `code` and **bold** from the narration, nothing more: the answer text is short and plain. */
 function inline(text: string): ReactNode[] {
@@ -82,14 +82,15 @@ export default function ChatScreen({ onOpenView, onMic, listening, inbox, compac
       if (e.type === "tool") {
         const item: AgentActivityItem =
           e.tool === "search-code"
-            ? { id: `${id}-s`, type: "search", query: `search-code “${e.arg}”`, results: (e.hits ?? []).map((h) => ({ id: h.symbol, title: h.symbol, domain: `${h.file.split("/").pop()} · ${h.score.toFixed(2)}`, icon: <Icon name="fn" size={14} /> })) }
+            ? { id: `${id}-s`, type: "search", query: `search-code “${e.arg}”`, results: (e.hits ?? []).map((h) => ({ id: h.id, title: h.symbol, domain: `${h.file.split("/").pop()} · ${h.score.toFixed(2)}`, icon: <Icon name="fn" size={14} /> })) }
             : e.tool === "read-symbol"
               ? { id: `${id}-r`, type: "tool", action: "read", target: e.symbol?.file ?? e.arg }
               : { id: `${id}-c`, type: "step", label: `callers-of ${e.arg}`, status: "complete", meta: `${e.callers?.length ?? 0} found` };
         patch((t) => ({ activity: [...t.activity, item], ...(e.symbol ? { read: e.symbol } : {}) }));
       } else if (e.type === "text") patch((t) => ({ status: "streaming", text: t.text + e.delta }));
       else if (e.type === "sources") patch(() => ({ sources: e.files }));
-      else if (e.type === "view") patch(() => ({ view: { recordingId: e.recordingId, title: e.title } }));
+      else if (e.type === "view") patch(() => ({ view: { view: e.view, title: e.title } }));
+      else if (e.type === "error") patch(() => ({ status: "streaming", error: e.message }));
     }
     patch((t) => ({ status: "complete", took: Math.round((Date.now() - t.started) / 100) / 10 }));
   };
@@ -104,15 +105,8 @@ export default function ChatScreen({ onOpenView, onMic, listening, inbox, compac
       <MessageScroller className="chat-scroll" contentClassName="chat-feed" followOutput smooth label="Conversation with the codebase" busy={busy}>
         {turns.length === 0 && (
           <div className="chat-empty">
-            <h1>Ask {REPO.slug}</h1>
-            <p>Answers come from the code index{isMock() ? " (sample data until the knowledge backend is connected)" : ""}. Each one shows what was searched and read, and opens as a graph when there is one.</p>
-            <div className="chat-starters">
-              {STARTERS.map((s) => (
-                <Button key={s} size="sm" variant="secondary" onClick={() => ask(s)}>
-                  {s}
-                </Button>
-              ))}
-            </div>
+            <h1>Ask {LIVE_REPO}</h1>
+            <p>Answers come from the code index. Each one shows what was searched and read, and opens as a graph when there is one.</p>
           </div>
         )}
         {turns.map((t) =>
@@ -149,10 +143,11 @@ export default function ChatScreen({ onOpenView, onMic, listening, inbox, compac
                       defaultOpen={false}
                       copyText={t.read.code}
                     >
-                      <ToolResultOutput language="tsx">{t.read.code}</ToolResultOutput>
+                      <ToolResultOutput language="rust">{t.read.code}</ToolResultOutput>
                     </ToolResult>
                   )}
-                  {t.status !== "working" && (
+                  {t.error && <p className="chat-text chat-error" role="alert">{t.error}</p>}
+                  {t.status !== "working" && !t.error && (
                     <StreamingResponse
                       status={t.status === "complete" ? "complete" : "streaming"}
                       copyText={t.text.replace(/[`*]/g, "")}
@@ -163,7 +158,7 @@ export default function ChatScreen({ onOpenView, onMic, listening, inbox, compac
                   )}
                   {t.view && t.status === "complete" && (
                     <div>
-                      <Button size="sm" variant="primary" onClick={() => onOpenView(t.view!.recordingId, t.question)}>
+                      <Button size="sm" variant="primary" onClick={() => onOpenView(t.view!.view, t.question)}>
                         <Icon name="flow" size={14} /> Open “{t.view.title}” as a graph
                       </Button>
                     </div>
@@ -183,7 +178,7 @@ export default function ChatScreen({ onOpenView, onMic, listening, inbox, compac
           loading={busy}
           onStop={() => (stopRef.current = true)}
           minRows={2}
-          placeholder={`Ask ${REPO.slug} anything…`}
+          placeholder={`Ask ${LIVE_REPO} anything…`}
           leadingAction={
             <Button size="icon" variant={listening ? "primary" : "ghost"} aria-label={listening ? "Stop listening" : "Ask by voice"} onClick={onMic}>
               <Icon name="mic" size={16} />

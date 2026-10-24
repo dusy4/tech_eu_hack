@@ -39,16 +39,12 @@ export function toBatch(repo: string, answer: ProposalBatch["answer"], accepted:
 
 /**
  * Publishes the batch and returns the handoff id. `url` is the handoff endpoint: the dev server's
- * /api/handoffs proxy when the MCP server is up, else VITE_AGENT_URL. With neither, it only logs.
+ * /api/handoffs proxy when the MCP server is up, else VITE_AGENT_URL. With neither, sending fails.
  */
 export async function sendToAgent(batch: ProposalBatch, url?: string): Promise<string | undefined> {
   const target = url ?? (import.meta.env.VITE_AGENT_URL as string | undefined);
-  if (!target) {
-    // No endpoint: keep the demo honest about where it stops.
-    console.info("[spelunk] proposals for the agent", batch);
-    await new Promise((r) => setTimeout(r, 900));
-    return undefined;
-  }
+  // No endpoint: nothing would receive it, so it isn't reported as sent.
+  if (!target) throw new Error("No handoff store: start the MCP server (SPELUNK_MCP_URL) or set VITE_AGENT_URL.");
   const res = await fetch(target, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(batch), signal: AbortSignal.timeout(15_000) });
   const body = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
   if (!res.ok) throw new Error(body.error ?? `Agent endpoint answered ${res.status}`);

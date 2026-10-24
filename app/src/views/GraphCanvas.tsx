@@ -42,9 +42,7 @@ const crateSwatch = (spec: ViewSpec, crate: string) => {
   const i = order.indexOf(crate);
   return CRATE_SW[(i < 0 ? order.length : i) % CRATE_SW.length];
 };
-/** A recorded sample flow has hand-placed positions; anything else is laid out automatically. */
-const isSampleFlow = (spec: ViewSpec) => spec.archetype === "flowTrace" && spec.nodes.every((n) => FLOW_GRID[n.id]);
-const byCrate = (spec: ViewSpec) => spec.archetype !== "algoStepper" && spec.archetype !== "blastRadius" && !isSampleFlow(spec);
+const byCrate = (spec: ViewSpec) => spec.archetype !== "algoStepper" && spec.archetype !== "blastRadius";
 
 /** The legend group a node belongs to: its phase, fiber tag, ring or crate. */
 export function groupOf(spec: ViewSpec, id: string): string {
@@ -285,36 +283,7 @@ const edgeTypes = { dot: DotEdge };
 
 // Sized to be read from across a room on a projector: 14px labels at zoom 1, and the fit zooms past 1 when there's space.
 const PILL_H = 40;
-const FLOW_W = 252;
 const pillWidth = (label: string, min = 140) => Math.max(min, Math.round(label.length * 8.3 + 58));
-
-// The flow reads left to right like an architecture diagram: the app, the reconciler's four
-// phases, then the DOM, one wide band to suit a wide canvas. Context calls sit above their caller.
-// Positions are fixed so nothing jumps between steps.
-// Drawn on a 32px-pill grid; FX/FY stretch it to fit the 40px pills.
-const FX = 1.1;
-const FY = 1.15;
-const FLOW_GRID: Record<string, [number, number]> = {
-  setCount: [16, 132], "ctx-useState(4)": [16, 80],
-  dispatchSetState: [336, 132], enqueueConcurrentHookUpdate: [336, 184], "ctx-requestUpdateLane": [336, 80],
-  scheduleUpdateOnFiber: [616, 132], ensureRootIsScheduled: [616, 184], "ctx-markRootUpdated": [616, 80],
-  performWorkOnRoot: [896, 132], workLoopSync: [896, 184], "ctx-renderRootSync": [896, 80],
-  commitRoot: [1176, 132], commitMutationEffects: [1176, 184], "ctx-commitLayoutEffects": [1176, 80],
-  commitTextUpdate: [1496, 132], "ctx-span text: 4 → 5": [1496, 80],
-};
-
-const FLOW_POS = Object.fromEntries(Object.entries(FLOW_GRID).map(([k, [x, y]]) => [k, [x * FX, y * FY]])) as Record<string, [number, number]>;
-
-const FLOW_GROUPS_GRID: (GroupData & { id: string; x: number; y: number })[] = [
-  { id: "g-app", kind: "package", label: "fixtures/counter", icon: "file", x: 0, y: 40, w: 264, h: 152 },
-  { id: "g-rec", kind: "package", label: "react-reconciler", sub: "8 functions on this path", icon: "layers", x: 304, y: 0, w: 1136, h: 248 },
-  { id: "g-Update", kind: "phase", label: "Update", dot: PHASE_SW.Update.fill, x: 320, y: 40, w: 264, h: 192 },
-  { id: "g-Schedule", kind: "phase", label: "Schedule", dot: PHASE_SW.Schedule.fill, x: 600, y: 40, w: 264, h: 192 },
-  { id: "g-Render", kind: "phase", label: "Render", dot: PHASE_SW.Render.fill, x: 880, y: 40, w: 264, h: 192 },
-  { id: "g-Commit", kind: "phase", label: "Commit", dot: PHASE_SW.Commit.fill, x: 1160, y: 40, w: 264, h: 192 },
-  { id: "g-dom", kind: "package", label: "react-dom-bindings", icon: "code", x: 1480, y: 40, w: 264, h: 152 },
-];
-const FLOW_GROUPS = FLOW_GROUPS_GRID.map((g) => ({ ...g, x: g.x * FX, y: g.y * FY, w: g.w * FX, h: g.h * FY }));
 
 // Fit leaves room for the tool strip and legend on top, the playback bar below,
 // and the conversation panel on the right while it's open.
@@ -412,12 +381,6 @@ function blastLayout(spec: ViewSpec, aspect: number) {
   return { pos, geo };
 }
 
-function handlesFor(a: [number, number], b: [number, number]) {
-  if (b[1] < a[1] - 20 && Math.abs(a[0] - b[0]) < 40) return { sourceHandle: "st", targetHandle: "tb" };
-  if (Math.abs(a[0] - b[0]) < 40 || b[1] - a[1] > 80) return { sourceHandle: "b", targetHandle: "t" };
-  return { sourceHandle: "r", targetHandle: "l" };
-}
-
 // ── The canvas ─────────────────────────────────────────────────────────────
 
 type Props = {
@@ -451,13 +414,12 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
   const [showCtx, setShowCtx] = useState(true);
   const [treePos, setTreePos] = useState<Record<string, [number, number]>>();
   const [aspect, setAspect] = useState(2);
-  const [availW, setAvailW] = useState(1600);
   const FIT = useMemo(() => fitFor(rightInset), [rightInset]);
 
   useEffect(() => {
     let live = true;
     setTreePos(undefined);
-    const layout = spec.archetype === "algoStepper" ? treeLayout : spec.archetype === "blastRadius" || isSampleFlow(spec) ? undefined : layeredLayout;
+    const layout = spec.archetype === "algoStepper" ? treeLayout : spec.archetype === "blastRadius" ? undefined : layeredLayout;
     // A layout that fails (a malformed view) draws nothing rather than crashing the room.
     layout?.(spec).then((p) => live && setTreePos(p)).catch(() => live && setTreePos({}));
     return () => {
@@ -474,7 +436,6 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
       // Laid out for the space actually left beside the panel; nodes glide there (see .react-flow__node in CSS).
       const a = (width - rightInset - 48) / Math.max(200, height - 172);
       setAspect(Math.round(Math.max(1, a) * 4) / 4);
-      setAvailW(Math.round((width - rightInset - 48) / 50) * 50);
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -483,7 +444,6 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
   const blast = useMemo(() => (spec.archetype === "blastRadius" ? blastLayout(spec, aspect) : undefined), [spec, aspect]);
 
   const pos = useMemo(() => {
-    if (isSampleFlow(spec)) return FLOW_POS;
     if (blast) return blast.pos;
     return treePos ?? {};
   }, [spec, treePos, blast]);
@@ -538,11 +498,6 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
     n.kind === "test" ? "test" : n.kind === "state" ? "code" : n.kind === "fiber" ? (n.meta?.tag === "HostText" ? "file" : "layers") : "fn";
 
   const nodes: Node[] = [];
-  if (isSampleFlow(spec)) {
-    FLOW_GROUPS.forEach((g) =>
-      nodes.push({ id: g.id, type: "box", position: { x: g.x, y: g.y }, width: g.w, height: g.h, data: g, draggable: false, selectable: false, zIndex: g.kind === "package" ? -2 : -1 }),
-    );
-  }
   if (spec.archetype === "blastRadius") {
     if (blast) nodes.push({ id: "rings", type: "rings", position: { x: 0, y: 0 }, width: blast.geo.w, height: blast.geo.h, data: { ...blast.geo, reached }, draggable: false, selectable: false, zIndex: -1 });
   }
@@ -559,7 +514,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
     const p = pos[n.id];
     if (!p) return;
     if (n.meta?.context && !showCtx) return;
-    const width = isSampleFlow(spec) ? FLOW_W : pillWidth(n.label, spec.archetype === "blastRadius" ? 140 : 150);
+    const width = pillWidth(n.label, spec.archetype === "blastRadius" ? 140 : 150);
     nodes.push({
       id: n.id,
       type: "pill",
@@ -611,7 +566,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
         source: from,
         target: to,
         type: "dot",
-        ...(spec.archetype === "blastRadius" ? {} : isSampleFlow(spec) ? handlesFor(pos[from], pos[to]) : { sourceHandle: "r", targetHandle: "l" }),
+        ...(spec.archetype === "blastRadius" ? {} : { sourceHandle: "r", targetHandle: "l" }),
         data: {
           color: swatchFor(spec, spec.archetype === "blastRadius" ? to : from).fill,
           lit,
@@ -709,17 +664,10 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
     };
   }, [spec.id, treePos, blast, FIT, rf, wanted.length]);
 
-  // The flow is one wide band; when fitting it whole would shrink labels past legibility, follow the step instead.
-  const FLOW_SPAN = 1760 * FX;
-  const tooSmall = isSampleFlow(spec) && availW / FLOW_SPAN < 0.75;
-  useEffect(() => {
-    if (tooSmall) setFollow(true);
-  }, [tooSmall, spec.id]);
-
   useEffect(() => {
     if (!follow || !ready || !focus[0] || !pos[focus[0]]) return;
     const [x, y] = pos[focus[0]];
-    rf.setCenter(x + FLOW_W / 2 + rightInset / 2 / 1.3, y + PILL_H / 2, { zoom: Math.max(rf.getZoom(), 0.9), duration: 400 });
+    rf.setCenter(x + pillWidth(spec.nodes.find((n) => n.id === focus[0])?.label ?? "", 150) / 2 + rightInset / 2 / 1.3, y + PILL_H / 2, { zoom: Math.max(rf.getZoom(), 0.9), duration: 400 });
   }, [follow, ready, step, focus, pos, rf]);
 
   // Bringing a node into view: if it's already on screen, the highlight is enough; otherwise

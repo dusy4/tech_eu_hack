@@ -195,11 +195,11 @@ tech_eu_hack/
 ├── app/                       # Spelunk app (React + Vite + Tailwind, Motion, React Flow + ELK)
 │   └── src/
 │       ├── engine/            # voice (Reson8), suggestions, replay, handoff to the agent
-│       ├── knowledge/         # code-knowledge client: sample data or the bridge
-│       ├── data/              # ViewSpec types + recorded sample answers for facebook/react
-│       ├── views/             # GraphCanvas, CodeCity
+│       ├── knowledge/         # the chat's code-knowledge client over repo-graph-api
+│       ├── data/              # ViewSpec types (the contract the canvas draws)
+│       ├── views/             # GraphCanvas
 │       ├── ui/                # panels: LivePanel, AgentRun, Inspector, ConnectAgent, …
-│       └── screens/           # Answer, Chat, Connect, Home, Atlas
+│       └── screens/           # Answer, Chat, Connect
 ├── bridge/                    # stopgap HTTP API from the app to the index (section 13)
 ├── repo-analysis-workbench/   # indexing + retrieval engine and the MCP server
 ├── repo_analyse/              # target repos being analysed (clones are gitignored)
@@ -217,7 +217,7 @@ tech_eu_hack/
 | Target repo | `repo_analyse/` | Aneeth | `rust-agent-framework` (67k lines of Rust) indexed |
 | Paper-to-code dashboard | `docs/paper-code-mapping/` | Aram | 85 papers mapped to file and line |
 | Pitch deck | not in the repo | ? | 14 slides drafted; team, event and ask still blank (open decision 5) |
-| Spelunk app | `app/` | frontend (dusy4) | All screens built, running on **sample data** for facebook/react |
+| Spelunk app | `app/` | frontend (dusy4) | Runs on the real index only (repo-graph-api + MCP server); shows a not-connected state without them |
 | Haiku extraction and graph building (loop ② ③) | none yet | **nobody** | Not started. The biggest missing piece |
 | Handoff through MCP (loop ⑤) | `repo-analysis-workbench/src/mcp_server/handoffs.py` + `app/` | Aneeth (server), frontend (app) | Server built and tested; app needs `VITE_AGENT_URL` |
 | HTTP bridge | `bridge/` | frontend | Stopgap so the chat can reach the index (open decision 2) |
@@ -229,11 +229,10 @@ tech_eu_hack/
 | Use the 12 MCP tools from Claude Code opened in this folder (after indexing) | **Real** |
 | Index a Rust repo and query callers, callees, paths, bodies | **Real.** With the SCIP step, callers include method calls, trait dispatch and cross-crate calls (12/12 on the check set) |
 | Talk and see the live transcript (Reson8) | **Real** (needs `RESON8_API_KEY`) |
-| Get proposals from what was said | Real time, but a **keyword matcher** against the sample symbols, not Haiku |
-| Accept proposals and send them to the agent | **Real** with `VITE_AGENT_URL=http://127.0.0.1:8787/handoffs` and the server in HTTP mode: stored as a handoff that Claude Code/Cursor pull via `list_handoffs` / `get_handoff`. Logs to the console when unset |
-| Watch an answer build on the graph, with the agent run listing tool calls | **Replay**: recorded answers played on timers (`app/src/engine/useReplay.ts`), nothing streams yet |
-| Play FlowTrace, BlastRadius, AlgoStepper and the code city | Sample: recorded React answers in `app/src/data/` |
-| Ask the chat a question | **Real** with the bridge running and `VITE_KNOWLEDGE_URL` set: answers from `rust-agent-framework` with real code, callers and file:line sources. Sample data otherwise |
+| Get proposals from what was said | **Real**: Haiku with the MCP tools (needs `ANTHROPIC_API_KEY`); without the key nothing is proposed |
+| Accept proposals and send them to the agent | **Real** with `VITE_AGENT_URL=http://127.0.0.1:8787/handoffs` and the server in HTTP mode: stored as a handoff that Claude Code/Cursor pull via `list_handoffs` / `get_handoff`. Sending fails when neither is set |
+| Watch an answer build on the graph, with the agent run listing tool calls | **Real** views from repo-graph-api, revealed call by call on timers (`app/src/engine/useReplay.ts`) |
+| Ask the chat a question | **Real**: search, symbol body and callers from repo-graph-api, with file:line sources |
 | "Connect your agent" screen | **Real** when the server runs with `--transport http`: its `http://localhost:8787/mcp` config connects |
 
 ## 8. Decided
@@ -525,9 +524,9 @@ In Claude Code connected to the server (`claude mcp add --transport http repo-an
 ask "work the Spelunk handoff" (skill `spelunk-handoff`): it calls `list_handoffs` → `get_handoff` →
 `update_handoff_status`, and the card on the graph moves to *building* → *built* with the agent's note.
 Typed questions in the top bar go to Haiku too; structural ones ("how does A reach B?") draw the view at once.
-Without the backends the app falls back to the recorded React sample and the keyword matcher.
+Without the backends the app shows that the index isn't connected, with a Retry button. There is no sample fallback.
 
-### Sample only
+### App only
 
 ```bash
 cd app
@@ -535,14 +534,13 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 (add `?still` to skip the code-city entrance). It runs on sample data by default.
+Open http://localhost:5173. It needs repo-graph-api and the MCP server running (above); without them it says so.
 Optional settings go in `app/.env.local` (template: `app/.env.example`):
 
 | Variable | Meaning |
 |---|---|
 | `RESON8_API_KEY` | Voice. Only the dev server reads it; it mints short-lived browser tokens at `/api/reson8-token` |
-| `VITE_KNOWLEDGE_URL` | e.g. `http://127.0.0.1:18300`: the chat uses the bridge instead of sample data |
-| `VITE_AGENT_URL` | Where "Send to the agent" POSTs the handoff batch; empty logs it to the console |
+| `VITE_AGENT_URL` | Where "Send to the agent" POSTs the handoff batch when the MCP server is down; with neither, sending fails |
 
 ## 17. Run the backend
 
@@ -623,7 +621,7 @@ WORKBENCH_REPO=rust-agent-framework repo-analysis-workbench/.venv/Scripts/python
 | `WORKBENCH_WORKSPACE` | `repo_analyse` | Where the indexed repos are cloned. The index keeps symbol spans, not text, so `find-symbol` reads the code from here |
 | `BRIDGE_PORT` | `18300` | Port, on 127.0.0.1 only |
 
-Then set `VITE_KNOWLEDGE_URL=http://127.0.0.1:18300` in `app/.env.local`.
+The app no longer uses the bridge: its chat reads repo-graph-api through the dev server.
 
 ---
 

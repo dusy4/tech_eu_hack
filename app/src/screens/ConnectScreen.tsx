@@ -1,148 +1,77 @@
-import { useEffect, useRef, useState } from "react";
-import { REPO, totals } from "../data/repo";
+import { useEffect, useState } from "react";
+import { LIVE_REPO } from "../engine/live";
 import ConnectAgent from "../ui/ConnectAgent";
 import { Icon } from "../ui/Icon";
 
-const STAGES = [
-  { name: "Inventory files", unit: "files" },
-  { name: "Parse symbols", unit: "symbols" },
-  { name: "Imports and references", unit: "edges" },
-  { name: "Build the graph", unit: "nodes" },
-  { name: "Keyword index", unit: "documents" },
-  { name: "Summaries", unit: "modules" },
-];
-
-// Sample counts the indexer reports per stage for facebook/react.
-const COUNTS = [totals.files, totals.symbols, 61302, 79542, 24810, 16];
-
-type Source = { kind: "github"; slug: string } | { kind: "folder"; name: string; files: number };
-
-const parseGithub = (v: string) => {
-  const m = v.trim().match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/i) ?? v.trim().match(/^([\w.-]+)\/([\w.-]+)$/);
-  return m ? `${m[1]}/${m[2]}` : null;
+type IndexedRepo = {
+  name: string;
+  git?: { remote?: string; branch?: string; short_commit?: string };
+  indexed_at?: string;
+  counts?: { crates?: number; symbols?: number; references?: number; tracked_files?: number };
 };
 
+const fmt = (n?: number) => (n ?? 0).toLocaleString("en-US");
+
+/** The repositories repo-graph-api has indexed. Indexing a new one runs outside the page (the index-repo skill). */
 export default function ConnectScreen({ onIndexed, agent, onAgent }: { onIndexed: () => void; agent: string | null; onAgent: (n: string) => void }) {
-  const [url, setUrl] = useState(REPO.url);
+  const [repos, setRepos] = useState<IndexedRepo[]>();
   const [error, setError] = useState("");
-  const [source, setSource] = useState<Source | null>(null);
-  const [stage, setStage] = useState(-1);
-  const timers = useRef<number[]>([]);
-  const slug = parseGithub(url);
-  const known = slug?.toLowerCase() === REPO.slug;
+  const [tries, setTries] = useState(0);
 
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
-
-  const run = (s: Source) => {
-    setSource(s);
-    setStage(0);
-    timers.current.forEach(clearTimeout);
-    timers.current = STAGES.map((_, i) => window.setTimeout(() => setStage(i + 1), 700 * (i + 1)));
-  };
-
-  const analyze = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!slug) {
-      setError("Enter a GitHub repository link, like github.com/facebook/react.");
-      return;
-    }
+  useEffect(() => {
+    let alive = true;
     setError("");
-    if (known) onIndexed();
-    else run({ kind: "github", slug });
-  };
-
-  const pickFolder = async () => {
-    const picker = (window as unknown as { showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker;
-    if (!picker) {
-      setError("Folder access needs Chrome or Edge. Paste a GitHub link instead.");
-      return;
-    }
-    try {
-      const dir = await picker();
-      let files = 0;
-      const walk = async (d: FileSystemDirectoryHandle, depth: number) => {
-        for await (const [name, h] of (d as unknown as { entries(): AsyncIterable<[string, FileSystemHandle]> }).entries()) {
-          if (name === "node_modules" || name.startsWith(".")) continue;
-          if (h.kind === "file") files++;
-          else if (depth < 6) await walk(h as FileSystemDirectoryHandle, depth + 1);
-          if (files > 20000) return;
-        }
-      };
-      await walk(dir, 0);
-      setError("");
-      run({ kind: "folder", name: dir.name, files });
-    } catch {
-      // The person closed the picker; nothing to do.
-    }
-  };
-
-  const done = stage >= STAGES.length;
-  const name = source?.kind === "folder" ? source.name : source?.slug;
+    fetch("/api/graph/repos", { signal: AbortSignal.timeout(8000) })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`repo-graph-api answered ${r.status}`))))
+      .then((b: { items: IndexedRepo[] }) => alive && setRepos(b.items))
+      .catch((e: Error) => alive && (setRepos(undefined), setError(e.message)));
+    return () => {
+      alive = false;
+    };
+  }, [tries]);
 
   return (
     <div className="page">
       <div className="title-row">
         <div>
-          <h1>Add a repository</h1>
-          <p className="sub">Parse the repository once into a code graph — symbols, callers, statement slices — then ask structural questions and replay the answer, every step linked to its source.</p>
+          <h1>Repositories</h1>
+          <p className="sub">Each repository is parsed once into a code graph — symbols, callers, statement slices. The room reads <span className="mono">{LIVE_REPO}</span> (SPELUNK_REPO on the dev server).</p>
         </div>
       </div>
 
       <div className="connect-grid">
         <section className="panel" aria-labelledby="repo-h">
-          <div className="panel-head"><h2 id="repo-h">Repository</h2></div>
+          <div className="panel-head"><h2 id="repo-h">Indexed</h2></div>
           <div className="panel-body">
-            <form onSubmit={analyze}>
-              <label className="field-label" htmlFor="gh">GitHub link</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <div className="input-wrap" style={{ flex: 1 }}>
-                  <Icon name="github" size={16} />
-                  <input id="gh" className="input" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="github.com/owner/repo" spellCheck={false} autoComplete="off" />
-                </div>
-                <button className="btn primary lg" type="submit">{known ? "Open" : "Analyze"}</button>
+            {error ? (
+              <div role="alert">
+                <p style={{ color: "var(--negative)", margin: 0, fontSize: 13 }}>The code index isn't reachable: {error}</p>
+                <p className="muted" style={{ fontSize: 12, margin: "8px 0 12px" }}>Start repo-graph-api (SPELUNK_GRAPH_URL, default 127.0.0.1:18790) and retry.</p>
+                <button className="btn" onClick={() => setTries((t) => t + 1)}>Retry</button>
               </div>
-              {error ? (
-                <p role="alert" style={{ color: "var(--negative)", margin: "8px 0 0", fontSize: 13 }}>{error}</p>
-              ) : known ? (
-                <p className="muted" style={{ margin: "8px 0 0", fontSize: 13 }}>Already indexed: {totals.symbols.toLocaleString("en-US")} symbols, ready to ask.</p>
-              ) : null}
-            </form>
-
-            <div className="or">or</div>
-
-            <button className="btn lg" onClick={pickFolder} style={{ width: "100%", justifyContent: "center" }}>
-              <Icon name="folderOpen" size={16} /> Choose a folder on this computer
-            </button>
-            <p className="muted" style={{ fontSize: 12, margin: "8px 0 0" }}>Files are read in the browser. Nothing leaves this machine until you start indexing.</p>
-
-            {source && (
-              <div style={{ marginTop: 24 }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                  <strong className="mono" style={{ fontWeight: 500 }}>{name}</strong>
-                  <span className="muted" style={{ fontSize: 12 }}>
-                    {source.kind === "folder" ? `${source.files.toLocaleString("en-US")} files found` : "from GitHub"}
-                  </span>
-                </div>
-                <div className="progress" aria-hidden="true"><span style={{ width: `${(Math.min(stage, STAGES.length) / STAGES.length) * 100}%` }} /></div>
-                <ol className="stages" aria-live="polite">
-                  {STAGES.map((s, i) => (
-                    <li key={s.name}>
-                      <span className={i < stage ? "" : "state-wait"}>
-                        <Icon name={i < stage ? "tick" : i === stage ? "terminal" : "file"} size={15} />
+            ) : !repos ? (
+              <p className="muted" style={{ margin: 0 }}><i className="ar-spin" /> Asking the index…</p>
+            ) : repos.length === 0 ? (
+              <p className="muted" style={{ margin: 0 }}>Nothing is indexed yet. Index a repository with the index-repo skill, then reopen this.</p>
+            ) : (
+              <ul className="stages" style={{ listStyle: "none", padding: 0 }}>
+                {repos.map((r) => (
+                  <li key={r.name}>
+                    <Icon name="github" size={15} />
+                    <span>
+                      <strong className="mono" style={{ fontWeight: 500 }}>{r.name}</strong>
+                      <span className="muted" style={{ fontSize: 12, display: "block" }}>
+                        {r.git?.branch ?? "—"}@{r.git?.short_commit ?? "—"} · {fmt(r.counts?.symbols)} symbols · {fmt(r.counts?.tracked_files)} files
                       </span>
-                      {i === stage ? <span className="t-shimmer" data-text={s.name}>{s.name}</span> : <span className={i > stage ? "muted" : ""}>{s.name}</span>}
-                      <span className="count num">{i < stage ? `${COUNTS[i].toLocaleString("en-US")} ${s.unit}` : "—"}</span>
-                    </li>
-                  ))}
-                </ol>
-                {done && (
-                  <div className="success-line">
-                    <Icon name="tick" size={16} />
-                    <span style={{ flex: 1 }}>Indexed. Sample data stands in until the backend is connected.</span>
-                    <button className="btn primary" onClick={onIndexed}>Open repository</button>
-                  </div>
-                )}
-              </div>
+                    </span>
+                    {r.name === LIVE_REPO ? (
+                      <button className="btn primary" style={{ marginLeft: "auto" }} onClick={onIndexed}>Open</button>
+                    ) : (
+                      <span className="count muted" style={{ marginLeft: "auto", fontSize: 12 }}>Set SPELUNK_REPO={r.name} to open</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </section>

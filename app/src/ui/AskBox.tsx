@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { SUGGESTED } from "../data/answers";
 import { Icon } from "./Icon";
 
-const FOLLOW_UPS = ["Slower", "Show the render phase as a tree", "What breaks if I change this?"];
+// Playback commands; anything else typed here goes to the listener.
+const FOLLOW_UPS = ["Slower", "Normal speed", "Faster"];
 
 export default function AskBox({
   onAsk,
@@ -21,7 +21,7 @@ export default function AskBox({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const input = useRef<HTMLInputElement>(null);
-  const list = inAnswer ? FOLLOW_UPS : SUGGESTED;
+  const list = FOLLOW_UPS;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -60,7 +60,7 @@ export default function AskBox({
             if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(-1, a - 1)); }
             if (e.key === "Escape") input.current?.blur();
           }}
-          placeholder={inAnswer ? "Follow up: slower, show it as a tree…" : `Ask about ${repo}: who calls this, how A reaches B…`}
+          placeholder={inAnswer ? `Ask about ${repo}: who calls this, what breaks if it changes…` : `Ask about ${repo}: who calls this, how A reaches B…`}
           aria-label="Ask the codebase"
           role="combobox"
           aria-expanded={open}
@@ -73,7 +73,7 @@ export default function AskBox({
       </form>
       {open && (
         <div className="suggest" id="ask-suggest" role="listbox">
-          <div className="suggest-label">{inAnswer ? "Follow-ups change the view in place" : "Recorded questions"}</div>
+          <div className="suggest-label">Playback</div>
           {list.map((s, i) => (
             <button key={s} role="option" aria-selected={i === active} data-active={i === active} onMouseDown={(e) => e.preventDefault()} onClick={() => submit(s)}>
               <Icon name={inAnswer ? "arrow" : "sparkles"} size={14} className="muted" /> {s}

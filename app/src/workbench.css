@@ -141,3 +141,5 @@
 .prop-anchors { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 0; }
 .prop-anchors code.on { background: #fdeeda; color: #8a4b0b; }
 .booting { display: flex; align-items: center; justify-content: center; gap: 10px; height: 100%; color: var(--text-muted); font-size: 13px; }
+.booting.offline { flex-direction: column; text-align: center; max-width: 440px; margin: 0 auto; line-height: 20px; }
+.booting.offline b { color: var(--text, #1c2024); font-size: 15px; font-weight: 600; }
