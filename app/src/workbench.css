@@ -17,7 +17,7 @@
   position: relative; display: flex; align-items: center; height: 40px; padding: 0 12px 0 5px; border-radius: 7px;
   background: var(--fill); color: var(--ink); border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 1px 0 rgba(16, 24, 32, 0.08); cursor: pointer;
-  transition: opacity 200ms var(--ease-in-out), box-shadow 200ms var(--ease-smooth-out), background-color 240ms ease, border-color 240ms ease;
+  transition: opacity 150ms ease, box-shadow 200ms var(--ease-smooth-out), background-color 240ms ease, border-color 240ms ease;
 }
 .gp-in { display: flex; align-items: center; gap: 8px; min-width: 0; width: 100%; }
 .gp-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 14px/1 var(--display); letter-spacing: -0.01em; }
@@ -52,7 +52,7 @@
 .dedge { transition: opacity var(--duration-fast) var(--ease-in-out); }
 .dedge.dim { opacity: 0.12; }
 @keyframes t-dots { to { stroke-dashoffset: -12; } }
-.ring { fill: #f7f9fa; stroke: color-mix(in srgb, var(--ring) 35%, #d5dbe0); stroke-dasharray: 4 5; transition: fill 400ms ease, stroke 400ms ease; }
+.ring { fill: #f7f9fa; stroke: color-mix(in srgb, var(--ring) 35%, #d5dbe0); stroke-dasharray: 4 5; transition: fill 250ms ease, stroke 250ms ease; }
 .ring.on { fill: color-mix(in srgb, var(--ring) 9%, #fff); stroke: color-mix(in srgb, var(--ring) 70%, #fff); stroke-dasharray: none; }
 .ring-label { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; fill: color-mix(in srgb, var(--ring) 80%, #33404b); font-family: var(--font); }
 @media (prefers-reduced-motion: reduce) {
@@ -69,7 +69,7 @@
 /* The canvas fills whatever holds it */
 .rf-wrap { position: absolute; inset: 0; }
 .de-line.lit { opacity: 0.85; stroke-width: 2; }
-.ripple { fill: none; stroke: #2f6fd1; stroke-width: 2; }
+.ripple { fill: none; stroke: #2f6fd1; stroke-width: 2; vector-effect: non-scaling-stroke; }
 
 /* A node the live conversation points at: a soft ring that breathes until it's applied or dismissed */
 .gp.sug { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #8e4ec6; }

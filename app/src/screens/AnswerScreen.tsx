@@ -33,6 +33,9 @@ type Props = {
   agentName?: string | null;
   /** The chat with the codebase, shown in the right pane's Ask tab. */
   chat?: ReactNode;
+  /** Pinned answers, the repo's living documentation, in the Pinned tab. */
+  pins?: ReactNode;
+  pinCount?: number;
 };
 
 const STEP_MS = 1600;
@@ -97,7 +100,12 @@ export default function AnswerScreen(p: Props) {
   const onUtterance = useCallback(
     (u: Utterance) => {
       setUtterances((us) => [...us, u]);
-      setSuggestions((ss) => [...ss, ...suggestFrom(u, rec.spec)]);
+      // A node or question already on the list isn't proposed again when someone repeats it.
+      const key = (s: Suggestion) => (s.kind === "focus" ? `f:${s.nodeId}` : `a:${s.question}`);
+      setSuggestions((ss) => {
+        const seen = new Set(ss.map(key));
+        return [...ss, ...suggestFrom(u, rec.spec).filter((s) => !seen.has(key(s)))];
+      });
     },
     [rec.spec],
   );
@@ -319,6 +327,9 @@ export default function AnswerScreen(p: Props) {
             <TabsTrigger value="code" icon={<Icon name="code" size={14} />}>
               Code
             </TabsTrigger>
+            <TabsTrigger value="pins" icon={<Icon name="pin" size={14} />}>
+              Pinned{p.pinCount ? ` · ${p.pinCount}` : ""}
+            </TabsTrigger>
           </TabsList>
           {narrow && (
             <TabsContent value="talk" className="room-tab">
@@ -333,6 +344,9 @@ export default function AnswerScreen(p: Props) {
           </TabsContent>
           <TabsContent value="code" className="room-tab room-code">
             <Inspector spec={rec.spec} nodeId={inspected} step={step} ready={replay.ready} />
+          </TabsContent>
+          <TabsContent value="pins" className="room-tab room-code">
+            {p.pins}
           </TabsContent>
         </Tabs>
       </aside>

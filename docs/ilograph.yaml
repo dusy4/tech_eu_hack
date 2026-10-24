@@ -50,7 +50,7 @@ resources:
       instanceOf: React Component
       subtitle: App.tsx
       description: |
-        Root component. Owns the current `Recording`, routes typed and spoken questions through `route()`, switches screens, and persists pins and the connected agent in `localStorage`.
+        Root component. Owns the current `Recording`, routes typed and spoken questions through `route()`, switches screens, and persists pins and the connected agent in `localStorage`. Passes a compact `ChatScreen` into `AnswerScreen` as its `chat` prop.
     - name: AskBox
       instanceOf: React Component
       subtitle: AskBox.tsx
@@ -66,12 +66,12 @@ resources:
       instanceOf: React Component
       subtitle: AnswerScreen.tsx
       description: |
-        The answer canvas. Drives replay and step playback, hosts the Live suggestions panel, applies approved suggestions to the graph and sends accepted proposals to the coding agent.
+        The three-pane room: `ConversationPanel` on the left, `GraphCanvas` with its header and playbar in the centre, and beUI `Tabs` on the right holding `ProposalsPanel`, the compact chat and `Inspector`. Drives replay and step playback, auto-starts the demo conversation once an answer is ready, applies approved suggestions to the graph and sends accepted proposals to the coding agent. Below 1280 px the conversation folds into a Talk tab.
     - name: ChatScreen
       instanceOf: React Component
       subtitle: ChatScreen.tsx
       description: |
-        Chat with the codebase built from beUI agent parts. Consumes the `answer()` event stream, shows tool activity, the read symbol, the streamed narration and sources, and offers to open a matching recording as a graph.
+        Chat with the codebase built from beUI agent parts, shown full-page on the chat route and in `compact` form in the room's Ask tab. Consumes the `answer()` event stream, shows tool activity, the read symbol, the streamed narration and sources, and offers to open a matching recording as a graph.
 
   - name: UI
     instanceOf: Package
@@ -83,11 +83,21 @@ resources:
       subtitle: views/GraphCanvas.tsx
       description: |
         Draws a `ViewSpec` as a graph, revealing nodes as the replay makes them visible, highlighting the current step, marking suggested nodes and flying the camera to a requested node.
-    - name: LivePanel
+    - name: ConversationPanel
       instanceOf: React Component
       subtitle: ui/LivePanel.tsx
       description: |
-        Live suggestions dock: transcript with speaker names, the voice orb, `ApprovalCard`s for each suggestion, the accepted list and the send-to-agent button.
+        Left pane of the room: the transcript with speaker names, the voice orb, the interim speaking row, and the Listen to the room and Play demo buttons.
+    - name: ProposalsPanel
+      instanceOf: React Component
+      subtitle: ui/LivePanel.tsx
+      description: |
+        First tab of the room's right pane: an `ApprovalCard` per suggestion quoting the sentence that prompted it, the accepted tray and the send-to-agent button.
+    - name: Inspector
+      instanceOf: React Component
+      subtitle: ui/Inspector.tsx
+      description: |
+        Code tab of the room's right pane: shows the source of the selected node, or of the node the current step focuses.
     - name: AgentRun
       instanceOf: React Component
       subtitle: ui/AgentRun.tsx
@@ -235,7 +245,7 @@ perspectives:
   notes: |
     This perspective shows a spoken or typed question being routed to a recorded answer and replayed on the graph canvas. Recordings stand in for the live harness stream, so the replay timing mirrors how MCP tool calls would arrive.
     #### Other Perspectives
-    [Run Live Suggestions] - conversation to approval cards to accepted proposals sent to the coding agent
+    [Run Live Suggestions] - room conversation to approval cards to accepted proposals sent to the coding agent
 
     [Chat With Codebase] - chat question answered through the knowledge tools, then opened as a graph
 
@@ -315,23 +325,23 @@ perspectives:
           label: Start timed replay
           description: |
             Timers mark each recorded tool call running then done and add the nodes it reveals to the visible set.
-            ##### /app/src/screens/AnswerScreen.tsx:61
+            ##### /app/src/screens/AnswerScreen.tsx:71
         - to: AnswerScreen
           label: Visible nodes and ready flag
           color: gray
         - to: AgentRun
           label: Show tool-call run
           description: |
-            While the answer builds, a bottom sheet narrates each tool call; it folds away when the replay is ready.
-            ##### /app/src/screens/AnswerScreen.tsx:268
+            While the answer builds, a bottom sheet over the centre canvas narrates each tool call; it folds away when the replay is ready.
+            ##### /app/src/screens/AnswerScreen.tsx:263
         - to: AnswerScreen
           label: Run sheet rendered
           color: gray
         - to: GraphCanvas
           label: Draw graph
           description: |
-            The canvas draws the `ViewSpec`, revealing nodes as they become visible and highlighting the current step.
-            ##### /app/src/screens/AnswerScreen.tsx:208
+            The centre pane draws the `ViewSpec`, revealing nodes as they become visible and highlighting the current step.
+            ##### /app/src/screens/AnswerScreen.tsx:251
         - to: AnswerScreen
           label: Canvas rendered
           color: gray
@@ -339,7 +349,15 @@ perspectives:
           label: Auto-play steps
           description: |
             Once the replay is ready, playback advances one step every 1.6 s divided by the speed, moving the canvas focus each time.
-            ##### /app/src/screens/AnswerScreen.tsx:146
+            ##### /app/src/screens/AnswerScreen.tsx:150
+        - to: Inspector
+          label: Show focused code
+          description: |
+            The Code tab in the right pane shows the source of the selected node, or of the node the current step focuses.
+            ##### /app/src/screens/AnswerScreen.tsx:335
+        - to: AnswerScreen
+          label: Code shown
+          color: gray
     - to: App
       label: Answer on screen
       color: gray
@@ -353,61 +371,61 @@ perspectives:
 
 - name: Run Live Suggestions
   notes: |
-    This perspective details live suggestions: a conversation about the answer on screen becomes approval cards, approved cards change the graph, and accepted proposals are sent to the coding agent. The transcript source is interchangeable (demo script, browser speech, or Reson8 realtime), and the matcher produces the same `Suggestion` shape jev will produce later.
+    This perspective details live suggestions in the room: a conversation about the answer on screen becomes approval cards, approved cards change the graph, and accepted proposals are sent to the coding agent. The transcript source is interchangeable (demo script, browser speech, or Reson8 realtime), and the matcher produces the same `Suggestion` shape jev will produce later.
   sequence:
     start: User
     steps:
     - subSequence:
-        name: Open live panel
+        name: Auto-start conversation
         color: "#1525c0"
         notes: |
-          Opening the panel starts the scripted demo conversation so the feature works without a microphone.
+          The first time an answer is ready, the scripted demo conversation starts by itself so the room is never silent and the feature works without a microphone.
         steps:
         - to: AnswerScreen
-          label: Open Live panel
+          label: Watch answer land
           description: |
-            The user presses the Live tool on the canvas toolbar.
+            The user has asked a question and the room is showing the answer replay.
         - to: suggest.ts
           label: Build demo script
           description: |
             A short two-speaker discussion is generated from the nodes of the current view.
-            ##### /app/src/screens/AnswerScreen.tsx:88
+            ##### /app/src/screens/AnswerScreen.tsx:96
         - to: AnswerScreen
           label: Scripted lines
           color: gray
         - to: useLiveTranscript
           label: Start demo feed
           description: |
-            The feed types each scripted line into the interim slot at speaking pace and emits it as an utterance.
-            ##### /app/src/screens/AnswerScreen.tsx:106
+            About 0.9 s after the replay is ready, and only once per mount, the feed starts in `demo` mode, typing each scripted line into the interim slot at speaking pace and emitting it as an utterance.
+            ##### /app/src/screens/AnswerScreen.tsx:114
         - to: AnswerScreen
           label: Demo feed running
           color: gray
-        - to: LivePanel
-          label: Render live panel
+        - to: ConversationPanel
+          label: Render conversation pane
           description: |
-            The dock shows the transcript, the current speaker and the mode buttons.
-            ##### /app/src/screens/AnswerScreen.tsx:238
+            The left pane shows the transcript, the current speaker and the mode buttons. Below 1280 px wide it renders inside a Talk tab in the right pane instead.
+            ##### /app/src/screens/AnswerScreen.tsx:223
         - to: AnswerScreen
-          label: Panel rendered
+          label: Pane rendered
           color: gray
         - to: User
-          label: Live panel open
+          label: Conversation playing
           color: gray
-    - to: LivePanel
-      label: Choose microphone
+    - to: ConversationPanel
+      label: Listen to the room
       description: |
         The user switches the feed from the demo script to live listening.
     - to: AnswerScreen
       label: Change feed mode
       description: |
-        The panel reports the selected mode to the answer screen.
-        ##### /app/src/ui/LivePanel.tsx:202
+        The pane reports the selected mode to the room.
+        ##### /app/src/ui/LivePanel.tsx:128
     - to: useLiveTranscript
       label: Start mic mode
       description: |
         The feed restarts in `mic` mode; any previous session is cleaned up.
-        ##### /app/src/screens/AnswerScreen.tsx:254
+        ##### /app/src/screens/AnswerScreen.tsx:203
     - subSequence:
         name: Get Reson8 token
         color: "#8a1bba"
@@ -487,77 +505,84 @@ perspectives:
           label: Match utterance to graph
           description: |
             Named nodes become `focus` suggestions; phrases about changes, paths or trees become `ask` suggestions.
-            ##### /app/src/screens/AnswerScreen.tsx:92
+            ##### /app/src/screens/AnswerScreen.tsx:100
         - to: AnswerScreen
           label: Focus and ask suggestions
           color: gray
         - to: GraphCanvas
           label: Mark suggested nodes
           description: |
-            Pending focus suggestions are highlighted on the canvas.
-            ##### /app/src/screens/AnswerScreen.tsx:215
+            Pending focus suggestions are highlighted on the centre canvas.
+            ##### /app/src/screens/AnswerScreen.tsx:258
         - to: AnswerScreen
           label: Highlights drawn
           color: gray
-        - to: LivePanel
+        - to: ProposalsPanel
           label: Render approval cards
           description: |
-            Each suggestion appears as an `ApprovalCard` with the reason it was suggested.
-            ##### /app/src/screens/AnswerScreen.tsx:238
-        - to: User
-          label: Approval cards
+            The Proposals tab, whose label counts pending suggestions, shows each one as an `ApprovalCard` under a quote of the sentence that prompted it.
+            ##### /app/src/screens/AnswerScreen.tsx:329
+        - to: AnswerScreen
+          label: Cards rendered
+          color: gray
+        - to: ConversationPanel
+          label: Transcript with proposal tags
           description: |
-            The user sees the live transcript and a card per suggestion.
+            The utterance joins the conversation pane, tagged with the number of proposals it produced.
+        - to: User
+          label: Transcript and approval cards
+          description: |
+            The user sees the live transcript on the left and a card per suggestion on the right.
     - subSequence:
         name: Approve suggestion
         color: "#1b5e20"
         notes: |
           Approval acts immediately on the canvas and also marks the suggestion as accepted for the agent hand-off.
         steps:
-        - to: LivePanel
+        - to: ProposalsPanel
           label: Approve a card
           description: |
-            The user approves one suggestion.
+            The user accepts one suggestion.
         - to: AnswerScreen
           label: Apply suggestion
           description: |
             The suggestion is marked approved; an `ask` suggestion is routed like a typed question instead.
-            ##### /app/src/ui/LivePanel.tsx:111
+            ##### /app/src/ui/LivePanel.tsx:167
         - to: GraphCanvas
           label: Fly to node
           description: |
             The node is selected, playback jumps to the step that focuses it and the camera flies to it.
-            ##### /app/src/screens/AnswerScreen.tsx:216
+            ##### /app/src/screens/AnswerScreen.tsx:122
         - to: AnswerScreen
           label: Node in view
           color: gray
-        - to: LivePanel
+        - to: ProposalsPanel
           label: Card approved
           color: gray
         - to: User
           label: Accepted proposal listed
           description: |
-            The approved card joins the accepted list with the send button enabled.
+            The approved card joins the Ready for the agent tray with the send button enabled.
     - subSequence:
         name: Send to agent
         color: "#e62100"
         notes: |
           Accepted proposals carry the sentence that prompted them, so the agent receives the room's intent along with the action.
         steps:
-        - to: LivePanel
+        - to: ProposalsPanel
           label: Send to agent
           description: |
             The user sends all accepted proposals to the connected agent.
         - to: AnswerScreen
           label: Send accepted proposals
           description: |
-            The panel passes the accepted suggestions to the answer screen.
-            ##### /app/src/ui/LivePanel.tsx:194
+            The panel passes the accepted suggestions to the room.
+            ##### /app/src/ui/LivePanel.tsx:203
         - to: agent.ts
           label: Build and send batch
           description: |
-            The suggestions, their source utterances, the repo slug and the current answer are shaped into a `ProposalBatch`.
-            ##### /app/src/screens/AnswerScreen.tsx:80
+            The suggestions, the conversation's utterances, the repo slug and the current answer are shaped into a `ProposalBatch`.
+            ##### /app/src/screens/AnswerScreen.tsx:88
         - to: Coding Agent Endpoint
           label: POST proposal batch
           description: |
@@ -569,7 +594,7 @@ perspectives:
         - to: AnswerScreen
           label: Batch sent
           color: gray
-        - to: LivePanel
+        - to: ProposalsPanel
           label: Mark proposals sent
           description: |
             Sent suggestions change state and the send button shows success or error.
@@ -586,12 +611,12 @@ perspectives:
     - to: ChatScreen
       label: Ask a question
       description: |
-        The user submits from the prompt input, a starter chip, or by voice (the shell forwards spoken text to the chat inbox while the chat screen is open).
+        The user submits from the prompt input or a starter chip, either on the chat screen or in the compact chat in the room's Ask tab, or by voice (the shell forwards spoken text to the chat inbox while the chat screen is open).
     - to: knowledge
       label: Stream answer
       description: |
         The chat iterates the `answer()` async generator for the question.
-        ##### /app/src/screens/ChatScreen.tsx:78
+        ##### /app/src/screens/ChatScreen.tsx:80
     - subSequence:
         name: Call knowledge tools
         color: "#8a1bba"
@@ -691,7 +716,7 @@ perspectives:
           label: Open recording view
           description: |
             The chat passes the recording id and original question to the shell.
-            ##### /app/src/screens/ChatScreen.tsx:164
+            ##### /app/src/screens/ChatScreen.tsx:166
         - to: answers.ts
           label: Look up recording
           description: |
@@ -709,7 +734,7 @@ perspectives:
           label: Replay graph
           description: |
             The canvas replays the answer as in the Ask Recorded Answer flow.
-            ##### /app/src/screens/AnswerScreen.tsx:208
+            ##### /app/src/screens/AnswerScreen.tsx:251
         - to: AnswerScreen
           label: Canvas rendered
           color: gray
@@ -732,7 +757,7 @@ perspectives:
   - from: App
     to: router.ts, useVoice, answers.ts, AnswerScreen, ChatScreen, AskBox
   - from: AnswerScreen
-    to: useReplay, useLiveTranscript, suggest.ts, agent.ts, GraphCanvas, LivePanel, AgentRun
+    to: useReplay, useLiveTranscript, suggest.ts, agent.ts, GraphCanvas, ConversationPanel, ProposalsPanel, AgentRun, Inspector
   - from: ChatScreen
     to: knowledge
   - from: knowledge
@@ -782,3 +807,7 @@ perspectives:
   - from: agent.ts
     to: Coding Agent Endpoint
     label: POSTs ProposalBatch
+
+# PLEASE DO NOT REMOVE
+# REPO URL: <none, local>
+# COMMIT HASH: 2770043

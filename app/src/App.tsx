@@ -1,28 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { RECORDINGS, blastRecording } from "./data/answers";
 import type { Recording } from "./data/types";
 import { REPO } from "./data/repo";
 import { route } from "./engine/router";
 import { useVoice } from "./engine/useVoice";
 import ConnectScreen from "./screens/ConnectScreen";
-import HomeScreen from "./screens/HomeScreen";
 import AnswerScreen from "./screens/AnswerScreen";
-import AtlasScreen from "./screens/AtlasScreen";
 import ChatScreen from "./screens/ChatScreen";
 import AskBox from "./ui/AskBox";
 import Modal from "./ui/Modal";
 import ConnectAgent, { HarnessLogo } from "./ui/ConnectAgent";
 import { Icon } from "./ui/Icon";
 import ErrorBoundary from "./ui/ErrorBoundary";
-import {
-  AnimatedSidebarProvider, AnimatedSidebar, AnimatedSidebarHeader, AnimatedSidebarContent, AnimatedSidebarGroup,
-  AnimatedSidebarGroupLabel, AnimatedSidebarGroupContent, AnimatedSidebarMenu, AnimatedSidebarMenuItem,
-  AnimatedSidebarMenuButton, AnimatedSidebarRail, AnimatedSidebarInset, AnimatedSidebarTrigger,
-} from "@/components/motion/animated-sidebar";
+import { Button } from "@/components/motion/button";
 
 export type Pin = { id: string; recId: string; question: string; view: string; symbols: number; files: number; when: string };
-
-type Screen = "connect" | "repo" | "answer" | "atlas" | "chat";
 
 const VIEW_NAME: Record<string, string> = { flowTrace: "Flow trace", algoStepper: "Algorithm stepper", blastRadius: "Blast radius" };
 
@@ -44,11 +36,6 @@ const store = {
   },
 };
 
-const readHash = (): Screen => {
-  const h = location.hash.replace("#/", "");
-  return (["connect", "repo", "answer", "atlas", "chat"] as Screen[]).includes(h as Screen) ? (h as Screen) : "connect";
-};
-
 function recById(id: string): Recording {
   return RECORDINGS.find((r) => r.spec.id === id) ?? blastRecording(id.replace(/^blast-/, ""));
 }
@@ -56,50 +43,33 @@ function recById(id: string): Recording {
 function Mark() {
   // A lamp beam into a stack of layers: the product's mark, drawn for it.
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="1" y="1" width="22" height="22" rx="6" fill="#15596a" />
+    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="1" y="1" width="22" height="22" rx="6" fill="#2d72d2" />
       <path d="M6 15.5h12M7.5 18.5h9M6 12.5l6-6.5 6 6.5" stroke="#fff" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
+const FIRST_QUESTION = "How does setState reach the DOM?";
+
+/**
+ * One screen. The top bar names the repo and takes questions; below it, the room:
+ * the conversation, the graph answering it, and what to do about it. Setup opens in modals.
+ */
 export default function App() {
-  const [screen, setScreen] = useState<Screen>(() => (store.get("indexed", false) && readHash() === "connect" && !location.hash ? "repo" : readHash()));
-  const [indexed, setIndexed] = useState(() => store.get("indexed", false));
   const [agent, setAgent] = useState<string | null>(() => store.get("agent", null));
   const [pins, setPins] = useState<Pin[]>(() => store.get("pins", []));
-  const [rec, setRec] = useState<Recording | null>(null);
-  const [asked, setAsked] = useState("");
+  // The room opens on a live answer, so there is never an empty screen to explain.
+  const [rec, setRec] = useState<Recording>(RECORDINGS[0]);
+  const [asked, setAsked] = useState(FIRST_QUESTION);
   const [runKey, setRunKey] = useState(0);
   const [instant, setInstant] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [focusRequest, setFocusRequest] = useState<{ id: string; n: number }>();
   const [toast, setToast] = useState<string | null>(null);
   const [agentOpen, setAgentOpen] = useState(false);
+  const [repoOpen, setRepoOpen] = useState(false);
   const [claudeOpen, setClaudeOpen] = useState(false);
-  const [navOpen, setNavOpen] = useState(() => readHash() !== "answer");
-
-  const go = useCallback((s: Screen) => {
-    if (location.hash !== `#/${s}`) location.hash = `/${s}`;
-    setScreen(s);
-    if (s === "answer") setNavOpen(false);
-    document.getElementById("main")?.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
-    const onHash = () => setScreen(readHash());
-    window.addEventListener("hashchange", onHash);
-    if (!location.hash) location.hash = `/${screen}`;
-    return () => window.removeEventListener("hashchange", onHash);
-  }, [screen]);
-
-  // Landing on a repo screen by link counts as having the sample repo indexed.
-  useEffect(() => {
-    if (screen !== "connect" && !indexed) {
-      setIndexed(true);
-      store.set("indexed", true);
-    }
-  }, [screen, indexed]);
 
   useEffect(() => {
     if (!toast) return;
@@ -112,11 +82,6 @@ export default function App() {
     setAsked(question);
     setInstant(!replay);
     setRunKey((k) => k + 1);
-    if (!indexed) {
-      setIndexed(true);
-      store.set("indexed", true);
-    }
-    go("answer");
   };
 
   const ask = (text: string) => {
@@ -132,13 +97,10 @@ export default function App() {
     }
   };
 
-  // On the chat screen, a spoken question goes into the chat rather than straight to a graph.
-  const [chatInbox, setChatInbox] = useState<{ text: string; n: number }>();
-  const voice = useVoice((text) => (screen === "chat" ? setChatInbox({ text, n: Date.now() }) : ask(text)));
+  const voice = useVoice(ask);
 
-  const pinned = !!rec && pins.some((p) => p.recId === rec.spec.id);
+  const pinned = pins.some((p) => p.recId === rec.spec.id);
   const togglePin = () => {
-    if (!rec) return;
     const next = pinned
       ? pins.filter((p) => p.recId !== rec.spec.id)
       : [
@@ -155,112 +117,84 @@ export default function App() {
         ];
     setPins(next);
     store.set("pins", next);
-    setToast(pinned ? "Removed from the atlas" : "Pinned to the atlas");
+    setToast(pinned ? "Unpinned" : "Pinned. Find it under Pinned.");
   };
 
   const connectAgent = (name: string) => {
     setAgent(name);
     store.set("agent", name);
-    setToast(`${name} connected. Questions it asks will build here.`);
+    setToast(`${name} connected. Accepted proposals go to it.`);
   };
 
-  const onIndexed = () => {
-    setIndexed(true);
-    store.set("indexed", true);
-    go("repo");
-  };
+  const pinList = (
+    <div className="pins">
+      {pins.length === 0 ? (
+        <p className="live-empty">Pin an answer with the pin button under the graph and it stays here as living documentation for {REPO.slug}.</p>
+      ) : (
+        <ul>
+          {pins.map((p) => (
+            <li key={p.id}>
+              <button className="pin-row" onClick={() => show(recById(p.recId), p.question, false)}>
+                <b>{p.question}</b>
+                <span>
+                  {p.view} · {p.symbols} symbols · {p.when}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 
   return (
-    <AnimatedSidebarProvider open={navOpen} onOpenChange={setNavOpen} className="app-shell">
-      <AnimatedSidebar collapsible="icon" className="nav">
-        <AnimatedSidebarHeader className="nav-head">
+    <div className="one">
+      <header className="one-bar">
+        <div className="one-brand">
           <Mark />
-          <span className="brand-name">Spelunk</span>
-        </AnimatedSidebarHeader>
-        <AnimatedSidebarContent>
-          <AnimatedSidebarGroup>
-            <AnimatedSidebarGroupLabel>{indexed ? REPO.slug : "No repository"}</AnimatedSidebarGroupLabel>
-            <AnimatedSidebarGroupContent>
-              <AnimatedSidebarMenu>
-                <AnimatedSidebarMenuItem>
-                  <AnimatedSidebarMenuButton icon={<Icon name="home" />} isActive={screen === "repo"} disabled={!indexed} onSelect={() => go("repo")}>Overview</AnimatedSidebarMenuButton>
-                </AnimatedSidebarMenuItem>
-                <AnimatedSidebarMenuItem>
-                  <AnimatedSidebarMenuButton icon={<Icon name="flow" />} isActive={screen === "answer"} disabled={!rec} onSelect={() => go("answer")}>Current answer</AnimatedSidebarMenuButton>
-                </AnimatedSidebarMenuItem>
-                <AnimatedSidebarMenuItem>
-                  <AnimatedSidebarMenuButton icon={<Icon name="sparkles" />} isActive={screen === "chat"} disabled={!indexed} onSelect={() => go("chat")}>Chat</AnimatedSidebarMenuButton>
-                </AnimatedSidebarMenuItem>
-                <AnimatedSidebarMenuItem>
-                  <AnimatedSidebarMenuButton icon={<Icon name="atlas" />} isActive={screen === "atlas"} badge={pins.length || undefined} onSelect={() => go("atlas")}>Atlas</AnimatedSidebarMenuButton>
-                </AnimatedSidebarMenuItem>
-              </AnimatedSidebarMenu>
-            </AnimatedSidebarGroupContent>
-          </AnimatedSidebarGroup>
-          <AnimatedSidebarGroup>
-            <AnimatedSidebarGroupLabel>Workspace</AnimatedSidebarGroupLabel>
-            <AnimatedSidebarGroupContent>
-              <AnimatedSidebarMenu>
-                <AnimatedSidebarMenuItem>
-                  <AnimatedSidebarMenuButton icon={<Icon name="folder" />} isActive={screen === "connect"} onSelect={() => go("connect")}>Add repository</AnimatedSidebarMenuButton>
-                </AnimatedSidebarMenuItem>
-                <AnimatedSidebarMenuItem>
-                  <AnimatedSidebarMenuButton icon={agent ? <HarnessLogo name={agent} size={18} /> : <Icon name="plug" />} badge={agent ? "on" : undefined} onSelect={() => setAgentOpen(true)}>
-                    {agent ?? "Connect your agent"}
-                  </AnimatedSidebarMenuButton>
-                </AnimatedSidebarMenuItem>
-              </AnimatedSidebarMenu>
-            </AnimatedSidebarGroupContent>
-          </AnimatedSidebarGroup>
-        </AnimatedSidebarContent>
-        <AnimatedSidebarRail />
-      </AnimatedSidebar>
+          <b>Spelunk</b>
+          <button className="one-repo" onClick={() => setRepoOpen(true)} title="Add or switch repository">
+            <Icon name="github" size={14} /> {REPO.slug} <Icon name="arrow" size={12} />
+          </button>
+        </div>
+        <AskBox onAsk={ask} onMic={() => (voice.status === "listening" ? voice.stop() : voice.start())} listening={voice.status === "listening"} inAnswer repo={REPO.slug} />
+        <div className="one-right">
+          <Button size="sm" variant={agent ? "secondary" : "primary"} onClick={() => setAgentOpen(true)}>
+            {agent ? <HarnessLogo name={agent} size={16} /> : <Icon name="plug" size={14} />}
+            {agent ? `${agent} connected` : "Connect your agent"}
+          </Button>
+        </div>
+      </header>
 
-      <AnimatedSidebarInset className="main">
-        <header className="topbar">
-          <AnimatedSidebarTrigger className="nav-trigger"><Icon name="menu" size={18} /></AnimatedSidebarTrigger>
-          <AskBox onAsk={ask} onMic={() => (voice.status === "listening" ? voice.stop() : voice.start())} listening={voice.status === "listening"} inAnswer={screen === "answer" && !!rec} repo={REPO.slug} />
-        </header>
-
-        <main className="sheet" id="main">
-          {screen === "connect" && <ConnectScreen onIndexed={onIndexed} agent={agent} onAgent={connectAgent} />}
-          {screen === "repo" && <HomeScreen onAsk={ask} pins={pins} onOpenPin={(p) => show(recById(p.recId), p.question, false)} />}
-          {screen === "chat" && (
-            <ChatScreen
-              inbox={chatInbox}
-              onOpenView={(id, q) => show(recById(id), q)}
-              onMic={() => (voice.status === "listening" ? voice.stop() : voice.start())}
-              listening={voice.status === "listening"}
-            />
-          )}
-          {screen === "atlas" && <AtlasScreen pins={pins} onOpen={(p) => show(recById(p.recId), p.question)} onAsk={() => voice.start()} />}
-          {screen === "answer" && rec && (
-            <ErrorBoundary resetKey={`${rec.spec.id}:${runKey}`}>
-            <AnswerScreen
-              rec={rec}
-              runKey={runKey}
-              instant={instant}
-              asked={asked}
-              speed={speed}
-              onSpeed={setSpeed}
-              focusRequest={focusRequest}
-              pinned={pinned}
-              onPin={togglePin}
-              onOpenInClaude={() => setClaudeOpen(true)}
-              onAskBlast={(sym) => ask(`What breaks if I change ${sym}?`)}
-              onAsk={ask}
-              agentName={agent}
-              chat={<ChatScreen compact inbox={chatInbox} onOpenView={(id, q) => show(recById(id), q)} onMic={() => (voice.status === "listening" ? voice.stop() : voice.start())} listening={voice.status === "listening"} />}
-            />
-            </ErrorBoundary>
-          )}
-          {screen === "answer" && !rec && (
-            <div className="page">
-              <div className="title-row"><div><h1>Current answer</h1><p className="sub">Ask a question from the box above and the answer builds here.</p></div></div>
-            </div>
-          )}
-        </main>
-      </AnimatedSidebarInset>
+      <main className="one-room">
+        <ErrorBoundary resetKey={`${rec.spec.id}:${runKey}`}>
+          <AnswerScreen
+            rec={rec}
+            runKey={runKey}
+            instant={instant}
+            asked={asked}
+            speed={speed}
+            onSpeed={setSpeed}
+            focusRequest={focusRequest}
+            pinned={pinned}
+            onPin={togglePin}
+            onOpenInClaude={() => setClaudeOpen(true)}
+            onAskBlast={(sym) => ask(`What breaks if I change ${sym}?`)}
+            onAsk={ask}
+            agentName={agent}
+            chat={
+              <ChatScreen
+                compact
+                onOpenView={(id, q) => show(recById(id), q)}
+                onMic={() => (voice.status === "listening" ? voice.stop() : voice.start())}
+                listening={voice.status === "listening"}
+              />
+            }
+            pins={pinList}
+            pinCount={pins.length}
+          />
+        </ErrorBoundary>
+      </main>
 
       {(voice.status === "listening" || voice.status === "denied" || voice.status === "unsupported") && (
         <div className="listen" role="status" aria-live="polite">
@@ -271,7 +205,7 @@ export default function App() {
               </div>
               <div className="heard">{voice.interim || <span className="t-shimmer" data-text="Listening. Ask a question about the code.">Listening. Ask a question about the code.</span>}</div>
               <div className="row">
-                <span className="muted" style={{ fontSize: 12, flex: 1 }}>Voice through Reason8 when connected; browser speech for now</span>
+                <span className="muted" style={{ fontSize: 12, flex: 1 }}>Asks one question. For the whole room, use Listen in the Conversation pane.</span>
                 <button className="btn" onClick={voice.stop}><Icon name="stop" size={14} /> Done</button>
               </div>
             </>
@@ -286,8 +220,19 @@ export default function App() {
         </div>
       )}
 
+      <Modal open={repoOpen} onClose={() => setRepoOpen(false)} title="Add a repository">
+        <ConnectScreen
+          onIndexed={() => {
+            setRepoOpen(false);
+            setToast(`${REPO.slug} is indexed. Ask anything.`);
+          }}
+          agent={agent}
+          onAgent={connectAgent}
+        />
+      </Modal>
+
       <Modal open={agentOpen} onClose={() => setAgentOpen(false)} title="Connect your agent">
-        <p className="lead">Your agent asks through the Spelunk MCP server, and the answer builds in this window while it works.</p>
+        <p className="lead">Your agent asks through the Spelunk MCP server, and accepted proposals from the room are sent to it.</p>
         <ConnectAgent connected={agent} onConnected={(n) => { connectAgent(n); setAgentOpen(false); }} />
       </Modal>
 
@@ -295,24 +240,24 @@ export default function App() {
         <p className="lead">The same view ships as an MCP App. In Claude Desktop, ChatGPT or VS Code it renders inside the chat, with play and step still working.</p>
         <div className="panel-body" style={{ paddingTop: 0 }}>
           <label className="field-label">Ask Claude</label>
-          <pre className="snippet"><code>{`Use spelunk to show the answer "${rec?.spec.title ?? ""}" for ${REPO.slug}`}</code></pre>
+          <pre className="snippet"><code>{`Use spelunk to show the answer "${rec.spec.title}" for ${REPO.slug}`}</code></pre>
           <p className="muted" style={{ fontSize: 12, margin: "10px 0 0" }}>
-            Resource: <span className="mono">ui://spelunk/answer/{rec?.spec.id}</span>
+            Resource: <span className="mono">ui://spelunk/answer/{rec.spec.id}</span>
           </p>
           <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
             <button className="btn primary" onClick={async () => {
               try {
-                await navigator.clipboard.writeText(`Use spelunk to show the answer "${rec?.spec.title}" for ${REPO.slug}`);
+                await navigator.clipboard.writeText(`Use spelunk to show the answer "${rec.spec.title}" for ${REPO.slug}`);
                 setToast("Prompt copied");
               } catch {
                 setToast("Copy failed. Select the prompt and copy it by hand.");
               }
               setClaudeOpen(false);
             }}>
-              <Icon name="copy" size={15} /> Copy prompt
+              <Icon name="copy" size={14} /> Copy prompt
             </button>
             <button className="btn" onClick={() => { setClaudeOpen(false); setAgentOpen(true); }}>
-              <Icon name="plug" size={15} /> Set up Claude
+              <Icon name="plug" size={14} /> Set up Claude
             </button>
           </div>
         </div>
@@ -320,9 +265,9 @@ export default function App() {
 
       {toast && (
         <div className="toast" role="status">
-          <Icon name="tick" size={15} /> {toast}
+          <Icon name="tick" size={14} /> {toast}
         </div>
       )}
-    </AnimatedSidebarProvider>
+    </div>
   );
 }

@@ -133,15 +133,18 @@ function Rings({ data }: NodeProps<Node<RingsData>>) {
           </g>
         ))}
       {!reduce && data.reached > 0 && r && (
+        // Drawn at the target ring's size and scaled up from the centre: transform and opacity only.
         <motion.ellipse
           key={data.reached}
           cx={data.cx}
           cy={data.cy}
+          rx={r * data.xs}
+          ry={r}
           className="ripple"
-          style={{ stroke: RING_SW[data.reached]?.fill }}
-          initial={{ rx: 20 * data.xs, ry: 20, opacity: 0.35 }}
-          animate={{ rx: r * data.xs, ry: r, opacity: 0 }}
-          transition={{ duration: 1.1, ease: EASE_OUT }}
+          style={{ stroke: RING_SW[data.reached]?.fill, transformBox: "fill-box", transformOrigin: "center" }}
+          initial={{ transform: "scale(0.08)", opacity: 0.35 }}
+          animate={{ transform: "scale(1)", opacity: 0 }}
+          transition={{ duration: 0.6, ease: EASE_OUT }}
         />
       )}
     </svg>
@@ -590,7 +593,7 @@ function Inner({ spec, visible, step, ready, selected, onSelect, inspector, onTo
           <span key={label} className="legend-row" style={{ ["--c" as string]: v.swatch.fill }}>
             <i className={v.outline ? "sw outline" : "sw"} style={{ background: v.outline ? "#fff" : v.swatch.fill, borderColor: v.swatch.fill }} />
             {label}
-            <NumberTicker value={v.found} startOnView={false} duration={0.35} stagger={0} className="num" />
+            <NumberTicker value={v.found} startOnView={false} duration={0.25} stagger={0} className="num" />
           </span>
         ))}
       </Panel>
